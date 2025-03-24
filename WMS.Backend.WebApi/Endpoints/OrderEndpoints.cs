@@ -1,26 +1,25 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.OpenApi;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using WMS.Backend.Domain.Models;
-using WMS.Backend.WebApi.Data;
+using WMS.Backend.Infrastructure.Data;
 namespace WMS.Backend.WebApi.Endpoints;
 
 public static class OrderEndpoints
 {
     public static void MapOrderEndpoints (this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/Order").WithTags(nameof(Order));
+        var group = routes.MapGroup("/api/orders").WithTags(nameof(Order));
 
         group.MapGet("/", async (AppDbContext db) =>
         {
-            return await db.Order.ToListAsync();
+            return await db.Orders.ToListAsync();
         })
         .WithName("GetAllOrders")
         .WithOpenApi();
 
         group.MapGet("/{id}", async Task<Results<Ok<Order>, NotFound>> (Guid id, AppDbContext db) =>
         {
-            return await db.Order.AsNoTracking()
+            return await db.Orders.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.Id == id)
                 is Order model
                     ? TypedResults.Ok(model)
@@ -31,7 +30,7 @@ public static class OrderEndpoints
 
         group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid id, Order order, AppDbContext db) =>
         {
-            var affected = await db.Order
+            var affected = await db.Orders
                 .Where(model => model.Id == id)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(m => m.Id, order.Id)
@@ -46,16 +45,16 @@ public static class OrderEndpoints
 
         group.MapPost("/", async (Order order, AppDbContext db) =>
         {
-            db.Order.Add(order);
+            db.Orders.Add(order);
             await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Order/{order.Id}",order);
+            return TypedResults.Created($"/api/orders/{order.Id}",order);
         })
         .WithName("CreateOrder")
         .WithOpenApi();
 
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid id, AppDbContext db) =>
         {
-            var affected = await db.Order
+            var affected = await db.Orders
                 .Where(model => model.Id == id)
                 .ExecuteDeleteAsync();
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();

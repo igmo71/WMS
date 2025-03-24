@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using WMS.Backend.WebApi.Data;
+using WMS.Backend.Infrastructure.Data;
 using WMS.Backend.WebApi.Endpoints;
 
 namespace WMS.Backend.WebApi
@@ -11,7 +10,8 @@ namespace WMS.Backend.WebApi
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("AppDbContext") ?? throw new InvalidOperationException("Connection string 'AppDbContext' not found.")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("AppDbContext")
+                    ?? throw new InvalidOperationException("Connection string 'AppDbContext' not found.")));
 
             // Add services to the container.
             builder.Services.AddAuthorization();
@@ -19,9 +19,9 @@ namespace WMS.Backend.WebApi
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
-                        builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddEndpointsApiExplorer();
 
-                        builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
@@ -30,12 +30,8 @@ namespace WMS.Backend.WebApi
             {
                 app.MapOpenApi();
             }
-
-                        if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-};
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
 
@@ -60,7 +56,7 @@ namespace WMS.Backend.WebApi
             })
             .WithName("GetWeatherForecast");
 
-                        app.MapOrderEndpoints();
+            app.MapOrderEndpoints();
 
             app.Run();
         }
