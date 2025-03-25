@@ -1,65 +1,77 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using WMS.Backend.Application.Abstractions.Services;
+using WMS.Backend.Application.Services;
 using WMS.Backend.Domain.Models;
-using WMS.Backend.Infrastructure.Data;
+
 namespace WMS.Backend.WebApi.Endpoints;
 
 public static class OrderEndpoints
 {
-    public static void MapOrderEndpoints (this IEndpointRouteBuilder routes)
+    public static void MapOrderEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/orders").WithTags(nameof(Order));
+        var group = routes.MapGroup("/api/orders").WithTags(nameof(Order))
+            .WithOpenApi()
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        group.MapGet("/", async (AppDbContext db) =>
-        {
-            return await db.Orders.ToListAsync();
-        })
-        .WithName("GetAllOrders")
-        .WithOpenApi();
+        group.MapPost("/", CreateOrder).WithName("CreateOrder");
 
-        group.MapGet("/{id}", async Task<Results<Ok<Order>, NotFound>> (Guid id, AppDbContext db) =>
-        {
-            return await db.Orders.AsNoTracking()
-                .FirstOrDefaultAsync(model => model.Id == id)
-                is Order model
-                    ? TypedResults.Ok(model)
-                    : TypedResults.NotFound();
-        })
-        .WithName("GetOrderById")
-        .WithOpenApi();
+        group.MapPut("/{id}", UpdateOrder).WithName("UpdateOrder");
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid id, Order order, AppDbContext db) =>
-        {
-            var affected = await db.Orders
-                .Where(model => model.Id == id)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(m => m.Id, order.Id)
-                    .SetProperty(m => m.Name, order.Name)
-                    .SetProperty(m => m.Number, order.Number)
-                    .SetProperty(m => m.DateTime, order.DateTime)
-                    );
-            return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
-        })
-        .WithName("UpdateOrder")
-        .WithOpenApi();
+        group.MapDelete("/{id}", DeleteOrder).WithName("DeleteOrder");
 
-        group.MapPost("/", async (Order order, AppDbContext db) =>
-        {
-            db.Orders.Add(order);
-            await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/orders/{order.Id}",order);
-        })
-        .WithName("CreateOrder")
-        .WithOpenApi();
+        group.MapGet("/", GetOrderList).WithName("GetOrderList");
 
-        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid id, AppDbContext db) =>
-        {
-            var affected = await db.Orders
-                .Where(model => model.Id == id)
-                .ExecuteDeleteAsync();
-            return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
-        })
-        .WithName("DeleteOrder")
-        .WithOpenApi();
+        group.MapGet("/{id}", GetOrderById).WithName("GetOrderById");
+    }
+
+    private static async Task<Results<Created<Order>, ProblemHttpResult>> CreateOrder(
+        [FromServices] IOrderService orderService,
+        [FromBody] Order order)
+    {
+        var result = await orderService.CreateAsync(order);
+
+        return TypedResults.Created($"/api/orders/{result.Id}", result);
+    }
+
+    private static async Task<Results<Ok, NotFound>> UpdateOrder(
+        [FromServices] IOrderService orderService,
+        [FromRoute] Guid id,
+        [FromBody] Order order)
+    {
+        var affected = await orderService.UpdateAsync(id, order);
+
+        return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+    }
+
+    private static async Task<Results<Ok, NotFound>> DeleteOrder(
+        [FromServices] IOrderService orderService,
+        [FromRoute] Guid id)
+    {
+        var affected = await orderService.DeleteAsync(id);
+
+        return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+    }
+
+    private static async Task<Results<Ok<List<Order>>, NotFound, ProblemHttpResult>> GetOrderList(
+        [FromServices] IOrderService orderService,
+        [FromQuery] int? skip = null,
+        [FromQuery] int? take = null)
+    {
+        var orderQuery = new OrderQuery(skip, take);
+
+        var result = await orderService.GetListAsync(orderQuery);
+
+        return result is List<Order> model ? TypedResults.Ok(model) : TypedResults.NotFound();
+    }
+
+    private static async Task<Results<Ok<Order>, NotFound, ProblemHttpResult>> GetOrderById(
+        [FromServices] IOrderService orderService,
+        [FromRoute] Guid id)
+    {
+        var result = await orderService.GetByIdAsync(id);
+
+        return result is Order model ? TypedResults.Ok(model) : TypedResults.NotFound();
     }
 }

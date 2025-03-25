@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WMS.Backend.Application\WMS.Backend.Application.csproj" />
-    <ProjectReference Include="..\WMS.Backend.Domain\WMS.Backend.Domain.csproj" />
   </ItemGroup>
 
 </Project>
