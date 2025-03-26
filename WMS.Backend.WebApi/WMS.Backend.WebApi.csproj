@@ -22,10 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WMS.Backend.Application\WMS.Backend.Application.csproj" />
-    <ProjectReference Include="..\WMS.Backend.Domain\WMS.Backend.Domain.csproj" />
     <ProjectReference Include="..\WMS.Backend.Infrastructure\WMS.Backend.Infrastructure.csproj" />
-    <ProjectReference Include="..\WMS.Shared.Abstractions\WMS.Shared.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>
