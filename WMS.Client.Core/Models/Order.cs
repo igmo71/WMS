@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-//using WMS.Shared.Abstractions.Models;
+﻿using WMS.Shared.Abstractions.Models;
 
 namespace WMS.Client.Core.Models
 {
-    internal class Order
+    internal class Order : OrderBase
     {
     }
 }
