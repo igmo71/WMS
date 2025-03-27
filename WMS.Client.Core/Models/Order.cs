@@ -2,7 +2,7 @@
 
 namespace WMS.Client.Core.Models
 {
-    internal class Order : OrderBase
+    public class Order : OrderBase
     {
     }
 }

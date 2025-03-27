@@ -1,8 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using WMS.Client.Core.Infrastructure;
 
 namespace WMS.Client.Core.ViewModels
 {
-    public abstract class ViewModelBase : ObservableObject
+    internal abstract class ViewModelBase : SafeBindable
     {
+
     }
 }

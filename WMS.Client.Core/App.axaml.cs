@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using WMS.Client.Core.Services;
 using WMS.Client.Core.ViewModels;
 using WMS.Client.Core.Views;
 
@@ -17,21 +18,20 @@ namespace WMS.Client.Core
 
         public override void OnFrameworkInitializationCompleted()
         {
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 DisableAvaloniaDataAnnotationValidation();
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = new MainViewModel()
-                };
+                desktop.MainWindow = new MainView();
+                desktop.MainWindow.DataContext = new MainViewModel();
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
             {
-                singleViewPlatform.MainView = new MainView
-                {
-                    DataContext = new MainViewModel()
-                };
+                singleViewPlatform.MainView = new MainView();
+                singleViewPlatform.MainView.DataContext = new MainViewModel();
             }
+
+            UIServiceProvider.Instance = new AvaloniaUIService();
 
             base.OnFrameworkInitializationCompleted();
         }
