@@ -9,5 +9,20 @@
 	<Design.DataContext>
 		<vm:MainViewModel />
 	</Design.DataContext>
-	<TransitioningContentControl Content="{Binding CurrentPage}" />
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="auto"/>
+			<RowDefinition/>
+		</Grid.RowDefinitions>
+		<ItemsControl ItemsSource="{Binding Pages}">
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<Button Content="{Binding Name}"
+							Command="{Binding CloseCommand}"/>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+		<TransitioningContentControl Grid.Row="1"
+									 Content="{Binding CurrentPage}" />
+	</Grid>
 </Window>

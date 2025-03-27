@@ -5,7 +5,7 @@ using Avalonia.Controls.Templates;
 using WMS.Client.Core.ViewModels;
 using WMS.Client.Core.Views;
 
-namespace WMS.Client.Core
+namespace WMS.Client.Core.Infrastructure
 {
     public class ViewLocator : IDataTemplate
     {

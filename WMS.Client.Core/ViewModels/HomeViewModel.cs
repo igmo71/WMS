@@ -18,6 +18,9 @@ namespace WMS.Client.Core.ViewModels
 
         public HomeViewModel()
         {
+            Name = "Home";
+            _persistent = true;
+
             GetOrdersCommand = new RelayCommand((p) => GetOrders());
         }
 
