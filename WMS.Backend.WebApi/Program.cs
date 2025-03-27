@@ -14,29 +14,29 @@ namespace WMS.Backend.WebApi
 
             builder.Services.AddOpenApi();
 
-            //builder.Services.AddEndpointsApiExplorer();
-            //builder.Services.AddSwaggerGen();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
             builder.Services.AddAppRepositories(builder.Configuration);
             builder.Services.AddAppServices(builder.Configuration);
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
+            //if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.UseSwagger();
+                app.UseSwaggerUI();
+                //app.UseSwaggerUI(options =>
+                //{
+                //    options.SwaggerEndpoint("/openapi/v1.json", "OpenAPI V1");
+                //});
             }
-            //app.UseSwagger();
-            //app.UseSwaggerUI();
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/openapi/v1.json", "OpenAPI V1");
-            });
 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-            
+
             app.MapAppEndpoints();
 
             app.Run();
