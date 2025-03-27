@@ -46,6 +46,9 @@ namespace WMS.Client.Core.Services
 
         internal static void ClosePage(ViewModelBase vm)
         {
+            if (vm.Persistent)
+                return;
+
             if (_pages.Contains(vm))
             {
                 _pages.Remove(vm);

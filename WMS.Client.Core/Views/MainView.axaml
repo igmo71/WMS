@@ -12,17 +12,30 @@
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="auto"/>
-			<RowDefinition/>
+			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 		<ItemsControl ItemsSource="{Binding Pages}">
 			<ItemsControl.ItemTemplate>
 				<DataTemplate>
-					<Button Content="{Binding Name}"
-							Command="{Binding CloseCommand}"/>
+					<Button Command="{Binding CurrentCommand}"
+							Margin="5,5,0,0">
+						<StackPanel Orientation="Horizontal">
+							<Label Content="{Binding Name}"/>
+							<Button Content="X"
+									Command="{Binding CloseCommand}"/>
+						</StackPanel>
+					</Button>
 				</DataTemplate>
 			</ItemsControl.ItemTemplate>
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Horizontal"/>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
 		</ItemsControl>
 		<TransitioningContentControl Grid.Row="1"
+									 HorizontalAlignment="Stretch"
+									 HorizontalContentAlignment="Center"
 									 Content="{Binding CurrentPage}" />
 	</Grid>
 </Window>

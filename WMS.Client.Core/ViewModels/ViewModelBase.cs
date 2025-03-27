@@ -11,12 +11,13 @@ namespace WMS.Client.Core.ViewModels
         internal bool Persistent => _persistent;
 
         internal RelayCommand CloseCommand { get; }
+        internal RelayCommand CurrentCommand { get; }
 
         public ViewModelBase() 
         {
-            CloseCommand = new RelayCommand((p) => Close());
+            CloseCommand = new RelayCommand((p) => NavigationService.ClosePage(this));
+            CurrentCommand = new RelayCommand((p) => NavigationService.SetCurrent(this));
         }
 
-        internal virtual void Close() => NavigationService.ClosePage(this);
     }
 }

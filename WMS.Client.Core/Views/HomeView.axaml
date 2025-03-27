@@ -9,22 +9,9 @@
 	<Design.DataContext>
 		<vm:HomeViewModel />
 	</Design.DataContext>
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition/>
-			<RowDefinition/>
-		</Grid.RowDefinitions>
-		<Button Grid.Row="0" Content="Get" Command="{Binding GetOrdersCommand}"></Button>
-		<ListBox Grid.Row="1" ItemsSource="{Binding Orders}">
-			<ListBox.ItemTemplate>
-				<DataTemplate>
-					<StackPanel Orientation="Horizontal">
-						<TextBlock Text="{Binding Name}"/>
-						<TextBlock Text="{Binding Number}" Padding="5,0"/>
-						<TextBlock Text="{Binding DateTime}"/>
-					</StackPanel>
-				</DataTemplate>
-			</ListBox.ItemTemplate>
-		</ListBox>
-	</Grid>
+	
+	<StackPanel>
+		<Button Content="Documents"
+				Command="{Binding DocumentsCommand}"/>
+	</StackPanel>
 </UserControl>

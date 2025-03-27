@@ -17,6 +17,7 @@ namespace WMS.Client.Core.Infrastructure
             Func<Control> func = param switch
             {
                 HomeViewModel => () => new HomeView(),
+                DocumentListViewModel => () => new DocumentListView(),
                 _ => () => new TextBlock { Text = "Not Found: " + param.GetType().FullName }
             };
 
