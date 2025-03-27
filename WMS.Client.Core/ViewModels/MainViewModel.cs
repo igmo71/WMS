@@ -6,7 +6,7 @@
 
         public MainViewModel()
         {
-            CurrentPage = new MainMenuViewModel();
+            CurrentPage = new HomeViewModel();
         }
     }
 }

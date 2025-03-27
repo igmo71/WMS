@@ -25,4 +25,10 @@
   <ItemGroup>
     <ProjectReference Include="..\WMS.Shared.Abstractions\WMS.Shared.Abstractions.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\HomeView.axaml.cs">
+      <DependentUpon>HomeView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@ using WMS.Client.Core.Models;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal class MainMenuViewModel : ViewModelBase
+    internal class HomeViewModel : ViewModelBase
     {
 
         private ObservableCollection<Order> _orders = new ObservableCollection<Order>();
@@ -16,7 +16,7 @@ namespace WMS.Client.Core.ViewModels
 
         internal RelayCommand GetOrdersCommand { get; }
 
-        public MainMenuViewModel()
+        public HomeViewModel()
         {
             GetOrdersCommand = new RelayCommand((p) => GetOrders());
         }

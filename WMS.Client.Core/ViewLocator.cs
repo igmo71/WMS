@@ -1,7 +1,9 @@
 using System;
+using System.Reflection.Metadata.Ecma335;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using WMS.Client.Core.ViewModels;
+using WMS.Client.Core.Views;
 
 namespace WMS.Client.Core
 {
@@ -12,15 +14,13 @@ namespace WMS.Client.Core
             if (param is null)
                 return null;
 
-            var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
-            var type = Type.GetType(name);
-
-            if (type != null)
+            Func<Control> func = param switch
             {
-                return (Control)Activator.CreateInstance(type)!;
-            }
+                HomeViewModel => () => new HomeView(),
+                _ => () => new TextBlock { Text = "Not Found: " + param.GetType().FullName }
+            };
 
-            return new TextBlock { Text = "Not Found: " + name };
+            return func.Invoke();
         }
 
         public bool Match(object? data)
