@@ -12,7 +12,7 @@ namespace WMS.Client.Core.ViewModels
             Name = "Home";
             _persistent = true;
 
-            DocumentsCommand = new RelayCommand((p) => NavigationService.AddPage(nameof(DocumentListViewModel), () => new DocumentListViewModel() { UniqueKey = nameof(DocumentListViewModel) }));
+            DocumentsCommand = new RelayCommand((p) => NavigationService.AddPage(nameof(DocumentListViewModel), () => new DocumentListViewModel()));
         }
     }
 }

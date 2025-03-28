@@ -27,7 +27,6 @@ namespace WMS.Client.Core.ViewModels
 
             _orders.Clear();
             orders.ForEach(_orders.Add);
-
         }
     }
 }

@@ -18,7 +18,7 @@ namespace WMS.Client.Core.Services
 
         static NavigationService()
         {
-            AddPage(nameof(HomeViewModel), () => new HomeViewModel() { UniqueKey = nameof(HomeViewModel) });
+            AddPage(nameof(HomeViewModel), () => new HomeViewModel());
         }
 
         internal static void AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
@@ -37,7 +37,7 @@ namespace WMS.Client.Core.Services
 
         internal static void SetCurrent(ViewModelBase vm)
         {
-            if (_pages.ContainsKey(vm.UniqueKey))
+            if (_pages.Where(kvp => kvp.Value == vm).Any())
             {
                 _current = vm;
                 CurrentChanged?.Invoke(vm);
@@ -49,10 +49,13 @@ namespace WMS.Client.Core.Services
             if (vm.Persistent)
                 return;
 
-            if (_pages.Remove(vm.UniqueKey))
+            List<string> keys = _pages.Where(kvp => kvp.Value == vm).Select(kvp => kvp.Key).ToList();
+            if (keys.Any())
             {
+                keys.ForEach(k => _pages.Remove(k));
                 PagesChanged?.Invoke();
-                if (Pages.Any())
+
+                if (_pages.Any())
                     SetCurrent(_pages.LastOrDefault().Value);
             }
         }

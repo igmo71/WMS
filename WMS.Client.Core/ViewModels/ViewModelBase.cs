@@ -8,7 +8,6 @@ namespace WMS.Client.Core.ViewModels
         protected bool _persistent = false;
 
         internal string Name { get; set; }
-        internal string UniqueKey { get; set; }
         internal bool Persistent => _persistent;
 
         internal RelayCommand CloseCommand { get; }
