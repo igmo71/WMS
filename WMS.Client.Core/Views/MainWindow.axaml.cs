@@ -1,9 +1,8 @@
 using Avalonia.Controls;
 
-namespace WMS.Client.Core.Views
+namespace WMS.Client.Core.Views;
+
+public partial class MainWindow : Window
 {
-    public partial class MainWindow : Window
-    {
-        public MainWindow() => InitializeComponent();
-    }
+    public MainWindow() => InitializeComponent();
 }

@@ -23,12 +23,12 @@ namespace WMS.Client.Core
             {
                 DisableAvaloniaDataAnnotationValidation();
                 desktop.MainWindow = new MainWindow();
-                desktop.MainWindow.DataContext = new MainWindowViewModel();
+                desktop.MainWindow.DataContext = new MainViewModel();
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
             {
-                singleViewPlatform.MainView = new MainWindow();
-                singleViewPlatform.MainView.DataContext = new MainWindowViewModel();
+                singleViewPlatform.MainView = new MainView();
+                singleViewPlatform.MainView.DataContext = new MainViewModel();
             }
 
             UIServiceProvider.Instance = new AvaloniaUIService();

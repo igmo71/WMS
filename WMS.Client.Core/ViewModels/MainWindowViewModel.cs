@@ -5,7 +5,7 @@ using WMS.Client.Core.Services;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal partial class MainWindowViewModel : SafeBindable
+    internal partial class MainViewModel : SafeBindable
     {
         private readonly ObservableCollection<ViewModelBase> _pages = new ObservableCollection<ViewModelBase>();
         private ViewModelBase _currentPage;
@@ -13,7 +13,7 @@ namespace WMS.Client.Core.ViewModels
         internal ViewModelBase CurrentPage { get => LockAndGet(ref _currentPage); private set => SetAndNotify(ref _currentPage, value); }
         internal ObservableCollection<ViewModelBase> Pages => _pages;
 
-        public MainWindowViewModel()
+        public MainViewModel()
         {
             CurrentPage = NavigationService.Current;
             UpdatePages();

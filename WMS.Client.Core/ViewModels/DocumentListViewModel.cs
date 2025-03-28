@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Models;
+using WMS.Client.Core.Services;
 
 namespace WMS.Client.Core.ViewModels
 {
@@ -13,7 +14,7 @@ namespace WMS.Client.Core.ViewModels
 
         internal ObservableCollection<Order> Orders { get => _orders; set => _orders = value; }
 
-        public DocumentListViewModel(string uniqueKey) : base(uniqueKey)
+        public DocumentListViewModel()
         {
             Name = "Documents";
             GetOrders();
@@ -21,7 +22,6 @@ namespace WMS.Client.Core.ViewModels
 
         private async void GetOrders()
         {
-
             HttpClient client = new HttpClient();
             List<Order> orders = await client.GetFromJsonAsync<List<Order>>("http://vm-igmo-dev:8220/api/orders");
 

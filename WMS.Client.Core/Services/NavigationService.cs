@@ -18,7 +18,7 @@ namespace WMS.Client.Core.Services
 
         static NavigationService()
         {
-            AddPage(nameof(HomeViewModel), () => new HomeViewModel(nameof(HomeViewModel)));
+            AddPage(nameof(HomeViewModel), () => new HomeViewModel() { UniqueKey = nameof(HomeViewModel) });
         }
 
         internal static void AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
