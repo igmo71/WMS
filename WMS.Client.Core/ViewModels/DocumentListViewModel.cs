@@ -13,7 +13,7 @@ namespace WMS.Client.Core.ViewModels
 
         internal ObservableCollection<Order> Orders { get => _orders; set => _orders = value; }
 
-        public DocumentListViewModel()
+        public DocumentListViewModel(string uniqueKey) : base(uniqueKey)
         {
             Name = "Documents";
             GetOrders();

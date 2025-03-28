@@ -7,36 +7,27 @@ namespace WMS.Client.Core.Services
 {
     internal static class NavigationService
     {
-        private readonly static List<ViewModelBase> _pages = new List<ViewModelBase>();
+        private readonly static Dictionary<string, ViewModelBase> _pages = new Dictionary<string, ViewModelBase>();
         private static ViewModelBase _current;
 
-        internal static List<ViewModelBase> Pages => _pages;
+        internal static List<ViewModelBase> Pages => _pages.Select(kvp => kvp.Value).ToList();
         internal static ViewModelBase Current => _current;
 
-        public static event Action<ViewModelBase> CurrentChanged;
-        public static event Action PagesChanged;
+        internal static event Action<ViewModelBase> CurrentChanged;
+        internal static event Action PagesChanged;
 
         static NavigationService()
         {
-            _current = new HomeViewModel();
-            _pages.Add(_current);
-            CurrentChanged?.Invoke(_current);
+            AddPage(nameof(HomeViewModel), () => new HomeViewModel(nameof(HomeViewModel)));
         }
 
-        internal static void SetCurrent(ViewModelBase vm)
+        internal static void AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
         {
-            if (_pages.Any(e => e == vm))
+            ViewModelBase vm = _pages.GetValueOrDefault(uniqueKey);
+            if (vm == null)
             {
-                _current = vm;
-                CurrentChanged?.Invoke(vm);
-            }
-        }
-
-        internal static void AddPage(ViewModelBase vm, bool setCurrent = true)
-        {
-            if (!_pages.Contains(vm))
-            {
-                _pages.Add(vm);
+                vm = factory.Invoke();
+                _pages.Add(uniqueKey, vm);
                 PagesChanged?.Invoke();
             }
 
@@ -44,16 +35,25 @@ namespace WMS.Client.Core.Services
                 SetCurrent(vm);
         }
 
+        internal static void SetCurrent(ViewModelBase vm)
+        {
+            if (_pages.ContainsKey(vm.UniqueKey))
+            {
+                _current = vm;
+                CurrentChanged?.Invoke(vm);
+            }
+        }
+
         internal static void ClosePage(ViewModelBase vm)
         {
             if (vm.Persistent)
                 return;
 
-            if (_pages.Contains(vm))
+            if (_pages.Remove(vm.UniqueKey))
             {
-                _pages.Remove(vm);
                 PagesChanged?.Invoke();
-                SetCurrent(_pages.LastOrDefault());
+                if (Pages.Any())
+                    SetCurrent(_pages.LastOrDefault().Value);
             }
         }
 

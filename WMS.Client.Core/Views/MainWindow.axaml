@@ -4,10 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="WMS.Client.Core.Views.MainView"
-             x:DataType="vm:MainViewModel">
+             x:Class="WMS.Client.Core.Views.MainWindow"
+             x:DataType="vm:MainWindowViewModel">
 	<Design.DataContext>
-		<vm:MainViewModel />
+		<vm:MainWindowViewModel />
 	</Design.DataContext>
 	<Grid>
 		<Grid.RowDefinitions>
