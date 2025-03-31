@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -22,11 +23,11 @@ namespace WMS.Client.Core.ViewModels
 
         private async void GetOrders()
         {
-            HttpClient client = new HttpClient();
-            List<Order> orders = await client.GetFromJsonAsync<List<Order>>("http://vm-igmo-dev:8220/api/orders");
+            List<Order> orders = new List<Order>() { new Order() { Id = Guid.NewGuid(), DateTime = DateTime.UtcNow, Name = "Some name", Number = "123" } };
 
             _orders.Clear();
             orders.ForEach(_orders.Add);
+
         }
     }
 }

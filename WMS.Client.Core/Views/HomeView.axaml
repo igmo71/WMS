@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
+			 xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.HomeView"
 			 x:DataType="vm:HomeViewModel">
@@ -13,5 +14,8 @@
 	<StackPanel>
 		<Button Content="Documents"
 				Command="{Binding DocumentsCommand}"/>
+		<Button Content="123"
+				Grid.Row="2"
+				bh:ClickBehaviour.Command="{Binding TestCommand}"/>
 	</StackPanel>
 </UserControl>
