@@ -16,7 +16,7 @@
 				Command="{Binding DocumentsCommand}"/>
 		<Button Content="123"
 				Grid.Row="2"
-				bh:ClickBehaviour.Command="{Binding TestCommand}"
-				bh:ClickBehaviour.CommandParameter="123"/>
+				bh:TappedBehaviour.Command="{Binding TestCommand}"
+				bh:TappedBehaviour.CommandParameter="123"/>
 	</StackPanel>
 </UserControl>
