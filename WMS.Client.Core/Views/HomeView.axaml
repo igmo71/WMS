@@ -17,6 +17,6 @@
 		<Button Content="123"
 				Grid.Row="2"
 				bh:ClickBehaviour.Command="{Binding TestCommand}"
-				/>
+				bh:ClickBehaviour.CommandParameter="123"/>
 	</StackPanel>
 </UserControl>
