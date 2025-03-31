@@ -2,11 +2,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace WMS.Client.Core.Behaviours
@@ -14,10 +9,12 @@ namespace WMS.Client.Core.Behaviours
     internal class ClickBehaviour : AvaloniaObject
     {
         public static readonly AttachedProperty<ICommand> CommandProperty = AvaloniaProperty.RegisterAttached<ClickBehaviour, Control, ICommand>("Command");
+        public static readonly AttachedProperty<object> CommandParameterProperty = AvaloniaProperty.RegisterAttached<ClickBehaviour, Control, object>("CommandParameter");
 
         public static void SetCommand(AvaloniaObject element, ICommand value) => element.SetValue(CommandProperty, value);
-
         public static ICommand GetCommand(AvaloniaObject element) => element.GetValue(CommandProperty);
+        public static void SetCommandParameter(AvaloniaObject element, object value) => element.SetValue(CommandParameterProperty, value);
+        public static object GetCommandParameter(AvaloniaObject element) => element.GetValue(CommandParameterProperty);
 
         static ClickBehaviour() => CommandProperty.Changed.AddClassHandler<Control>(PropertyChangedHandler);
 
@@ -33,8 +30,10 @@ namespace WMS.Client.Core.Behaviours
             if (sender is Control control)
             {
                 ICommand command = control.GetValue(CommandProperty);
-                if (command?.CanExecute(null) == true)
-                    command.Execute(null);
+                object parameter = control.GetValue(CommandParameterProperty);
+
+                if (command?.CanExecute(parameter) == true)
+                    command.Execute(parameter);
             }
         }
     }
