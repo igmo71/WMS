@@ -21,37 +21,16 @@ namespace WMS.Client.Core.Behaviours
 
         static TappedBehaviour() => CommandProperty.Changed.AddClassHandler<Interactive>(PropertyChangedHandler);
 
-        static readonly HashSet<Interactive> _elements = new HashSet<Interactive>();
-
         public static void PropertyChangedHandler(Interactive element, AvaloniaPropertyChangedEventArgs args)
         {
-            if (args.OldValue is ICommand oldCommand)
-                oldCommand.CanExecuteChanged -= CanExecuteChanged;
-
             if (args.NewValue is ICommand newCommand)
             {
-                _elements.Add(element);
                 element.AddHandler(InputElement.TappedEvent, EventHandler);
-                UpdateIsEnabled(element, newCommand);
-                newCommand.CanExecuteChanged += CanExecuteChanged;
             }
             else
             {
-                _elements.Remove(element);
                 element.RemoveHandler(InputElement.TappedEvent, EventHandler);
             }
-        }
-
-        private static void CanExecuteChanged(object? sender, EventArgs e)
-        {
-            if (sender is ICommand command)
-                _elements.Where((e) => GetCommand(e) == command).ToList().ForEach((e) => UpdateIsEnabled(e, command));
-        }
-
-        private static void UpdateIsEnabled(Interactive element, ICommand command)
-        {
-            if (element is Control control)
-                control.IsEnabled = command?.CanExecute(GetCommandParameter(element)) ?? true;
         }
 
         public static void EventHandler(object sender, RoutedEventArgs args)
