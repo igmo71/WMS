@@ -10,14 +10,13 @@
 	<Design.DataContext>
 		<vm:DocumentListViewModel />
 	</Design.DataContext>
-
 	<ListBox ItemsSource="{Binding Orders}"
-			 HorizontalAlignment="Stretch">
+			 HorizontalAlignment="Stretch"
+			 bh:DoubleTappedBehaviour.Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+			 bh:DoubleTappedBehaviour.CommandParameter="{Binding $self.SelectedItem}">
 		<ListBox.ItemTemplate>
 			<DataTemplate>
-				<StackPanel Orientation="Horizontal"
-							bh:TappedBehaviour.Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-							bh:TappedBehaviour.CommandParameter="{Binding}">
+				<StackPanel Orientation="Horizontal">
 					<TextBlock Text="{Binding Name}"/>
 					<TextBlock Text="{Binding Number}" Padding="5,0"/>
 					<TextBlock Text="{Binding DateTime}"/>

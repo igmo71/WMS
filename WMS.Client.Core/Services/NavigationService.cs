@@ -20,7 +20,7 @@ namespace WMS.Client.Core.Services
             }
         }
 
-        internal static ViewModelBase Current
+        internal static PageViewModelBase Current
         {
             get
             {

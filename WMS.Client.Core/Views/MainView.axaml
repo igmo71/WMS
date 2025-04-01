@@ -18,31 +18,24 @@
 		<Grid.RowDefinitions>
 			<RowDefinition Height="auto"/>
 			<RowDefinition Height="*"/>
-			<RowDefinition Height="auto"/>
 		</Grid.RowDefinitions>
-		<ItemsControl ItemsSource="{Binding Pages}">
-			<ItemsControl.ItemTemplate>
+		<TabStrip ItemsSource="{Binding Pages}"
+				  SelectedItem="{Binding CurrentPage}">
+			<TabStrip.ItemTemplate>
 				<DataTemplate>
-					<Button Classes.Current="{Binding IsCurrent}"
-							Command="{Binding CurrentCommand}"
-							Margin="5,5,0,0">
-						<StackPanel Orientation="Horizontal">
-							<Label Content="{Binding Name}"/>
-							<Button Content="X"
-									Command="{Binding CloseCommand}"/>
-						</StackPanel>
-					</Button>
+					<StackPanel Orientation="Horizontal">
+						<Label Content="{Binding Name}"
+							   VerticalContentAlignment="Center"
+							   FontSize="20"/>
+						<Button Content="x"
+								Padding="1"
+								Command="{Binding CloseCommand}"/>
+					</StackPanel>
 				</DataTemplate>
-			</ItemsControl.ItemTemplate>
-			<ItemsControl.ItemsPanel>
-				<ItemsPanelTemplate>
-					<StackPanel Orientation="Horizontal"/>
-				</ItemsPanelTemplate>
-			</ItemsControl.ItemsPanel>
-		</ItemsControl>
+			</TabStrip.ItemTemplate>
+		</TabStrip>
 		<TransitioningContentControl Grid.Row="1"
 									 HorizontalAlignment="Stretch"
-									 HorizontalContentAlignment="Center"
-									 Content="{Binding CurrentPage}" />
+									 Content="{Binding CurrentPage}"/>
 	</Grid>
 </UserControl>

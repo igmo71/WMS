@@ -6,7 +6,6 @@ namespace WMS.Client.Core.ViewModels
     internal class HomeViewModel : PageViewModelBase
     {
         internal RelayCommand DocumentsCommand { get; }
-        internal RelayCommand TestCommand { get; }
 
         public HomeViewModel()
         {
@@ -14,7 +13,6 @@ namespace WMS.Client.Core.ViewModels
             _persistent = true;
 
             DocumentsCommand = new RelayCommand((p) => NavigationService.AddPage(nameof(DocumentListViewModel), () => new DocumentListViewModel()));
-            TestCommand = new RelayCommand((p) => NavigationService.AddPage(nameof(DocumentListViewModel), () => new DocumentListViewModel()));
         }
     }
 }

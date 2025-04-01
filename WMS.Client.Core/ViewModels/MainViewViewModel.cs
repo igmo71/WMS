@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Linq;
-using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Services;
 
 namespace WMS.Client.Core.ViewModels
@@ -8,9 +7,9 @@ namespace WMS.Client.Core.ViewModels
     internal partial class MainViewModel : ViewModelBase
     {
         private readonly ObservableCollection<ViewModelBase> _pages = new ObservableCollection<ViewModelBase>();
-        private ViewModelBase _currentPage;
+        private PageViewModelBase _currentPage;
 
-        internal ViewModelBase CurrentPage { get => LockAndGet(ref _currentPage); private set => SetAndNotify(ref _currentPage, value); }
+        internal PageViewModelBase CurrentPage { get => LockAndGet(ref _currentPage); set => NavigationService.SetCurrent(value); }
         internal ObservableCollection<ViewModelBase> Pages => _pages;
 
         public MainViewModel()
@@ -22,7 +21,7 @@ namespace WMS.Client.Core.ViewModels
             NavigationService.PagesChanged += UpdatePages;
         }
 
-        private void UpdateCurrent(ViewModelBase vm) => CurrentPage = vm;
+        private void UpdateCurrent(PageViewModelBase vm) => SetAndNotify(ref _currentPage, vm, nameof(CurrentPage));
 
         private void UpdatePages()
         {

@@ -10,9 +10,10 @@
 	<Design.DataContext>
 		<vm:HomeViewModel />
 	</Design.DataContext>
-	
-	<StackPanel>
+	<StackPanel HorizontalAlignment="Center"
+				Margin="0,20">
 		<Button Content="Documents"
+				FontSize="30"
 				Command="{Binding DocumentsCommand}"/>
 	</StackPanel>
 </UserControl>
