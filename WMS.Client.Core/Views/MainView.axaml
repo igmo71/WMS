@@ -3,37 +3,69 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
+             xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.MainView"
-             x:DataType="vm:MainViewModel">
+             x:DataType="vm:MainViewModel"
+			 Name="Container">
 	<Design.DataContext>
 		<vm:MainViewModel />
 	</Design.DataContext>
-	<UserControl.Styles>
-		<Style Selector="Button.Current">
-			<Setter Property="Background" Value="Red"/>
-		</Style>
-	</UserControl.Styles>
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="auto"/>
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
-		<TabStrip ItemsSource="{Binding Pages}"
-				  SelectedItem="{Binding CurrentPage}">
-			<TabStrip.ItemTemplate>
-				<DataTemplate>
-					<StackPanel Orientation="Horizontal">
-						<Label Content="{Binding Name}"
-							   VerticalContentAlignment="Center"
-							   FontSize="20"/>
-						<Button Content="x"
-								Padding="1"
-								Command="{Binding CloseCommand}"/>
-					</StackPanel>
-				</DataTemplate>
-			</TabStrip.ItemTemplate>
-		</TabStrip>
+		<Grid Grid.Row="0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="auto"/>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="auto"/>
+			</Grid.ColumnDefinitions>
+			<StackPanel Grid.Column="1"
+						Orientation="Horizontal">
+				<TabStrip ItemsSource="{Binding Pages}"
+						  SelectedItem="{Binding CurrentPage, Mode=OneWay}">
+					<TabStrip.ItemTemplate>
+						<DataTemplate>
+							<StackPanel Orientation="Horizontal"
+										bh:TappedBehaviour.Command="{Binding DataContext.SetCurrentCommand, ElementName=Container}"
+										bh:TappedBehaviour.CommandParameter="{Binding}">
+								<Label Content="{Binding Name}"
+									   VerticalContentAlignment="Center"
+									   FontSize="20"/>
+								<Button Content="x"
+										Padding="1"
+										Command="{Binding CloseCommand}"/>
+							</StackPanel>
+						</DataTemplate>
+					</TabStrip.ItemTemplate>
+				</TabStrip>
+			</StackPanel>
+			<Button Grid.Column="2"
+					Content="Pages"
+					HorizontalAlignment="Right">
+				<Button.Flyout>
+					<MenuFlyout ItemsSource="{Binding Pages}">
+						<MenuFlyout.ItemTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal"
+											Background="Aqua"
+											bh:TappedBehaviour.Command="{Binding DataContext.SetCurrentCommand, ElementName=Container}"
+											bh:TappedBehaviour.CommandParameter="{Binding}">
+									<Label Content="{Binding Name}"
+										   VerticalContentAlignment="Center"
+										   FontSize="15"/>
+									<Button Content="x"
+											Padding="1"
+											Command="{Binding CloseCommand}"/>
+								</StackPanel>
+							</DataTemplate>
+						</MenuFlyout.ItemTemplate>
+					</MenuFlyout>
+				</Button.Flyout>
+			</Button>
+		</Grid>
 		<TransitioningContentControl Grid.Row="1"
 									 HorizontalAlignment="Stretch"
 									 Content="{Binding CurrentPage}"/>
