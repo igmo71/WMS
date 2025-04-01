@@ -7,7 +7,7 @@ using WMS.Client.Core.Services;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal class DocumentListViewModel : ViewModelBase
+    internal class DocumentListViewModel : PageViewModelBase
     {
         private ObservableCollection<Order> _orders = new ObservableCollection<Order>();
 

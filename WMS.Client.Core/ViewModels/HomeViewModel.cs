@@ -3,7 +3,7 @@ using WMS.Client.Core.Services;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal class HomeViewModel : ViewModelBase
+    internal class HomeViewModel : PageViewModelBase
     {
         internal RelayCommand DocumentsCommand { get; }
         internal RelayCommand TestCommand { get; }

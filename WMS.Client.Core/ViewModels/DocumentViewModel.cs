@@ -2,7 +2,7 @@
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal class DocumentViewModel : ViewModelBase
+    internal class DocumentViewModel : PageViewModelBase
     {
         private Order _order;
 

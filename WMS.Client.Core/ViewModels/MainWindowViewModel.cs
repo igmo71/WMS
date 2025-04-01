@@ -5,7 +5,7 @@ using WMS.Client.Core.Services;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal partial class MainViewModel : SafeBindable
+    internal partial class MainViewModel : ViewModelBase
     {
         private readonly ObservableCollection<ViewModelBase> _pages = new ObservableCollection<ViewModelBase>();
         private ViewModelBase _currentPage;

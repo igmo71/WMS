@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using WMS.Client.Core.ViewModels;
 
 namespace WMS.Client.Core.Services
@@ -9,10 +8,10 @@ namespace WMS.Client.Core.Services
     internal static class NavigationService
     {
         private static readonly object _lock = new object();
-        private static readonly Dictionary<string, ViewModelBase> _pages = new Dictionary<string, ViewModelBase>();
-        private static ViewModelBase _current;
+        private static readonly Dictionary<string, PageViewModelBase> _pages = new Dictionary<string, PageViewModelBase>();
+        private static PageViewModelBase _current;
 
-        internal static List<ViewModelBase> Pages
+        internal static List<PageViewModelBase> Pages
         {
             get
             {
@@ -30,17 +29,16 @@ namespace WMS.Client.Core.Services
             }
         }
 
-        internal static event Action<ViewModelBase> CurrentChanged;
+        internal static event Action<PageViewModelBase> CurrentChanged;
         internal static event Action PagesChanged;
 
         static NavigationService() => AddPage(GetUniqueKey<HomeViewModel>(), () => new HomeViewModel());
 
-        internal static string GetUniqueKey<T>(string postfix = null) where T : ViewModelBase => nameof(T) + postfix != null ? "_" + postfix : "";
+        internal static string GetUniqueKey<T>(string postfix = null) where T : PageViewModelBase => nameof(T) + postfix != null ? "_" + postfix : "";
 
-        internal static void AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
+        internal static PageViewModelBase AddPage(string uniqueKey, Func<PageViewModelBase> factory, bool setCurrent = true)
         {
-
-            ViewModelBase vm;
+            PageViewModelBase vm;
             bool invokeEvent = false;
 
             lock (_lock)
@@ -59,13 +57,15 @@ namespace WMS.Client.Core.Services
 
             if (setCurrent)
                 SetCurrent(vm);
+
+            return vm;
         }
 
-        internal static void SetCurrent(ViewModelBase vm)
+        internal static void SetCurrent(PageViewModelBase vm)
         {
             bool invokeEvent = false;
 
-            lock (_lock) 
+            lock (_lock)
             {
                 if (_pages.Where(kvp => kvp.Value == vm).Any())
                 {
@@ -78,7 +78,7 @@ namespace WMS.Client.Core.Services
                 CurrentChanged?.Invoke(vm);
         }
 
-        internal static void ClosePage(ViewModelBase vm)
+        internal static void ClosePage(PageViewModelBase vm)
         {
             if (vm.Persistent)
                 return;
