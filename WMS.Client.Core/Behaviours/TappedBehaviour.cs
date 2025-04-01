@@ -2,6 +2,9 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Input;
 
 namespace WMS.Client.Core.Behaviours
@@ -18,19 +21,45 @@ namespace WMS.Client.Core.Behaviours
 
         static TappedBehaviour() => CommandProperty.Changed.AddClassHandler<Interactive>(PropertyChangedHandler);
 
-        static void PropertyChangedHandler(Interactive element, AvaloniaPropertyChangedEventArgs args)
+        static readonly HashSet<Interactive> _elements = new HashSet<Interactive>();
+
+        public static void PropertyChangedHandler(Interactive element, AvaloniaPropertyChangedEventArgs args)
         {
-            if (args.NewValue is ICommand commandValue)
-                element.AddHandler(InputElement.TappedEvent, EventHandler);
-            else
-                element.RemoveHandler(InputElement.TappedEvent, EventHandler);
-        }
-        static void EventHandler(object sender, RoutedEventArgs args)
-        {
-            if (sender is Interactive control)
+            if (args.OldValue is ICommand oldCommand)
+                oldCommand.CanExecuteChanged -= CanExecuteChanged;
+
+            if (args.NewValue is ICommand newCommand)
             {
-                ICommand command = control.GetValue(CommandProperty);
-                object parameter = control.GetValue(CommandParameterProperty);
+                _elements.Add(element);
+                element.AddHandler(InputElement.TappedEvent, EventHandler);
+                UpdateIsEnabled(element, newCommand);
+                newCommand.CanExecuteChanged += CanExecuteChanged;
+            }
+            else
+            {
+                _elements.Remove(element);
+                element.RemoveHandler(InputElement.TappedEvent, EventHandler);
+            }
+        }
+
+        private static void CanExecuteChanged(object? sender, EventArgs e)
+        {
+            if (sender is ICommand command)
+                _elements.Where((e) => GetCommand(e) == command).ToList().ForEach((e) => UpdateIsEnabled(e, command));
+        }
+
+        private static void UpdateIsEnabled(Interactive element, ICommand command)
+        {
+            if (element is Control control)
+                control.IsEnabled = command?.CanExecute(GetCommandParameter(element)) ?? true;
+        }
+
+        public static void EventHandler(object sender, RoutedEventArgs args)
+        {
+            if (sender is Interactive interactive)
+            {
+                ICommand command = interactive.GetValue(CommandProperty);
+                object parameter = interactive.GetValue(CommandParameterProperty);
 
                 if (command?.CanExecute(parameter) == true)
                     command.Execute(parameter);
