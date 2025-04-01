@@ -1,7 +1,6 @@
-using System;
-using System.Reflection.Metadata.Ecma335;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using System;
 using WMS.Client.Core.ViewModels;
 using WMS.Client.Core.Views;
 
@@ -18,6 +17,7 @@ namespace WMS.Client.Core.Infrastructure
             {
                 HomeViewModel => () => new HomeView(),
                 DocumentListViewModel => () => new DocumentListView(),
+                DocumentViewModel => () => new DocumentView(),
                 _ => () => new TextBlock { Text = "Not Found: " + param.GetType().FullName }
             };
 

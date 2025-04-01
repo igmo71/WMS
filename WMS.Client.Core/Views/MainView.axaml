@@ -9,6 +9,11 @@
 	<Design.DataContext>
 		<vm:MainViewModel />
 	</Design.DataContext>
+	<UserControl.Styles>
+		<Style Selector="Button.Current">
+			<Setter Property="Background" Value="Red"/>
+		</Style>
+	</UserControl.Styles>
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="auto"/>
@@ -18,7 +23,8 @@
 		<ItemsControl ItemsSource="{Binding Pages}">
 			<ItemsControl.ItemTemplate>
 				<DataTemplate>
-					<Button Command="{Binding CurrentCommand}"
+					<Button Classes.Current="{Binding IsCurrent}"
+							Command="{Binding CurrentCommand}"
 							Margin="5,5,0,0">
 						<StackPanel Orientation="Horizontal">
 							<Label Content="{Binding Name}"/>

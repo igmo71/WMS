@@ -60,5 +60,10 @@ namespace WMS.Client.Core.Services
             }
         }
 
+        internal static string GetUniqueKey<T>(string postfix = null) where T : ViewModelBase
+        {
+            return nameof(T) + postfix != null ? "_" + postfix : "";
+        }
+
     }
 }
