@@ -42,7 +42,7 @@ namespace WMS.Backend.Infrastructure.Repositories
             return affected;
         }
 
-        public async Task<List<Order>> GetListAsync(OrderQuery? orderQuery)
+        public async Task<List<Order>> GetListAsync(OrderQuery orderQuery)
         {
             var result = await _dbContext.Orders
                 .AsNoTracking()
