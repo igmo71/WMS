@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services;
+using WMS.Backend.Application.Services.OrderServices;
 using WMS.Backend.Domain.Models;
 
 namespace WMS.Backend.WebApi.Endpoints;
@@ -29,9 +30,9 @@ public static class OrderEndpoints
 
     private static async Task<Results<Created<Order>, ProblemHttpResult>> CreateOrder(
         [FromServices] IOrderService orderService,
-        [FromBody] Order order)
+        [FromBody] CreateOrderCommand createCommand)
     {
-        var result = await orderService.CreateAsync(order);
+        var result = await orderService.CreateAsync(createCommand);
 
         return TypedResults.Created($"/api/orders/{result.Id}", result);
     }

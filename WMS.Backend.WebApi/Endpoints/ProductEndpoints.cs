@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services;
+using WMS.Backend.Application.Services.ProductServices;
 using WMS.Backend.Domain.Models;
 
 namespace WMS.Backend.WebApi.Endpoints
@@ -29,9 +30,9 @@ namespace WMS.Backend.WebApi.Endpoints
 
         private static async Task<Results<Created<Product>, ProblemHttpResult>> CreateProduct(
             [FromServices] IProductService productService,
-            [FromBody] Product product)
+            [FromBody] CreateProductCommand createCommand)
         {
-            var result = await productService.CreateAsync(product);
+            var result = await productService.CreateAsync(createCommand);
 
             return TypedResults.Created($"/api/products/{result.Id}", result);
         }

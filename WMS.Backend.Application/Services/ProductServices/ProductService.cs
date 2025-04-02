@@ -4,15 +4,20 @@ using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Domain.Models;
 
-namespace WMS.Backend.Application.Services
+namespace WMS.Backend.Application.Services.ProductServices
 {
     internal class ProductService(IProductRepository productRepository) : IProductService
     {
         private readonly ILogger _log = Log.ForContext<ProductService>();
         private readonly IProductRepository _productRepository = productRepository;
 
-        public async Task<Product> CreateAsync(Product newProduct)
+        public async Task<Product> CreateAsync(CreateProductCommand createCommand)
         {
+            var newProduct = new Product
+            {
+                Name = createCommand.Name
+            };
+
             var product = await _productRepository.CreateAsync(newProduct);
 
             _log.Debug("{Source} {@Product}", nameof(CreateAsync), product);
