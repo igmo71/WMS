@@ -5,6 +5,7 @@
         public static void MapAppEndpoints(this IEndpointRouteBuilder routes)
         {
             routes.MapOrderEndpoints();
+            routes.MapProductEndpoints();
         }
     }
 }

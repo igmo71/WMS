@@ -10,7 +10,8 @@ public static class OrderEndpoints
 {
     public static void MapOrderEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/orders").WithTags(nameof(Order))
+        var group = routes.MapGroup("/api/orders")
+            .WithTags(nameof(Order))
             .WithOpenApi()
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
@@ -40,18 +41,18 @@ public static class OrderEndpoints
         [FromRoute] Guid id,
         [FromBody] Order order)
     {
-        var affected = await orderService.UpdateAsync(id, order);
+        var isSuccess = await orderService.UpdateAsync(id, order);
 
-        return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+        return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
     }
 
     private static async Task<Results<Ok, NotFound>> DeleteOrder(
         [FromServices] IOrderService orderService,
         [FromRoute] Guid id)
     {
-        var affected = await orderService.DeleteAsync(id);
+        var isSuccess = await orderService.DeleteAsync(id);
 
-        return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+        return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
     }
 
     private static async Task<Results<Ok<List<Order>>, NotFound, ProblemHttpResult>> GetOrderList(
