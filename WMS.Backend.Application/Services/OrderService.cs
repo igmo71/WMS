@@ -11,16 +11,16 @@ namespace WMS.Backend.Application.Services
         private readonly ILogger _log = Log.ForContext<OrderService>();
         private readonly IOrderRepository _orderRepository = orderRepository;
 
-        public async Task<Order> CreateAsync(Order order)
+        public async Task<Order> CreateAsync(Order newOrder)
         {
-            var result = await _orderRepository.CreateAsync(order);
+            var order = await _orderRepository.CreateAsync(newOrder);
 
-            _log.Debug("{Source} {@Order}", nameof(CreateAsync), result);
+            _log.Debug("{Source} {@Order}", nameof(CreateAsync), order);
 
-            return result;
+            return order;
         }
 
-        public async Task<int> UpdateAsync(Guid id, Order order)
+        public async Task<bool> UpdateAsync(Guid id, Order order)
         {
             var result = await _orderRepository.UpdateAsync(id, order);
 
@@ -29,11 +29,11 @@ namespace WMS.Backend.Application.Services
             return result;
         }
 
-        public async Task<int> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
             var result = await _orderRepository.DeleteAsync(id);
 
-            _log.Debug("{Source} {@Order}", nameof(DeleteAsync), id);
+            _log.Debug("{Source} {@OrderId}", nameof(DeleteAsync), id);
 
             return result;
         }

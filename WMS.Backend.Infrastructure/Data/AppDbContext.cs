@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WMS.Backend.Common;
 using WMS.Backend.Domain.Models;
-using WMS.Shared.Abstractions.Models;
 
 namespace WMS.Backend.Infrastructure.Data
 {
@@ -20,6 +19,9 @@ namespace WMS.Backend.Infrastructure.Data
             modelBuilder.Entity<Order>().HasKey(e => e.Id);
             modelBuilder.Entity<Order>().Property(e => e.Number).HasMaxLength(AppSettings.NUMBER_MAX_LENGTH);
             modelBuilder.Entity<Order>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);
+
+            modelBuilder.Entity<Product>().HasKey(e => e.Id);
+            modelBuilder.Entity<Product>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);
         }
     }
 

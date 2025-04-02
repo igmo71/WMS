@@ -6,54 +6,52 @@ using WMS.Backend.Infrastructure.Data;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {
-    public class OrderRepository(AppDbContext dbContext) : IOrderRepository
+    internal class ProductRepository(AppDbContext dbContext) : IProductRepository
     {
         private readonly AppDbContext _dbContext = dbContext;
 
-        public async Task<Order> CreateAsync(Order order)
+        public async Task<Product> CreateAsync(Product product)
         {
-            var result = _dbContext.Orders.Add(order).Entity;
+            var result = _dbContext.Products.Add(product).Entity;
 
             await _dbContext.SaveChangesAsync();
 
             return result;
         }
 
-        public async Task<bool> UpdateAsync(Guid id, Order order)
+        public async Task<bool> UpdateAsync(Guid id, Product product)
         {
-            var affected = await _dbContext.Orders
+            var affected = await _dbContext.Products
                 .Where(model => model.Id == id)
                 .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(m => m.Id, order.Id)
-                    .SetProperty(m => m.Name, order.Name)
-                    .SetProperty(m => m.Number, order.Number)
-                    .SetProperty(m => m.DateTime, order.DateTime));
+                    .SetProperty(m => m.Id, product.Id)
+                    .SetProperty(m => m.Name, product.Name));
 
             return affected == 1;
         }
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var affected = await _dbContext.Orders
+            var affected = await _dbContext.Products
                 .Where(e => e.Id == id)
                 .ExecuteDeleteAsync();
 
             return affected == 1;
         }
 
-        public async Task<List<Order>> GetListAsync(OrderQuery orderQuery)
+        public async Task<List<Product>> GetListAsync(ProductQuery productQuery)
         {
-            var result = await _dbContext.Orders
+            var result = await _dbContext.Products
                 .AsNoTracking()
-                .HandleQuery(orderQuery)
+                .HandleQuery(productQuery)
                 .ToListAsync();
 
             return result;
         }
 
-        public async Task<Order?> GetByIdAsync(Guid id)
+        public async Task<Product?> GetByIdAsync(Guid id)
         {
-            var result = await _dbContext.Orders
+            var result = await _dbContext.Products
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.Id == id);
 
