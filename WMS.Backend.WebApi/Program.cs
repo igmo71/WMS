@@ -19,6 +19,8 @@ namespace WMS.Backend.WebApi
 
                 var builder = WebApplication.CreateBuilder(args);
 
+                builder.Services.AddSerilog();
+
                 builder.Services.AddAuthorization();
 
                 builder.Services.AddOpenApi();

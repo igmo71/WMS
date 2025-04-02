@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -45,7 +46,7 @@ namespace WMS.Backend.Application.Services.ProductServices
 
         public async Task<List<Product>> GetListAsync(ProductQuery productQuery)
         {
-            using var activityListener = _log.StartActivity("{Source} {@ProductQuery}", nameof(GetListAsync), productQuery);
+            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {@ProductQuery}", nameof(GetListAsync), productQuery);
 
             var products = await _productRepository.GetListAsync(productQuery);
 

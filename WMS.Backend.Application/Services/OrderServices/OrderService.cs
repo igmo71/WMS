@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -47,7 +48,7 @@ namespace WMS.Backend.Application.Services.OrderServices
 
         public async Task<List<Order>> GetListAsync(OrderQuery orderQuery)
         {
-            using var activityListener = _log.StartActivity("{Source} {@OrderQuery}", nameof(GetListAsync), orderQuery);
+            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {@OrderQuery}", nameof(GetListAsync), orderQuery);
 
             var orders = await _orderRepository.GetListAsync(orderQuery);
 
