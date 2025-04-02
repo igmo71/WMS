@@ -18,6 +18,7 @@ namespace WMS.Backend.WebApi
             builder.Services.AddSwaggerGen();
 
             builder.Services.AddAppRepositories(builder.Configuration);
+
             builder.Services.AddAppServices(builder.Configuration);
 
             var app = builder.Build();
