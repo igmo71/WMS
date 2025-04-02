@@ -5,14 +5,11 @@ namespace WMS.Backend.Infrastructure.Repositories
 {
     public static class OrderRepositoryExtensions
     {
-        public static IQueryable<Order> HandleQuery(this IQueryable<Order> query, OrderQuery? orderQuery)
+        public static IQueryable<Order> HandleQuery(this IQueryable<Order> query, OrderQuery orderQuery)
         {
-            if(!orderQuery.HasValue)
-                return query;
-
             query = query
-                .Skip(orderQuery.Value.Skip)
-                .Take(orderQuery.Value.Take);
+                .Skip(orderQuery.Skip ?? 0)
+                .Take(orderQuery.Take ?? 100);
 
             return query;
         }
