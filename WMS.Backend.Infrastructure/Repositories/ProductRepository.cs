@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WMS.Backend.Application.Abstractions.Repositories;
-using WMS.Backend.Application.Services;
+using WMS.Backend.Application.Services.ProductServices;
 using WMS.Backend.Domain.Models;
 using WMS.Backend.Infrastructure.Data;
 

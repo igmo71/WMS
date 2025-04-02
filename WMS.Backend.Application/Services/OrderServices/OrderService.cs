@@ -4,15 +4,22 @@ using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Domain.Models;
 
-namespace WMS.Backend.Application.Services
+namespace WMS.Backend.Application.Services.OrderServices
 {
     public class OrderService(IOrderRepository orderRepository) : IOrderService
     {
         private readonly ILogger _log = Log.ForContext<OrderService>();
         private readonly IOrderRepository _orderRepository = orderRepository;
 
-        public async Task<Order> CreateAsync(Order newOrder)
+        public async Task<Order> CreateAsync(CreateOrderCommand createCommand)
         {
+            var newOrder = new Order
+            {
+                Name = createCommand.Name,
+                Number = createCommand.Number,
+                DateTime = createCommand.DateTime
+            };
+
             var order = await _orderRepository.CreateAsync(newOrder);
 
             _log.Debug("{Source} {@Order}", nameof(CreateAsync), order);

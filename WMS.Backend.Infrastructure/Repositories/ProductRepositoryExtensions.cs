@@ -1,4 +1,4 @@
-﻿using WMS.Backend.Application.Services;
+﻿using WMS.Backend.Application.Services.ProductServices;
 using WMS.Backend.Common;
 using WMS.Backend.Domain.Models;
 
