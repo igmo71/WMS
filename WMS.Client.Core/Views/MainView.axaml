@@ -7,7 +7,8 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.MainView"
              x:DataType="vm:MainViewModel"
-			 Name="Container">
+			 Name="Container"
+			 SizeChanged="SizeChanged">
 	<Design.DataContext>
 		<vm:MainViewModel />
 	</Design.DataContext>
@@ -22,15 +23,20 @@
 				<ColumnDefinition Width="*"/>
 				<ColumnDefinition Width="auto"/>
 			</Grid.ColumnDefinitions>
+			<Label Name="CurrentName"
+				   Grid.Column="0"
+				   Content="{Binding CurrentPage.Name}"
+				   VerticalAlignment="Center"
+				   Margin="5"
+				   FontSize="15"/>
 			<StackPanel Grid.Column="1"
 						Orientation="Horizontal">
-				<TabStrip ItemsSource="{Binding Pages}"
-						  SelectedItem="{Binding CurrentPage, Mode=OneWay}">
+				<TabStrip Name="PagesTabs" 
+						  ItemsSource="{Binding Pages}"
+						  SelectedItem="{Binding CurrentPage}">
 					<TabStrip.ItemTemplate>
 						<DataTemplate>
-							<StackPanel Orientation="Horizontal"
-										bh:TappedBehaviour.Command="{Binding DataContext.SetCurrentCommand, ElementName=Container}"
-										bh:TappedBehaviour.CommandParameter="{Binding}">
+							<StackPanel Orientation="Horizontal">
 								<Label Content="{Binding Name}"
 									   VerticalContentAlignment="Center"
 									   FontSize="20"/>
@@ -42,17 +48,23 @@
 					</TabStrip.ItemTemplate>
 				</TabStrip>
 			</StackPanel>
-			<Button Grid.Column="2"
+			<Button Name="PagesButton"
+					Grid.Column="2"
 					Content="Pages"
-					HorizontalAlignment="Right">
+					HorizontalAlignment="Right"
+					Margin="10">
 				<Button.Flyout>
 					<MenuFlyout ItemsSource="{Binding Pages}">
+						<MenuFlyout.ItemContainerTheme>
+							<ControlTheme TargetType="MenuItem" 
+										  BasedOn="{StaticResource {x:Type MenuItem}}">
+								<Setter Property="Command" Value="{Binding DataContext.SetCurrentCommand, ElementName=Container}"/>
+								<Setter Property="CommandParameter" Value="{Binding}"/>
+							</ControlTheme>
+						</MenuFlyout.ItemContainerTheme>
 						<MenuFlyout.ItemTemplate>
 							<DataTemplate>
-								<StackPanel Orientation="Horizontal"
-											Background="Aqua"
-											bh:TappedBehaviour.Command="{Binding DataContext.SetCurrentCommand, ElementName=Container}"
-											bh:TappedBehaviour.CommandParameter="{Binding}">
+								<StackPanel Orientation="Horizontal">
 									<Label Content="{Binding Name}"
 										   VerticalContentAlignment="Center"
 										   FontSize="15"/>
