@@ -2,7 +2,7 @@
 
 namespace WMS.Backend.Domain.Models
 {
-    public class Order : OrderBase
+    public class Order : Document
     {
     }
 }
