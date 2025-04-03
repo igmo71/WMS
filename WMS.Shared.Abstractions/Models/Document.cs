@@ -1,6 +1,6 @@
 ﻿namespace WMS.Shared.Abstractions.Models
 {
-    public abstract class OrderBase
+    public abstract class Document
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }

@@ -2,7 +2,7 @@
 
 namespace WMS.Backend.Domain.Models
 {
-    public class Order : Document
+    public class Product : Catalog
     {
     }
 }

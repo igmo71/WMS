@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.Infrastructure"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.Application", "WMS.Backend.Application\WMS.Backend.Application.csproj", "{4D447026-9794-4C88-A29C-E241BED040CE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.Common", "WMS.Backend.Common\WMS.Backend.Common.csproj", "{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Core", "WMS.Client.Core\WMS.Client.Core.csproj", "{CFF12522-ECD5-455E-B7CB-551A108FC764}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Android", "WMS.Client.Android\WMS.Client.Android.csproj", "{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}"
@@ -64,6 +66,10 @@ Global
 		{259E4CA0-1A38-473F-A5F9-CF539ECABD36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{259E4CA0-1A38-473F-A5F9-CF539ECABD36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{259E4CA0-1A38-473F-A5F9-CF539ECABD36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
