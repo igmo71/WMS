@@ -1,4 +1,4 @@
-﻿using WMS.Shared.Abstractions.Models;
+﻿using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Domain.Models
 {
