@@ -32,7 +32,7 @@ public static class OrderEndpoints
         [FromServices] IOrderService orderService,
         [FromBody] CreateOrderCommand createCommand)
     {
-        var result = await orderService.CreateAsync(createCommand);
+        var result = await orderService.CreateOrderAsync(createCommand);
 
         return TypedResults.Created($"/api/orders/{result.Id}", result);
     }
@@ -42,7 +42,7 @@ public static class OrderEndpoints
         [FromRoute] Guid id,
         [FromBody] Order order)
     {
-        var isSuccess = await orderService.UpdateAsync(id, order);
+        var isSuccess = await orderService.UpdateOrderAsync(id, order);
 
         return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
     }
@@ -51,19 +51,20 @@ public static class OrderEndpoints
         [FromServices] IOrderService orderService,
         [FromRoute] Guid id)
     {
-        var isSuccess = await orderService.DeleteAsync(id);
+        var isSuccess = await orderService.DeleteOrderAsync(id);
 
         return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
     }
 
     private static async Task<Results<Ok<List<Order>>, NotFound, ProblemHttpResult>> GetOrderList(
         [FromServices] IOrderService orderService,
+        [FromQuery] string? orderBy = null,
         [FromQuery] int? skip = null,
         [FromQuery] int? take = null)
     {
-        var orderQuery = new OrderQuery(skip, take);
+        var orderQuery = new OrderQuery(orderBy, skip, take);
 
-        var result = await orderService.GetListAsync(orderQuery);
+        var result = await orderService.GetOrderListAsync(orderQuery);
 
         return result is List<Order> model ? TypedResults.Ok(model) : TypedResults.NotFound();
     }
@@ -72,7 +73,7 @@ public static class OrderEndpoints
         [FromServices] IOrderService orderService,
         [FromRoute] Guid id)
     {
-        var result = await orderService.GetByIdAsync(id);
+        var result = await orderService.GetOrderByIdAsync(id);
 
         return result is Order model ? TypedResults.Ok(model) : TypedResults.NotFound();
     }
