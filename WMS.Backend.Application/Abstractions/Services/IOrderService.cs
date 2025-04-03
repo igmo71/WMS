@@ -5,10 +5,10 @@ namespace WMS.Backend.Application.Abstractions.Services
 {
     public interface IOrderService
     {
-        Task<Order> CreateAsync(CreateOrderCommand createCommand);
-        Task<bool> UpdateAsync(Guid id, Order order);
-        Task<bool> DeleteAsync(Guid id);
-        Task<List<Order>> GetListAsync(OrderQuery orderQuery);
-        Task<Order?> GetByIdAsync(Guid id);
+        Task<Order> CreateOrderAsync(CreateOrderCommand createCommand);
+        Task<bool> UpdateOrderAsync(Guid id, Order order);
+        Task<bool> DeleteOrderAsync(Guid id);
+        Task<List<Order>> GetOrderListAsync(OrderQuery orderQuery);
+        Task<Order?> GetOrderByIdAsync(Guid id);
     }
 }

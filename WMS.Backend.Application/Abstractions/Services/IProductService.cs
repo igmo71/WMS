@@ -5,10 +5,10 @@ namespace WMS.Backend.Application.Abstractions.Services
 {
     public interface IProductService
     {
-        Task<Product> CreateAsync(CreateProductCommand createCommand);
-        Task<bool> UpdateAsync(Guid id, Product product);
-        Task<bool> DeleteAsync(Guid id);
-        Task<List<Product>> GetListAsync(ProductQuery productQuery);
-        Task<Product?> GetByIdAsync(Guid id);
+        Task<Product> CreateProductAsync(CreateProductCommand createCommand);
+        Task<bool> UpdateProductAsync(Guid id, Product product);
+        Task<bool> DeleteProductAsync(Guid id);
+        Task<List<Product>> GetProductListAsync(ProductQuery productQuery);
+        Task<Product?> GetProductByIdAsync(Guid id);
     }
 }
