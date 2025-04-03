@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.Application", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.Common", "WMS.Backend.Common\WMS.Backend.Common.csproj", "{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Shared", "WMS.Shared\WMS.Shared.csproj", "{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Core", "WMS.Client.Core\WMS.Client.Core.csproj", "{CFF12522-ECD5-455E-B7CB-551A108FC764}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Android", "WMS.Client.Android\WMS.Client.Android.csproj", "{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}"
@@ -19,10 +21,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Desktop", "WMS.Client.Desktop\WMS.Client.Desktop.csproj", "{7370AE29-1767-49A5-99AC-919CFA113A1C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Browser", "WMS.Client.Browser\WMS.Client.Browser.csproj", "{259E4CA0-1A38-473F-A5F9-CF539ECABD36}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Shared", "WMS.Shared\WMS.Shared.csproj", "{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Shared", "WMS.Shared\WMS.Shared.csproj", "{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
