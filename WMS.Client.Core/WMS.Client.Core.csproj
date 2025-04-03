@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WMS.Shared.Abstractions\WMS.Shared.Abstractions.csproj" />
+    <ProjectReference Include="..\WMS.Shared\WMS.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
