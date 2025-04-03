@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Browser", "WMS.C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Shared", "WMS.Shared\WMS.Shared.csproj", "{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Shared", "WMS.Shared\WMS.Shared.csproj", "{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
