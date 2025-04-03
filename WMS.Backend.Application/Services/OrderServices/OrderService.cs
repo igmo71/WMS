@@ -12,7 +12,7 @@ namespace WMS.Backend.Application.Services.OrderServices
         private readonly ILogger _log = Log.ForContext<OrderService>();
         private readonly IOrderRepository _orderRepository = orderRepository;
 
-        public async Task<Order> CreateAsync(CreateOrderCommand createCommand)
+        public async Task<Order> CreateOrderAsync(CreateOrderCommand createCommand)
         {
             var newOrder = new Order
             {
@@ -23,32 +23,32 @@ namespace WMS.Backend.Application.Services.OrderServices
 
             var order = await _orderRepository.CreateAsync(newOrder);
 
-            _log.Debug("{Source} {@Order}", nameof(CreateAsync), order);
+            _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
 
             return order;
         }
 
-        public async Task<bool> UpdateAsync(Guid id, Order order)
+        public async Task<bool> UpdateOrderAsync(Guid id, Order order)
         {
             var result = await _orderRepository.UpdateAsync(id, order);
 
-            _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateAsync), id, order);
+            _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
 
             return result;
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteOrderAsync(Guid id)
         {
             var result = await _orderRepository.DeleteAsync(id);
 
-            _log.Debug("{Source} {@OrderId}", nameof(DeleteAsync), id);
+            _log.Debug("{Source} {@OrderId}", nameof(DeleteOrderAsync), id);
 
             return result;
         }
 
-        public async Task<List<Order>> GetListAsync(OrderQuery orderQuery)
+        public async Task<List<Order>> GetOrderListAsync(OrderQuery orderQuery)
         {
-            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {@OrderQuery}", nameof(GetListAsync), orderQuery);
+            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {@OrderQuery}", nameof(GetOrderListAsync), orderQuery);
 
             var orders = await _orderRepository.GetListAsync(orderQuery);
 
@@ -57,11 +57,11 @@ namespace WMS.Backend.Application.Services.OrderServices
             return orders;
         }
 
-        public async Task<Order?> GetByIdAsync(Guid id)
+        public async Task<Order?> GetOrderByIdAsync(Guid id)
         {
             var order = await _orderRepository.GetByIdAsync(id);
 
-            _log.Debug("{Source} {OrderId} {@Order}", nameof(GetListAsync), id, order);
+            _log.Debug("{Source} {OrderId} {@Order}", nameof(GetOrderListAsync), id, order);
 
             return order;
         }

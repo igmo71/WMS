@@ -32,7 +32,7 @@ namespace WMS.Backend.WebApi.Endpoints
             [FromServices] IProductService productService,
             [FromBody] CreateProductCommand createCommand)
         {
-            var result = await productService.CreateAsync(createCommand);
+            var result = await productService.CreateProductAsync(createCommand);
 
             return TypedResults.Created($"/api/products/{result.Id}", result);
         }
@@ -42,7 +42,7 @@ namespace WMS.Backend.WebApi.Endpoints
             [FromRoute] Guid id,
             [FromBody] Product product)
         {
-            var isSuccess = await productService.UpdateAsync(id, product);
+            var isSuccess = await productService.UpdateProductAsync(id, product);
 
             return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
         }
@@ -51,19 +51,20 @@ namespace WMS.Backend.WebApi.Endpoints
             [FromServices] IProductService productService,
             [FromRoute] Guid id)
         {
-            var isSuccess = await productService.DeleteAsync(id);
+            var isSuccess = await productService.DeleteProductAsync(id);
 
             return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
         }
 
         private static async Task<Results<Ok<List<Product>>, NotFound, ProblemHttpResult>> GetProductList(
             [FromServices] IProductService productService,
+            [FromQuery] string? orderBy,
             [FromQuery] int? skip = null,
             [FromQuery] int? take = null)
         {
-            var productQuery = new ProductQuery(skip, take);
+            var productQuery = new ProductQuery(orderBy, skip, take);
 
-            var result = await productService.GetListAsync(productQuery);
+            var result = await productService.GetProductListAsync(productQuery);
 
             return result is List<Product> model ? TypedResults.Ok(model) : TypedResults.NotFound();
         }
@@ -72,7 +73,7 @@ namespace WMS.Backend.WebApi.Endpoints
         [FromServices] IProductService productService,
         [FromRoute] Guid id)
         {
-            var result = await productService.GetByIdAsync(id);
+            var result = await productService.GetProductByIdAsync(id);
 
             return result is Product model ? TypedResults.Ok(model) : TypedResults.NotFound();
         }
