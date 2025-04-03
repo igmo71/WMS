@@ -1,4 +1,4 @@
-﻿namespace WMS.Shared.Abstractions.Models
+﻿namespace WMS.Shared.Models.Documents
 {
     public abstract class Document
     {

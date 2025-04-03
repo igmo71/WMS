@@ -1,8 +1,8 @@
-﻿using WMS.Shared.Abstractions.Models;
+﻿using Catalog = WMS.Shared.Models.Catalogs;
 
 namespace WMS.Backend.Domain.Models
 {
-    public class Product : Catalog
+    public class Product : Catalog.Product
     {
     }
 }
