@@ -5,7 +5,7 @@ namespace WMS.Backend.Application.Abstractions.Repositories
 {
     public interface IOrderRepository
     {
-        Task<Order> CreateAsync(Order order);
+        Task<Order> CreateAsync(CreateOrderCommand createOrderCommand);
         Task<bool> UpdateAsync(Guid id, Order order);
         Task<bool> DeleteAsync(Guid id);
         Task<List<Order>> GetListAsync(OrderQuery orderQuery);
