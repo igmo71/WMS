@@ -29,7 +29,7 @@ public static class OrderInEndpoints
 
     private static async Task<Results<Created<OrderIn>, ProblemHttpResult>> CreateOrder(
         [FromServices] IOrderInService orderService,
-        [FromBody] CreateOrderCommand createCommand)
+        [FromBody] CreateOrderInCommand createCommand)
     {
         var result = await orderService.CreateOrderAsync(createCommand);
 

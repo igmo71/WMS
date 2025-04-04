@@ -15,9 +15,9 @@ namespace WMS.Backend.Infrastructure.Data
 
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderIn> OrdersIn { get; set; }
-        public DbSet<OrderInProducts> OrderInProducts { get; set; }
+        public DbSet<OrderInProduct> OrderInProducts { get; set; }
         public DbSet<OrderOut> OrdersOut { get; set; }
-        public DbSet<OrderOutProducts> OrderOutProducts { get; set; }
+        public DbSet<OrderOutProduct> OrderOutProducts { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
 
@@ -33,7 +33,7 @@ namespace WMS.Backend.Infrastructure.Data
             modelBuilder.Entity<OrderIn>().HasMany(e => e.Products).WithOne()
                 .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
 
-            modelBuilder.Entity<OrderInProducts>().HasKey(e => new { e.OrderId, e.ProductId });
+            modelBuilder.Entity<OrderInProduct>().HasKey(e => new { e.OrderId, e.ProductId });
 
             modelBuilder.Entity<OrderOut>().HasKey(e => e.Id);
             modelBuilder.Entity<OrderOut>().Property(e => e.Number).HasMaxLength(AppSettings.NUMBER_MAX_LENGTH);
@@ -41,7 +41,7 @@ namespace WMS.Backend.Infrastructure.Data
             modelBuilder.Entity<OrderOut>().HasMany(e => e.Products).WithOne()
                 .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
 
-            modelBuilder.Entity<OrderOutProducts>().HasKey(e => new { e.OrderId, e.ProductId });
+            modelBuilder.Entity<OrderOutProduct>().HasKey(e => new { e.OrderId, e.ProductId });
 
             modelBuilder.Entity<Product>().HasKey(e => e.Id);
             modelBuilder.Entity<Product>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);

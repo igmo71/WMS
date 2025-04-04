@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Services.OrderServices;
 using WMS.Backend.Infrastructure.Data;
@@ -10,7 +11,12 @@ namespace WMS.Backend.Infrastructure.Repositories
     {
         private readonly AppDbContext _dbContext = dbContext;
 
-        public async Task<OrderIn> CreateAsync(CreateOrderCommand createOrderCommand)
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _dbContext.Database.BeginTransactionAsync();
+        }
+
+        public async Task<OrderIn> CreateAsync(CreateOrderInCommand createOrderCommand)
         {
             var newOrder = new OrderIn
             {

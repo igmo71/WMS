@@ -22,6 +22,36 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Catalogs.Product", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Catalogs.Warehouse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Warehouses", (string)null);
+                });
+
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -41,40 +71,10 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
-            modelBuilder.Entity("WMS.Shared.Models.Catalogs.Product", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("WMS.Shared.Models.Catalogs.Warehouse", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Warehouses");
-                });
-
-            modelBuilder.Entity("WMS.Shared.Models.Documents.OrderIn", b =>
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderIn", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -93,10 +93,10 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OrdersIn");
+                    b.ToTable("OrdersIn", (string)null);
                 });
 
-            modelBuilder.Entity("WMS.Shared.Models.Documents.OrderInProducts", b =>
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProducts", b =>
                 {
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid");
@@ -109,68 +109,19 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("OrderId", "ProductId");
 
-                    b.ToTable("OrderInProducts");
+                    b.ToTable("OrderInProducts", (string)null);
                 });
 
-            modelBuilder.Entity("WMS.Shared.Models.Documents.OrderOut", b =>
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProducts", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<string>("Number")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OrdersOut");
-                });
-
-            modelBuilder.Entity("WMS.Shared.Models.Documents.OrderOutProducts", b =>
-                {
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<double>("Count")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("OrderId", "ProductId");
-
-                    b.ToTable("OrderOutProducts");
-                });
-
-            modelBuilder.Entity("WMS.Shared.Models.Documents.OrderInProducts", b =>
-                {
-                    b.HasOne("WMS.Shared.Models.Documents.OrderIn", null)
-                        .WithMany("Products")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WMS.Shared.Models.Documents.OrderOut", null)
+                    b.HasOne("WMS.Backend.Domain.Models.Documents.OrderIn", null)
                         .WithMany("Products")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WMS.Shared.Models.Documents.OrderIn", b =>
-                {
-                    b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("WMS.Shared.Models.Documents.OrderOut", b =>
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderIn", b =>
                 {
                     b.Navigation("Products");
                 });

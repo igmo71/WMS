@@ -7,18 +7,34 @@ using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderServices
 {
-    internal class OrderInService(IOrderInRepository orderRepository) : IOrderInService
+    internal class OrderInService(
+        IOrderInRepository orderRepository,
+        IOrderInProductRepository orderProductRepository) : IOrderInService
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
+        private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
 
-        public async Task<OrderIn> CreateOrderAsync(CreateOrderCommand createOrderCommand)
+        public async Task<OrderIn> CreateOrderAsync(CreateOrderInCommand createOrderCommand)
         {
-            var order = await _orderRepository.CreateAsync(createOrderCommand);
+            await using var transaction = await _orderRepository.BeginTransactionAsync();
 
-            _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
+            try
+            {
+                var order = await _orderRepository.CreateAsync(createOrderCommand);
 
-            return order;
+                var productCount = await _orderProductRepository.CreateRangeAsync(order.Id, createOrderCommand.Products);
+
+                _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
+
+                await transaction.CommitAsync();
+
+                return order;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public async Task<bool> UpdateOrderAsync(Guid id, OrderIn order)
@@ -53,6 +69,12 @@ namespace WMS.Backend.Application.Services.OrderServices
         public async Task<OrderIn?> GetOrderByIdAsync(Guid id)
         {
             var order = await _orderRepository.GetByIdAsync(id);
+
+            if (order is not null)
+            {
+                var products = await _orderProductRepository.GetListAsync(id);
+                order.Products = products;
+            }
 
             _log.Debug("{Source} {OrderId} {@Order}", nameof(GetOrderListAsync), id, order);
 
