@@ -1,34 +1,35 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Services.OrderServices;
-using WMS.Backend.Domain.Models.Documents;
 using WMS.Backend.Infrastructure.Data;
+using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {
-    public class OrderRepository(AppDbContext dbContext) : IOrderRepository
+    internal class OrderInRepository(AppDbContext dbContext) : IOrderInRepository
     {
         private readonly AppDbContext _dbContext = dbContext;
 
-        public async Task<Order> CreateAsync(CreateOrderCommand createOrderCommand)
+        public async Task<OrderIn> CreateAsync(CreateOrderCommand createOrderCommand)
         {
-            var newOrder = new Order
+            var newOrder = new OrderIn
             {
                 Name = createOrderCommand.Name,
                 Number = createOrderCommand.Number,
                 DateTime = createOrderCommand.DateTime
             };
 
-            var result = _dbContext.Orders.Add(newOrder).Entity;
+            var result = _dbContext.OrdersIn.Add(newOrder).Entity;
 
             await _dbContext.SaveChangesAsync();
 
             return result;
         }
 
-        public async Task<bool> UpdateAsync(Guid id, Order order)
+
+        public async Task<bool> UpdateAsync(Guid id, OrderIn order)
         {
-            var affected = await _dbContext.Orders
+            var affected = await _dbContext.OrdersIn
                 .Where(model => model.Id == id)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(m => m.Id, order.Id)
@@ -41,16 +42,16 @@ namespace WMS.Backend.Infrastructure.Repositories
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var affected = await _dbContext.Orders
+            var affected = await _dbContext.OrdersIn
                 .Where(e => e.Id == id)
                 .ExecuteDeleteAsync();
 
             return affected == 1;
         }
 
-        public async Task<List<Order>> GetListAsync(OrderQuery orderQuery)
+        public async Task<List<OrderIn>> GetListAsync(OrderQuery orderQuery)
         {
-            var result = await _dbContext.Orders
+            var result = await _dbContext.OrdersIn
                 .AsNoTracking()
                 .HandleQuery(orderQuery)
                 .ToListAsync();
@@ -58,9 +59,9 @@ namespace WMS.Backend.Infrastructure.Repositories
             return result;
         }
 
-        public async Task<Order?> GetByIdAsync(Guid id)
+        public async Task<OrderIn?> GetByIdAsync(Guid id)
         {
-            var result = await _dbContext.Orders
+            var result = await _dbContext.OrdersIn
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.Id == id);
 
