@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Services.OrderServices;
-using WMS.Backend.Domain.Models;
+using WMS.Backend.Domain.Models.Documents;
 using WMS.Backend.Infrastructure.Data;
 
 namespace WMS.Backend.Infrastructure.Repositories

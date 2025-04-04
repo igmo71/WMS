@@ -1,5 +1,5 @@
 ﻿using WMS.Backend.Application.Services.OrderServices;
-using WMS.Backend.Domain.Models;
+using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Abstractions.Services
 {
