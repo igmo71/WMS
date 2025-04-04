@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Backend.Application.Services;
 using WMS.Backend.Application.Services.ProductServices;
-using WMS.Backend.Domain.Models.Catalogs;
+using WMS.Shared.Models.Catalogs;
 
 namespace WMS.Backend.WebApi.Endpoints
 {

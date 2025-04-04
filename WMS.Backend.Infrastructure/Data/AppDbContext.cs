@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WMS.Backend.Common;
-using WMS.Backend.Domain.Models;
-using WMS.Backend.Domain.Models.Catalogs;
 using WMS.Backend.Domain.Models.Documents;
+using WMS.Shared.Models.Catalogs;
+using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Infrastructure.Data
 {
