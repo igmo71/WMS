@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services;
 using WMS.Backend.Application.Services.OrderServices;
-using WMS.Backend.Domain.Models;
+using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.WebApi.Endpoints;
 
