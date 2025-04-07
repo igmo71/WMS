@@ -1,42 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using WMS.Client.Core.Infrastructure;
-using WMS.Client.Core.Models;
 using WMS.Client.Core.Services;
+using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.ViewModels
 {
     internal class DocumentListViewModel : PageViewModelBase
     {
-        //private ObservableCollection<Order> _orders = new ObservableCollection<Order>();
+        private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();
 
-        //internal ObservableCollection<Order> Orders { get => _orders; set => _orders = value; }
+        internal ObservableCollection<Document> Documents { get => _documents; }
 
-        //public RelayCommand OpenCommand { get; }
+        public RelayCommand OpenCommand { get; }
 
-        //public DocumentListViewModel()
-        //{
-        //    Name = "Documents";
-        //    OpenCommand = new RelayCommand((p) =>
-        //    {
-        //        if (p is Order order)
-        //            NavigationService.AddPage(NavigationService.GetUniqueKey<DocumentViewModel>(order.Id.ToString()), () => new DocumentViewModel(order));
-        //    });
-        //    GetOrders();
-        //}
+        public DocumentListViewModel()
+        {
+            Name = "Documents";
+            GetDocuments();
 
-        //private async void GetOrders()
-        //{
-        //    List<Order> orders = new List<Order>() 
-        //    { 
-        //        new Order() { Id = Guid.NewGuid(), DateTime = DateTime.UtcNow, Name = "Order", Number = "123" },
-        //        new Order() { Id = Guid.NewGuid(), DateTime = DateTime.UtcNow, Name = "Order", Number = "4335" },
-        //    };
+            OpenCommand = new RelayCommand((p) =>
+            {
+                if (p is OrderIn item)
+                {
+                    OrderIn orderIn = HTTPService.GetObject<OrderIn>(item.Id.ToString());
+                    if (orderIn != null)
+                        NavigationService.AddPage($"{nameof(OrderIn)}{orderIn.Id}", () => new OrderInViewModel(orderIn));
+                }
+            });
+        }
 
-        //    _orders.Clear();
-        //    orders.ForEach(_orders.Add);
-
-        //}
+        private void GetDocuments()
+        {
+            _documents.Clear();
+            HTTPService.GetList<OrderIn>().ForEach(_documents.Add);
+        }
     }
 }

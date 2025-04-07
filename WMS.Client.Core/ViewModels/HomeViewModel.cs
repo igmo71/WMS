@@ -5,14 +5,14 @@ namespace WMS.Client.Core.ViewModels
 {
     internal class HomeViewModel : PageViewModelBase
     {
-        internal RelayCommand DocumentsCommand { get; }
+        internal RelayCommand OrderInCommand { get; }
 
         public HomeViewModel()
         {
             Name = "Home";
             _persistent = true;
 
-            DocumentsCommand = new RelayCommand((p) => NavigationService.AddPage(nameof(DocumentListViewModel), () => new DocumentListViewModel()));
+            OrderInCommand = new RelayCommand((p) => NavigationService.AddPage(nameof(DocumentListViewModel), () => new DocumentListViewModel() { Name = "Order In" } ));
         }
     }
 }
