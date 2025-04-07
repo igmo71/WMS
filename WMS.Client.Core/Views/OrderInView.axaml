@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
+			 xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WMS.Client.Core.Views.OrderInView"
+			 x:DataType="vm:OrderInViewModel">
+	<StackPanel>
+		<StackPanel Orientation="Horizontal">
+			<Label Content="ID"/>
+			<TextBox Text="{Binding Model.Id}"/>
+		</StackPanel>
+		<StackPanel Orientation="Horizontal">
+			<Label Content="Name"/>
+			<TextBox Text="{Binding Model.Name}"/>
+		</StackPanel>
+		<StackPanel Orientation="Horizontal">
+			<Label Content="Number"/>
+			<TextBox Text="{Binding Model.Number}"/>
+		</StackPanel>
+		<StackPanel Orientation="Horizontal">
+			<Label Content="DateTime"/>
+			<TextBox Text="{Binding Model.DateTime}"/>
+		</StackPanel>
+		<ListBox ItemsSource="{Binding Products}">
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<StackPanel>
+						<Label Content="{Binding Id}"/>
+						<Label Content="{Binding Name}"/>
+					</StackPanel>
+				</DataTemplate>
+			</ListBox.ItemTemplate>	
+		</ListBox>
+	</StackPanel>
+</UserControl>

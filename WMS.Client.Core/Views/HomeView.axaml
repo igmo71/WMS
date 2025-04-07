@@ -12,8 +12,8 @@
 	</Design.DataContext>
 	<StackPanel HorizontalAlignment="Center"
 				Margin="0,20">
-		<Button Content="Documents"
+		<Button Content="Order In"
 				FontSize="30"
-				Command="{Binding DocumentsCommand}"/>
+				Command="{Binding OrderInCommand}"/>
 	</StackPanel>
 </UserControl>
