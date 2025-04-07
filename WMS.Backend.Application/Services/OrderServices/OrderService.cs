@@ -3,7 +3,7 @@ using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Backend.Domain.Models;
+using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderServices
 {
@@ -12,16 +12,9 @@ namespace WMS.Backend.Application.Services.OrderServices
         private readonly ILogger _log = Log.ForContext<OrderService>();
         private readonly IOrderRepository _orderRepository = orderRepository;
 
-        public async Task<Order> CreateOrderAsync(CreateOrderCommand createCommand)
+        public async Task<Order> CreateOrderAsync(CreateOrderCommand createOrderCommand)
         {
-            var newOrder = new Order
-            {
-                Name = createCommand.Name,
-                Number = createCommand.Number,
-                DateTime = createCommand.DateTime
-            };
-
-            var order = await _orderRepository.CreateAsync(newOrder);
+            var order = await _orderRepository.CreateAsync(createOrderCommand);
 
             _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
 

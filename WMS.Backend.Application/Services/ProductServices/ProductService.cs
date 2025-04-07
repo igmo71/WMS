@@ -3,7 +3,7 @@ using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Backend.Domain.Models;
+using WMS.Shared.Models.Catalogs;
 
 namespace WMS.Backend.Application.Services.ProductServices
 {

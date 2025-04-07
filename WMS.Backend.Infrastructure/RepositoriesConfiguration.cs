@@ -20,6 +20,8 @@ namespace WMS.Backend.Infrastructure
             });
 
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IOrderInRepository, OrderInRepository>();
+            services.AddScoped<IOrderInProductRepository, OrderInProductRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
 
             return services;

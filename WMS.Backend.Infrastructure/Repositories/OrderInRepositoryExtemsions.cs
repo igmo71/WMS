@@ -1,16 +1,16 @@
 ﻿using WMS.Backend.Application.Services.OrderServices;
 using WMS.Backend.Common;
-using WMS.Backend.Domain.Models.Documents;
+using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {
-    internal static class OrderRepositoryExtensions
+    internal static class OrderInRepositoryExtensions
     {
-        public static IQueryable<Order> HandleQuery(this IQueryable<Order> query, OrderQuery orderQuery)
+        public static IQueryable<OrderIn> HandleQuery(this IQueryable<OrderIn> query, OrderQuery orderQuery)
         {
             query = orderQuery.orderBy is null 
                 ? query.OrderBy(e => e.DateTime) 
-                : query.OrderBy(RepoUtils.GetOrderByExpression<Order>(orderQuery.orderBy));
+                : query.OrderBy(RepoUtils.GetOrderByExpression<OrderIn>(orderQuery.orderBy));
 
             query = query
                 .Skip(orderQuery.Skip ?? AppSettings.DEFAULT_SKIP)

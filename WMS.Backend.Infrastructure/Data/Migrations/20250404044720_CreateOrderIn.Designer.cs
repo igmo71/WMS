@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WMS.Backend.Infrastructure.Data;
@@ -11,9 +12,11 @@ using WMS.Backend.Infrastructure.Data;
 namespace WMS.Backend.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250404044720_CreateOrderIn")]
+    partial class CreateOrderIn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,7 +37,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Catalogs.Warehouse", b =>
@@ -49,7 +52,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Warehouses", (string)null);
+                    b.ToTable("Warehouses");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.Order", b =>
@@ -71,7 +74,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderIn", b =>
@@ -93,7 +96,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OrdersIn", (string)null);
+                    b.ToTable("OrdersIn");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProducts", b =>
@@ -109,7 +112,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("OrderId", "ProductId");
 
-                    b.ToTable("OrderInProducts", (string)null);
+                    b.ToTable("OrderInProducts");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProducts", b =>

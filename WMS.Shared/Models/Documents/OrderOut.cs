@@ -2,5 +2,6 @@
 {
     public class OrderOut : Document
     {
+        public List<OrderOutProduct>? Products { get; set; }
     }
 }

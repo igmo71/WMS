@@ -1,8 +1,7 @@
 ﻿namespace WMS.Shared.Models.Catalogs
 {
-    public abstract class Catalog
+    public abstract class Catalog : EntityBase
     {
-        public Guid Id { get; set; }
         public string? Name { get; set; }
     }
 }

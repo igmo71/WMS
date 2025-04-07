@@ -2,5 +2,6 @@
 {
     public class OrderIn : Document
     {
+        public List<OrderInProduct>? Products { get; set; }
     }
 }
