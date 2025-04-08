@@ -22,7 +22,7 @@ namespace WMS.Client.Core.Services
             return type switch
             {
                 Type t when t == typeof(OrderIn) => new ViewModelDescriptor($"{nameof(DocumentListViewModel)}_{nameof(OrderIn)}", 
-                    () => new DocumentListViewModel(new RemoteEntityRepository(typeof(OrderIn))) { Name = "Order In" }),
+                    () => new DocumentListViewModel(EntityRepositoryFactory.Get<OrderIn>()) { Name = "Order In" }),
                 _ => throw new NotSupportedException()
             };
         }

@@ -26,13 +26,13 @@ namespace WMS.Client.Core.Services
             _httpClient.BaseAddress = _host;
         }
 
-        internal static List<T> GetList<T>() where T : EntityBase
+        internal static IEnumerable<T> GetList<T>() where T : EntityBase
         {
             string? url = _urls.GetValueOrDefault(typeof(T).Name);
             if (url == null)
                 throw new NotSupportedException(typeof(T).Name);
 
-            Task<List<T>> task = _httpClient.GetFromJsonAsync<List<T>>(url);
+            Task<IEnumerable<T>> task = _httpClient.GetFromJsonAsync<IEnumerable<T>>(url);
             task.Wait();
 
             return task.Result;

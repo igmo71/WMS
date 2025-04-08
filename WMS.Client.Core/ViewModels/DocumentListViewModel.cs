@@ -28,7 +28,7 @@ namespace WMS.Client.Core.ViewModels
             {
                 if (p is EntityBase header)
                 {
-                    EntityBase entity = HTTPService.GetObject<EntityBase>(header.Id);
+                    EntityBase entity = _repository.GetById(header.Id);
                     if (entity != null)
                     {
                         ViewModelDescriptor descriptor = ViewModelResolver.GetMain(entity);
