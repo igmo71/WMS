@@ -1,30 +1,39 @@
 ﻿using System.Collections.ObjectModel;
+using System.Linq;
 using WMS.Client.Core.Infrastructure;
+using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Services;
+using WMS.Shared.Models;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.ViewModels
 {
     internal class DocumentListViewModel : PageViewModelBase
     {
+        private readonly IEntityRepository _repository;
         private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();
 
         internal ObservableCollection<Document> Documents { get => _documents; }
 
         public RelayCommand OpenCommand { get; }
 
-        public DocumentListViewModel()
+        public DocumentListViewModel(IEntityRepository repository)
         {
             Name = "Documents";
+            _repository = repository;
+
             GetDocuments();
 
             OpenCommand = new RelayCommand((p) =>
             {
-                if (p is OrderIn item)
+                if (p is EntityBase header)
                 {
-                    OrderIn orderIn = HTTPService.GetObject<OrderIn>(item.Id.ToString());
-                    if (orderIn != null)
-                        NavigationService.AddPage($"{nameof(OrderIn)}{orderIn.Id}", () => new OrderInViewModel(orderIn));
+                    EntityBase entity = HTTPService.GetObject<EntityBase>(header.Id);
+                    if (entity != null)
+                    {
+                        ViewModelDescriptor descriptor = ViewModelResolver.GetMain(entity);
+                        NavigationService.AddPage(descriptor.UniqueKey, descriptor.Factory);
+                    }
                 }
             });
         }
@@ -32,7 +41,7 @@ namespace WMS.Client.Core.ViewModels
         private void GetDocuments()
         {
             _documents.Clear();
-            HTTPService.GetList<OrderIn>().ForEach(_documents.Add);
+            _repository.GetList().OfType<Document>().ToList().ForEach(_documents.Add);
         }
     }
 }

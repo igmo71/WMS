@@ -1,5 +1,6 @@
 ﻿using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Services;
+using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.ViewModels
 {
@@ -12,7 +13,11 @@ namespace WMS.Client.Core.ViewModels
             Name = "Home";
             _persistent = true;
 
-            OrderInCommand = new RelayCommand((p) => NavigationService.AddPage(nameof(DocumentListViewModel), () => new DocumentListViewModel() { Name = "Order In" } ));
+            OrderInCommand = new RelayCommand((p) => 
+            {
+                ViewModelDescriptor descriptor = ViewModelResolver.GetList(typeof(OrderIn));
+                NavigationService.AddPage(descriptor.UniqueKey, descriptor.Factory);
+            });
         }
     }
 }

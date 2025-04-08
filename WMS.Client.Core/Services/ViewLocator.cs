@@ -4,7 +4,7 @@ using System;
 using WMS.Client.Core.ViewModels;
 using WMS.Client.Core.Views;
 
-namespace WMS.Client.Core.Infrastructure
+namespace WMS.Client.Core.Services
 {
     public class ViewLocator : IDataTemplate
     {
@@ -16,8 +16,8 @@ namespace WMS.Client.Core.Infrastructure
             Func<Control> func = param switch
             {
                 HomeViewModel => () => new HomeView(),
-                DocumentListViewModel => () => new DocumentListView(),
                 OrderInViewModel => () => new OrderInView(),
+                DocumentListViewModel => () => new DocumentListView(),
                 _ => () => new TextBlock { Text = "Not Found: " + param.GetType().FullName }
             };
 

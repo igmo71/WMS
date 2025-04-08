@@ -11,7 +11,7 @@ namespace WMS.Client.Core.Services
 {
     internal static class HTTPService
     {
-        private readonly static string _host = "http://vm-igmo-dev:8220/";
+        private readonly static Uri _host = new Uri("https://whs.verum.link");
         private readonly static HttpClient _httpClient;
 
         private readonly static Dictionary<string, string> _urls = new Dictionary<string, string>
@@ -23,12 +23,12 @@ namespace WMS.Client.Core.Services
         static HTTPService()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri(_host);
+            _httpClient.BaseAddress = _host;
         }
 
-        internal static List<T> GetList<T>() where T : Document
+        internal static List<T> GetList<T>() where T : EntityBase
         {
-            string url = _urls.GetValueOrDefault(typeof(T).Name);
+            string? url = _urls.GetValueOrDefault(typeof(T).Name);
             if (url == null)
                 throw new NotSupportedException(typeof(T).Name);
 
@@ -38,9 +38,9 @@ namespace WMS.Client.Core.Services
             return task.Result;
         }
 
-        internal static T GetObject<T>(string id) where T : EntityBase
+        internal static T GetObject<T>(Guid id) where T : EntityBase
         {
-            string url = _urls.GetValueOrDefault(typeof(T).Name);
+            string? url = _urls.GetValueOrDefault(typeof(T).Name);
             if (url == null)
                 throw new NotSupportedException(typeof(T).Name);
 

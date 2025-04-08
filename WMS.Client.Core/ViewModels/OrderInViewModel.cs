@@ -24,7 +24,7 @@ namespace WMS.Client.Core.ViewModels
         {
             _products.Clear();
             _model.Products.ForEach((p) =>
-                _products.Add(HTTPService.GetObject<Product>(p.ProductId.ToString())));
+                _products.Add(HTTPService.GetObject<Product>(p.ProductId)));
         }
     }
 }

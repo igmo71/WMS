@@ -32,9 +32,7 @@ namespace WMS.Client.Core.Services
         internal static event Action<PageViewModelBase> CurrentChanged;
         internal static event Action PagesChanged;
 
-        static NavigationService() => AddPage(GetUniqueKey<HomeViewModel>(), () => new HomeViewModel());
-
-        internal static string GetUniqueKey<T>(string postfix = null) where T : PageViewModelBase => nameof(T) + postfix != null ? "_" + postfix : "";
+        static NavigationService() => AddPage(nameof(HomeViewModel), () => new HomeViewModel());
 
         internal static PageViewModelBase AddPage(string uniqueKey, Func<PageViewModelBase> factory, bool setCurrent = true)
         {
