@@ -10,7 +10,6 @@ namespace WMS.Backend.Application
     {
         public static IServiceCollection AddAppServices(this IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            serviceCollection.AddScoped<IOrderService, OrderService>();
             serviceCollection.AddScoped<IOrderInService, OrderInService>();
             serviceCollection.AddScoped<IProductService, ProductService>();
 
