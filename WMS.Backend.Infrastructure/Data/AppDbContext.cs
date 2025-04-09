@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WMS.Backend.Common;
-using WMS.Backend.Domain.Models.Documents;
 using WMS.Shared.Models.Catalogs;
 using WMS.Shared.Models.Documents;
 
@@ -13,7 +12,6 @@ namespace WMS.Backend.Infrastructure.Data
         {
         }
 
-        public DbSet<Order> Orders { get; set; }
         public DbSet<OrderIn> OrdersIn { get; set; }
         public DbSet<OrderInProduct> OrderInProducts { get; set; }
         public DbSet<OrderOut> OrdersOut { get; set; }
@@ -23,10 +21,6 @@ namespace WMS.Backend.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Order>().HasKey(e => e.Id);
-            modelBuilder.Entity<Order>().Property(e => e.Number).HasMaxLength(AppSettings.NUMBER_MAX_LENGTH);
-            modelBuilder.Entity<Order>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);
-
             modelBuilder.Entity<OrderIn>().HasKey(e => e.Id);
             modelBuilder.Entity<OrderIn>().Property(e => e.Number).HasMaxLength(AppSettings.NUMBER_MAX_LENGTH);
             modelBuilder.Entity<OrderIn>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);

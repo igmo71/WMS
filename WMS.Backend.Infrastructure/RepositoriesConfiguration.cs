@@ -19,7 +19,6 @@ namespace WMS.Backend.Infrastructure
                 options.UseNpgsql(connectionString);
             });
 
-            services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderInRepository, OrderInRepository>();
             services.AddScoped<IOrderInProductRepository, OrderInProductRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
