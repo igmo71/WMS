@@ -13,8 +13,8 @@ namespace WMS.Backend.Infrastructure.Repositories
                 : query.OrderBy(RepoUtils.GetOrderByExpression<OrderIn>(orderQuery.orderBy));
 
             query = query
-                .Skip(orderQuery.Skip ?? AppSettings.DEFAULT_SKIP)
-                .Take(orderQuery.Take ?? AppSettings.DEFAULT_TAKE);
+                .Skip(orderQuery.Skip ?? AppConfig.DEFAULT_SKIP)
+                .Take(orderQuery.Take ?? AppConfig.DEFAULT_TAKE);
 
             return query;
         }
