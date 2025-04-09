@@ -31,9 +31,9 @@ namespace WMS.Client.Core.Services
     internal readonly struct ViewModelDescriptor
     {
         public string UniqueKey { get; }
-        public Func<PageViewModelBase> Factory { get; }
+        public Func<ViewModelBase> Factory { get; }
 
-        public ViewModelDescriptor(string uniqueKey, Func<PageViewModelBase> factory)
+        public ViewModelDescriptor(string uniqueKey, Func<ViewModelBase> factory)
         {
             UniqueKey = uniqueKey;
             Factory = factory;

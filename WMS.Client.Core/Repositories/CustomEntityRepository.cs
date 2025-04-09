@@ -5,18 +5,18 @@ using WMS.Shared.Models;
 
 namespace WMS.Client.Core.Repositories
 {
-    internal class EntityRepository : IEntityRepository
+    internal class CustomEntityRepository : IEntityRepository
     {
-        private Type _type;
+        private readonly Type _type;
         private readonly Func<Guid, EntityBase> _getById;
         private readonly Func<IEnumerable<EntityBase>> _getList;
         private readonly Action<EntityBase> _add;
         private readonly Action<EntityBase> _delete;
         private readonly Action<EntityBase> _update;
 
-        internal Type Type => _type;
+        Type IEntityRepository.Type => _type;
 
-        internal EntityRepository(Type type,
+        internal CustomEntityRepository(Type type,
             Func<Guid, EntityBase> getById,
             Func<IEnumerable<EntityBase>> getList,
             Action<EntityBase> add,

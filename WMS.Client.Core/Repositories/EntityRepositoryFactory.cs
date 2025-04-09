@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Services;
 using WMS.Shared.Models;
 
@@ -7,19 +8,15 @@ namespace WMS.Client.Core.Repositories
 {
     internal static class EntityRepositoryFactory
     {
-        private readonly static ConcurrentDictionary<(Type, RepositoryKind), EntityRepository> _cache = new ConcurrentDictionary<(Type, RepositoryKind), EntityRepository>();
-        private static RepositoryKind _kind = RepositoryKind.Remote;
+        private readonly static ConcurrentDictionary<(Type, RepositoryKind), IEntityRepository> _cache = new ConcurrentDictionary<(Type, RepositoryKind), IEntityRepository>();
+        private static RepositoryKind _kind = RepositoryKind.Dev;
 
-        internal static EntityRepository Get<TEntity>() where TEntity : EntityBase
+        internal static IEntityRepository Get<TEntity>() where TEntity : EntityBase
         {
-            EntityRepository repository = _cache.GetOrAdd((typeof(TEntity), _kind), (k) => CreateNew<TEntity>());
-            if (repository == null)
-                throw new NotSupportedException();
-
-            return repository;
+            return _cache.GetOrAdd((typeof(TEntity), _kind), (k) => CreateNew<TEntity>()) ?? throw new NotSupportedException();
         }
 
-        private static EntityRepository CreateNew<TEntity>() where TEntity : EntityBase
+        private static IEntityRepository CreateNew<TEntity>() where TEntity : EntityBase
         {
             switch (_kind)
             {
@@ -34,9 +31,9 @@ namespace WMS.Client.Core.Repositories
             }
         }
 
-        private static EntityRepository CreateRemote<TEntity>() where TEntity : EntityBase
+        private static IEntityRepository CreateRemote<TEntity>() where TEntity : EntityBase
         {
-            return new EntityRepository(typeof(TEntity),
+            return new CustomEntityRepository(typeof(TEntity),
                 (id) => HTTPService.GetObject<TEntity>(id),
                 () => HTTPService.GetList<TEntity>(),
                 (e) => throw new NotImplementedException(),
@@ -46,15 +43,9 @@ namespace WMS.Client.Core.Repositories
             throw new NotSupportedException();
         }
 
-        private static EntityRepository CreateCombined<TEntity>() where TEntity : EntityBase
-        {
-            throw new NotImplementedException();
-        }
+        private static IEntityRepository CreateCombined<TEntity>() where TEntity : EntityBase => throw new NotImplementedException();
 
-        private static EntityRepository CreateDev<TEntity>() where TEntity : EntityBase
-        {
-            throw new NotImplementedException();
-        }
+        private static IEntityRepository CreateDev<TEntity>() where TEntity : EntityBase => new DevEntityRepository(typeof(TEntity));
     }
 
     internal enum RepositoryKind

@@ -8,7 +8,7 @@ using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal class DocumentListViewModel : PageViewModelBase
+    internal class DocumentListViewModel : ViewModelBase
     {
         private readonly IEntityRepository _repository;
         private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();

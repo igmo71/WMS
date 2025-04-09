@@ -6,6 +6,7 @@ namespace WMS.Client.Core.Interfaces
 {
     internal interface IEntityRepository
     {
+        internal Type Type { get; }
         internal EntityBase GetById(Guid id);
         internal IEnumerable<EntityBase> GetList();
         internal void Add(EntityBase entity);

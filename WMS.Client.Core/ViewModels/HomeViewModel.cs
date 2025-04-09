@@ -4,7 +4,7 @@ using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal class HomeViewModel : PageViewModelBase
+    internal class HomeViewModel : ViewModelBase
     {
         internal RelayCommand OrderInCommand { get; }
 

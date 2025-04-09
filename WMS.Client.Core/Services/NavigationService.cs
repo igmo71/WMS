@@ -8,10 +8,10 @@ namespace WMS.Client.Core.Services
     internal static class NavigationService
     {
         private static readonly object _lock = new object();
-        private static readonly Dictionary<string, PageViewModelBase> _pages = new Dictionary<string, PageViewModelBase>();
-        private static PageViewModelBase _current;
+        private static readonly Dictionary<string, ViewModelBase> _pages = new Dictionary<string, ViewModelBase>();
+        private static ViewModelBase _current;
 
-        internal static List<PageViewModelBase> Pages
+        internal static List<ViewModelBase> Pages
         {
             get
             {
@@ -20,7 +20,7 @@ namespace WMS.Client.Core.Services
             }
         }
 
-        internal static PageViewModelBase Current
+        internal static ViewModelBase Current
         {
             get
             {
@@ -29,14 +29,14 @@ namespace WMS.Client.Core.Services
             }
         }
 
-        internal static event Action<PageViewModelBase> CurrentChanged;
+        internal static event Action<ViewModelBase> CurrentChanged;
         internal static event Action PagesChanged;
 
         static NavigationService() => AddPage(nameof(HomeViewModel), () => new HomeViewModel());
 
-        internal static PageViewModelBase AddPage(string uniqueKey, Func<PageViewModelBase> factory, bool setCurrent = true)
+        internal static ViewModelBase AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
         {
-            PageViewModelBase vm;
+            ViewModelBase vm;
             bool invokeEvent = false;
 
             lock (_lock)
@@ -59,7 +59,7 @@ namespace WMS.Client.Core.Services
             return vm;
         }
 
-        internal static void SetCurrent(PageViewModelBase vm)
+        internal static void SetCurrent(ViewModelBase vm)
         {
             bool invokeEvent = false;
 
@@ -76,7 +76,7 @@ namespace WMS.Client.Core.Services
                 CurrentChanged?.Invoke(vm);
         }
 
-        internal static void ClosePage(PageViewModelBase vm)
+        internal static void ClosePage(ViewModelBase vm)
         {
             if (vm.Persistent)
                 return;
