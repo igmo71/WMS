@@ -1,15 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Services.OrderServices;
+using WMS.Backend.Common;
+using WMS.Backend.Domain.Models.Documents;
 using WMS.Backend.Infrastructure.Data;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {
-    internal class OrderInRepository(AppDbContext dbContext) : IOrderInRepository
+    internal class OrderInRepository(
+        AppDbContext dbContext,
+        IOptions<AppSettings> options) : IOrderInRepository
     {
         private readonly AppDbContext _dbContext = dbContext;
+        private readonly AppSettings _appSettings = options.Value;
 
         public async Task<IDbContextTransaction> BeginTransactionAsync()
         {
@@ -33,26 +39,43 @@ namespace WMS.Backend.Infrastructure.Repositories
         }
 
 
-        public async Task<bool> UpdateAsync(Guid id, OrderIn order)
+        public async Task UpdateAsync(Guid id, OrderIn order)
         {
-            var affected = await _dbContext.OrdersIn
-                .Where(model => model.Id == id)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(m => m.Id, order.Id)
-                    .SetProperty(m => m.Name, order.Name)
-                    .SetProperty(m => m.Number, order.Number)
-                    .SetProperty(m => m.DateTime, order.DateTime));
+            var existing = await _dbContext.OrdersIn
+                .FirstOrDefaultAsync(e => e.Id == id)
+                    ?? throw new ApplicationException($"Order Not Found by {id}");
 
-            return affected == 1;
+            if (_appSettings.UseVersioning)
+                await ArchiveAsync(existing, HistoryOperation.Updated);
+
+            _dbContext.Entry(existing).CurrentValues.SetValues(order);
+
+            await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
-            var affected = await _dbContext.OrdersIn
-                .Where(e => e.Id == id)
-                .ExecuteDeleteAsync();
+            var existing = await _dbContext.OrdersIn
+                .FirstOrDefaultAsync(e => e.Id == id);
 
-            return affected == 1;
+            if (existing == null)
+                return;
+
+            if (_appSettings.UseVersioning)
+                await ArchiveAsync(existing, HistoryOperation.Deleted);
+
+            _dbContext.OrdersIn.Remove(existing);
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        private async Task ArchiveAsync(OrderIn existing, HistoryOperation operation)
+        {
+            var archived = new OrderInHistory(existing, operation);
+
+            await _dbContext.OrdersInHistory.AddAsync(archived);
+
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task<List<OrderIn>> GetListAsync(OrderQuery orderQuery)

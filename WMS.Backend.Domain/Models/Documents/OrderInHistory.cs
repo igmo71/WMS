@@ -3,10 +3,12 @@ using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Domain.Models.Documents
 {
-    public class OrderInHistory : OrderIn
+    public class OrderInHistory : DocumentHistory<OrderIn>
     {
-        public Guid VersionId { get; set; }
-        public DateTime VersionDateTime{ get; set; }
-        public HistoryOperation Operation { get; set; }
+        public OrderInHistory()
+        { }
+        public OrderInHistory(OrderIn document, HistoryOperation operation)
+            : base(document, operation)
+        { }
     }
 }

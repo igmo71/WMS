@@ -36,23 +36,23 @@ public static class OrderInEndpoints
         return TypedResults.Created($"/api/orders-in/{result.Id}", result);
     }
 
-    private static async Task<Results<Ok, NotFound>> UpdateOrder(
+    private static async Task<Results<NoContent, NotFound>> UpdateOrder(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id,
         [FromBody] OrderIn order)
     {
-        var isSuccess = await orderService.UpdateOrderAsync(id, order);
+        await orderService.UpdateOrderAsync(id, order);
 
-        return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
+        return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Ok, NotFound>> DeleteOrder(
+    private static async Task<Results<NoContent, NotFound>> DeleteOrder(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {
-        var isSuccess = await orderService.DeleteOrderAsync(id);
+        await orderService.DeleteOrderAsync(id);
 
-        return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
+        return TypedResults.NoContent();
     }
 
     private static async Task<Results<Ok<List<OrderIn>>, NotFound, ProblemHttpResult>> GetOrderList(

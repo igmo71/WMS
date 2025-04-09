@@ -37,22 +37,18 @@ namespace WMS.Backend.Application.Services.OrderServices
             }
         }
 
-        public async Task<bool> UpdateOrderAsync(Guid id, OrderIn order)
+        public async Task UpdateOrderAsync(Guid id, OrderIn order)
         {
-            var result = await _orderRepository.UpdateAsync(id, order);
+            await _orderRepository.UpdateAsync(id, order);
 
-            _log.Debug("{Source} {IsSuccess} {OrderId} {@Order}", nameof(UpdateOrderAsync), result, id, order);
-
-            return result;
+            _log.Debug("{Source} {IsSuccess} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
         }
 
-        public async Task<bool> DeleteOrderAsync(Guid id)
+        public async Task DeleteOrderAsync(Guid id)
         {
-            var result = await _orderRepository.DeleteAsync(id);
+            await _orderRepository.DeleteAsync(id);
 
-            _log.Debug("{Source} {IsSuccess} {@OrderId}", nameof(DeleteOrderAsync), result, id);
-
-            return result;
+            _log.Debug("{Source} {IsSuccess} {@OrderId}", nameof(DeleteOrderAsync), id);
         }
 
         public async Task<List<OrderIn>> GetOrderListAsync(OrderQuery orderQuery)

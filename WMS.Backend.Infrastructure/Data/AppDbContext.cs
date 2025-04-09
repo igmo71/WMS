@@ -30,10 +30,6 @@ namespace WMS.Backend.Infrastructure.Data
                 .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
 
             modelBuilder.Entity<OrderInHistory>().HasKey(e => e.VersionId);
-            modelBuilder.Entity<OrderInHistory>().Property(e => e.Number).HasMaxLength(AppConfig.NUMBER_MAX_LENGTH);
-            modelBuilder.Entity<OrderInHistory>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
-            modelBuilder.Entity<OrderInHistory>().HasMany(e => e.Products).WithOne()
-                .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
 
             modelBuilder.Entity<OrderInProduct>().HasKey(e => new { e.OrderId, e.ProductId });
 
