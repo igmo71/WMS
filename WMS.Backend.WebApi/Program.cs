@@ -1,5 +1,6 @@
 using Serilog;
 using WMS.Backend.Application;
+using WMS.Backend.Common;
 using WMS.Backend.Infrastructure;
 using WMS.Backend.WebApi.Endpoints;
 
@@ -18,6 +19,9 @@ namespace WMS.Backend.WebApi
                 Log.Information("Hello, {Name}! App is Starting up...", Environment.UserName);
 
                 var builder = WebApplication.CreateBuilder(args);
+
+                builder.Services.Configure<AppSettings>(
+                    builder.Configuration.GetSection(nameof(AppSettings)));
 
                 builder.Services.AddSerilog();
 
