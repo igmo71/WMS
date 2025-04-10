@@ -6,23 +6,24 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WMS.Backend.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateOrderInHistory : Migration
+    public partial class CreateOrderInArchive : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "OrdersInHistory",
+                name: "OrdersInArchive",
                 columns: table => new
                 {
-                    VersionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    VersionDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Operation = table.Column<int>(type: "integer", nullable: false),
+                    DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
                     Document = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrdersInHistory", x => x.VersionId);
+                    table.PrimaryKey("PK_OrdersInArchive", x => x.Id);
                 });
         }
 
@@ -30,7 +31,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "OrdersInHistory");
+                name: "OrdersInArchive");
         }
     }
 }

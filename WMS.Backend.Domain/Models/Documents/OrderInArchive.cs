@@ -3,11 +3,11 @@ using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Domain.Models.Documents
 {
-    public class OrderInHistory : DocumentHistory<OrderIn>
+    public class OrderInArchive : DocumentArchive<OrderIn>
     {
-        public OrderInHistory()
+        public OrderInArchive()
         { }
-        public OrderInHistory(OrderIn document, HistoryOperation operation)
+        public OrderInArchive(OrderIn document, ArchiveOperation operation)
             : base(document, operation)
         { }
     }

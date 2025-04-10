@@ -2,6 +2,6 @@
 {
     public class AppSettings
     {
-        public bool UseVersioning { get; set; }
+        public bool UseArchiving { get; set; }
     }
 }

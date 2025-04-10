@@ -12,8 +12,8 @@ using WMS.Backend.Infrastructure.Data;
 namespace WMS.Backend.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250409135100_CreateOrderInHistory")]
-    partial class CreateOrderInHistory
+    [Migration("20250410100527_CreateOrderInArchive")]
+    partial class CreateOrderInArchive
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,24 +25,27 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInHistory", b =>
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInArchive", b =>
                 {
-                    b.Property<Guid>("VersionId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Document")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Operation")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("VersionDateTime")
-                        .HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
 
-                    b.HasKey("VersionId");
-
-                    b.ToTable("OrdersInHistory");
+                    b.ToTable("OrdersInArchive");
                 });
 
             modelBuilder.Entity("WMS.Shared.Models.Catalogs.Product", b =>

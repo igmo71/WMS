@@ -45,8 +45,8 @@ namespace WMS.Backend.Infrastructure.Repositories
                 .FirstOrDefaultAsync(e => e.Id == id)
                     ?? throw new ApplicationException($"Order Not Found by {id}");
 
-            if (_appSettings.UseVersioning)
-                await ArchiveAsync(existing, HistoryOperation.Updated);
+            if (_appSettings.UseArchiving)
+                await ArchiveAsync(existing, ArchiveOperation.Update);
 
             _dbContext.Entry(existing).CurrentValues.SetValues(order);
 
@@ -61,19 +61,19 @@ namespace WMS.Backend.Infrastructure.Repositories
             if (existing == null)
                 return;
 
-            if (_appSettings.UseVersioning)
-                await ArchiveAsync(existing, HistoryOperation.Deleted);
+            if (_appSettings.UseArchiving)
+                await ArchiveAsync(existing, ArchiveOperation.Delete);
 
             _dbContext.OrdersIn.Remove(existing);
 
             await _dbContext.SaveChangesAsync();
         }
 
-        private async Task ArchiveAsync(OrderIn existing, HistoryOperation operation)
+        private async Task ArchiveAsync(OrderIn existing, ArchiveOperation operation)
         {
-            var archived = new OrderInHistory(existing, operation);
+            var archived = new OrderInArchive(existing, operation);
 
-            await _dbContext.OrdersInHistory.AddAsync(archived);
+            await _dbContext.OrdersInArchive.AddAsync(archived);
 
             await _dbContext.SaveChangesAsync();
         }

@@ -14,7 +14,7 @@ namespace WMS.Backend.Infrastructure.Data
         }
 
         public DbSet<OrderIn> OrdersIn { get; set; }
-        public DbSet<OrderInHistory> OrdersInHistory { get; set; }
+        public DbSet<OrderInArchive> OrdersInArchive { get; set; }
         public DbSet<OrderInProduct> OrderInProducts { get; set; }
         public DbSet<OrderOut> OrdersOut { get; set; }
         public DbSet<OrderOutProduct> OrderOutProducts { get; set; }
@@ -29,7 +29,7 @@ namespace WMS.Backend.Infrastructure.Data
             modelBuilder.Entity<OrderIn>().HasMany(e => e.Products).WithOne()
                 .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
 
-            modelBuilder.Entity<OrderInHistory>().HasKey(e => e.VersionId);
+            modelBuilder.Entity<OrderInArchive>().HasKey(e => e.Id);
 
             modelBuilder.Entity<OrderInProduct>().HasKey(e => new { e.OrderId, e.ProductId });
 
