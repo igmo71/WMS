@@ -22,7 +22,7 @@ namespace WMS.Backend.Infrastructure.Repositories
             return await _dbContext.Database.BeginTransactionAsync();
         }
 
-        public async Task<OrderIn> CreateAsync(CreateOrderInCommand createOrderCommand)
+        public async Task<OrderIn> CreateAsync(OrderInCreateCommand createOrderCommand)
         {
             var newOrder = new OrderIn
             {

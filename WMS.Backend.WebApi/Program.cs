@@ -2,6 +2,7 @@ using Serilog;
 using WMS.Backend.Application;
 using WMS.Backend.Common;
 using WMS.Backend.Infrastructure;
+using WMS.Backend.MessageBus;
 using WMS.Backend.WebApi.Endpoints;
 
 namespace WMS.Backend.WebApi
@@ -32,8 +33,8 @@ namespace WMS.Backend.WebApi
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
 
+                builder.Services.AddAppMessageBus(builder.Configuration);
                 builder.Services.AddAppRepositories(builder.Configuration);
-
                 builder.Services.AddAppServices(builder.Configuration);
 
                 var app = builder.Build();

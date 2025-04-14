@@ -15,7 +15,7 @@ namespace WMS.Backend.Application.Services.OrderServices
         private readonly IOrderInRepository _orderRepository = orderRepository;
         private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
 
-        public async Task<OrderIn> CreateOrderAsync(CreateOrderInCommand createOrderCommand)
+        public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand)
         {
             await using var transaction = await _orderRepository.BeginTransactionAsync();
 

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.OrderServices;
+using WMS.Backend.MessageBus.Abstractions;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.WebApi.Endpoints;
@@ -25,15 +26,26 @@ public static class OrderInEndpoints
         group.MapGet("/", GetOrderList).WithName("GetOrderInList");
 
         group.MapGet("/{id}", GetOrderById).WithName("GetOrderInById");
+
+        group.MapPost("/kafka", CreateOrderToKafka).WithName("CreateOrderToKafka");
     }
 
     private static async Task<Results<Created<OrderIn>, ProblemHttpResult>> CreateOrder(
         [FromServices] IOrderInService orderService,
-        [FromBody] CreateOrderInCommand createCommand)
+        [FromBody] OrderInCreateCommand createCommand)
     {
         var result = await orderService.CreateOrderAsync(createCommand);
 
         return TypedResults.Created($"/api/orders-in/{result.Id}", result);
+    }
+
+    private static async Task<Results<Ok, ProblemHttpResult>> CreateOrderToKafka(
+        [FromServices] IOrderInCommandProducer producer,
+        [FromBody] OrderInCreateCommand createCommand)
+    {
+        await producer.CreateOrderCommandProduce(createCommand);
+
+        return TypedResults.Ok();
     }
 
     private static async Task<Results<NoContent, NotFound>> UpdateOrder(
