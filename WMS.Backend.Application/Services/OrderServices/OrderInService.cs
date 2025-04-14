@@ -18,7 +18,7 @@ namespace WMS.Backend.Application.Services.OrderServices
         private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
         private readonly IOrderInEventProducer _orderEventProducer = orderEventProducer;
 
-        public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand)
+        public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand, byte[]? correlationId)
         {
             try
             {
@@ -30,9 +30,9 @@ namespace WMS.Backend.Application.Services.OrderServices
 
                 await transaction.CommitAsync();
 
-                await _orderEventProducer.OrderCreatedEventProduce(order);
+                await _orderEventProducer.OrderCreatedEventProduce(order, correlationId);
 
-                _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
+                _log.Debug("{Source} {@Order}, {CorrelationId}", nameof(CreateOrderAsync), order, correlationId);
 
                 return order;
             }

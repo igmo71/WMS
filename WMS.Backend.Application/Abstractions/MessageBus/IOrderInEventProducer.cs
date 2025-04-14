@@ -4,6 +4,6 @@ namespace WMS.Backend.Application.Abstractions.MessageBus
 {
     public interface IOrderInEventProducer
     {
-        Task OrderCreatedEventProduce(OrderIn orderIn);
+        Task OrderCreatedEventProduce(OrderIn orderIn, byte[]? correlationId = null);
     }
 }

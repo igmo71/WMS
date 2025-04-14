@@ -12,14 +12,15 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
 
         private readonly KafkaProducer _kafkaProducer = kafkaProducer;
 
-
         public async Task CreateOrderCommandProduce(OrderInCreateCommand createOrderCommand)
         {
             var message = JsonSerializer.Serialize(createOrderCommand);
 
             var topic = _configuration.Topics[nameof(OrderInCreateCommand)];
 
-            await _kafkaProducer.ProduceAsync(topic, message);
+            var correlationId = System.Text.Encoding.UTF8.GetBytes(Guid.CreateVersion7().ToString());
+
+            await _kafkaProducer.ProduceAsync(topic, message, correlationId);
         }
     }
 }

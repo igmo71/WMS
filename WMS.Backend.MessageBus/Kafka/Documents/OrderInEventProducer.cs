@@ -12,13 +12,13 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
 
         private readonly KafkaProducer _kafkaProducer = kafkaProducer;
 
-        public async Task OrderCreatedEventProduce(OrderIn orderIn)
+        public async Task OrderCreatedEventProduce(OrderIn orderIn, byte[]? correlationId)
         {
             var message = JsonSerializer.Serialize(orderIn);
 
             var topic = _configuration.Topics["OrderInCreatedEvent"];
 
-            await _kafkaProducer.ProduceAsync(topic, message);
+            await _kafkaProducer.ProduceAsync(topic, message, correlationId);
         }
     }
 }

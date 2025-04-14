@@ -61,11 +61,13 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
 
                 var message = consumeResult.Message.Value;
 
+                var correlationId = consumeResult.Message.Headers.GetLastBytes("СorrelationId") ;
+
                 _consumer.Commit(consumeResult);
 
-                _log.Debug("{Source} {Message}", nameof(ProcessMessage), message);
+                _log.Debug("{Source} {Message} {CorrelationId}", nameof(ProcessMessage), message, correlationId);
 
-                await CreateOrder(message);
+                await CreateOrder(message, correlationId);
 
             }
             catch (Exception ex)
@@ -75,9 +77,9 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
             }
         }
 
-        private async Task CreateOrder(string message)
+        private async Task CreateOrder(string message, byte[]? correlationId)
         {
-            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source}", nameof(CreateOrder));
+            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {CorrelationId}", nameof(CreateOrder), correlationId);
 
             var createOrderCommand = JsonSerializer.Deserialize<OrderInCreateCommand>(message);
 
@@ -90,7 +92,7 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
 
             var orderService = scope.ServiceProvider.GetRequiredService<IOrderInService>();
 
-            var orderIn = await orderService.CreateOrderAsync(createOrderCommand);
+            var orderIn = await orderService.CreateOrderAsync(createOrderCommand, correlationId);
 
             activityListener.AddProperty("{OrderIn}", orderIn, destructureObjects: true);
         }
