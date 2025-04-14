@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using Serilog.Events;
 using SerilogTracing;
+using WMS.Backend.Application.Abstractions.MessageBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Shared.Models.Documents;
@@ -9,25 +10,29 @@ namespace WMS.Backend.Application.Services.OrderServices
 {
     internal class OrderInService(
         IOrderInRepository orderRepository,
-        IOrderInProductRepository orderProductRepository) : IOrderInService
+        IOrderInProductRepository orderProductRepository,
+        IOrderInEventProducer orderEventProducer) : IOrderInService
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
         private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
+        private readonly IOrderInEventProducer _orderEventProducer = orderEventProducer;
 
         public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand)
         {
-            await using var transaction = await _orderRepository.BeginTransactionAsync();
-
             try
             {
+                await using var transaction = await _orderRepository.BeginTransactionAsync();
+
                 var order = await _orderRepository.CreateAsync(createOrderCommand);
 
                 var productCount = await _orderProductRepository.CreateRangeAsync(order.Id, createOrderCommand.Products);
 
-                _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
-
                 await transaction.CommitAsync();
+
+                await _orderEventProducer.OrderCreatedEventProduce(order);
+
+                _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
 
                 return order;
             }

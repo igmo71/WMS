@@ -9,7 +9,7 @@ using System.Text.Json;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.OrderServices;
 
-namespace WMS.Backend.MessageBus.Kafka.Documents.OrderIn
+namespace WMS.Backend.MessageBus.Kafka.Documents
 {
     internal class OrderInCreateCommandConsumer : BackgroundService
     {

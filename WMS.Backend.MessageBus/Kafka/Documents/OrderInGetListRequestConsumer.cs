@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WMS.Backend.MessageBus.Kafka.Documents.OrderIn
+namespace WMS.Backend.MessageBus.Kafka.Documents
 {
     internal class OrderInGetListRequestConsumer
     {
