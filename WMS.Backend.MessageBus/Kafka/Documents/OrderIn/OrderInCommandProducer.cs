@@ -7,7 +7,7 @@ using System.Text.Json;
 using WMS.Backend.Application.Services.OrderServices;
 using WMS.Backend.MessageBus.Abstractions;
 
-namespace WMS.Backend.MessageBus.Kafka.Documents
+namespace WMS.Backend.MessageBus.Kafka.Documents.OrderIn
 {
     public class OrderInCommandProducer : IOrderInCommandProducer
     {

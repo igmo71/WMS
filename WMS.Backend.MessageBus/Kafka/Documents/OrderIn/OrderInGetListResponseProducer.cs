@@ -1,4 +1,4 @@
-﻿namespace WMS.Backend.MessageBus.Kafka.Documents
+﻿namespace WMS.Backend.MessageBus.Kafka.Documents.OrderIn
 {
     internal class OrderInGetListResponseProducer
     {

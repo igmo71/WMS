@@ -40,10 +40,10 @@ public static class OrderInEndpoints
     }
 
     private static async Task<Results<Ok, ProblemHttpResult>> CreateOrderToKafka(
-        [FromServices] IOrderInCommandProducer producer,
+        [FromServices] IOrderInCommandProducer commandProducer,
         [FromBody] OrderInCreateCommand createCommand)
     {
-        await producer.CreateOrderCommandProduce(createCommand);
+        await commandProducer.CreateOrderCommandProduce(createCommand);
 
         return TypedResults.Ok();
     }

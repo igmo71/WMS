@@ -9,7 +9,7 @@ using System.Text.Json;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.OrderServices;
 
-namespace WMS.Backend.MessageBus.Kafka.Documents
+namespace WMS.Backend.MessageBus.Kafka.Documents.OrderIn
 {
     internal class OrderInCreateCommandConsumer : BackgroundService
     {
@@ -17,12 +17,8 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
         private readonly ILogger _log = Log.ForContext<OrderInCreateCommandConsumer>();
         private readonly IConsumer<Ignore, string> _consumer;
         private readonly IServiceProvider _services;
-        //private readonly IOrderInService _orderService;
 
-        public OrderInCreateCommandConsumer(
-            IConfiguration configuration,
-            IServiceProvider services
-            /*IOrderInService orderInService*/)
+        public OrderInCreateCommandConsumer(IConfiguration configuration, IServiceProvider services)
         {
             _configuration = configuration.GetSection(KafkaConfiguration.Section).Get<KafkaConfiguration>()
                 ?? throw new ApplicationException("Kafka Configuration Not Found");
@@ -37,7 +33,6 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
             _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
 
             _services = services;
-            //_orderService = orderInService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -62,31 +57,25 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
         {
             try
             {
-                using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source}", nameof(ProcessMessage));
-
                 var consumeResult = _consumer.Consume(stoppingToken);
 
                 var message = consumeResult.Message.Value;
 
                 _consumer.Commit(consumeResult);
 
-                activityListener.AddProperty("{Message}", message);
+                _log.Debug("{Source} {Message}", nameof(ProcessMessage), message);
 
-                bool flowControl = await CreateOrder(message);
-                
-                if (!flowControl)
-                {
-                    return;
-                }
+                await CreateOrder(message);
+
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _log.Error(ex, "{Source} {Message}", nameof(ProcessMessage), ex.Message);
                 throw;
             }
         }
 
-        private async Task<bool> CreateOrder(string message)
+        private async Task CreateOrder(string message)
         {
             using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source}", nameof(CreateOrder));
 
@@ -95,9 +84,7 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
             activityListener.AddProperty("{CreateOrderInCommand}", createOrderCommand, destructureObjects: true);
 
             if (createOrderCommand is null)
-            {
-                return false;
-            }
+                return;
 
             using var scope = _services.CreateScope();
 
@@ -106,8 +93,6 @@ namespace WMS.Backend.MessageBus.Kafka.Documents
             var orderIn = await orderService.CreateOrderAsync(createOrderCommand);
 
             activityListener.AddProperty("{OrderIn}", orderIn, destructureObjects: true);
-
-            return true;
         }
     }
 }

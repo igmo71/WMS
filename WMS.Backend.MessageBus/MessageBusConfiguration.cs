@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WMS.Backend.MessageBus.Abstractions;
-using WMS.Backend.MessageBus.Kafka.Documents;
+using WMS.Backend.MessageBus.Kafka.Documents.OrderIn;
 
 namespace WMS.Backend.MessageBus
 {
