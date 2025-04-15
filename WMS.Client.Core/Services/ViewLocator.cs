@@ -17,6 +17,7 @@ namespace WMS.Client.Core.Services
             {
                 HomeViewModel => () => new HomeView(),
                 OrderInViewModel => () => new OrderInView(),
+                OrderOutViewModel => () => new OrderOutView(),
                 DocumentListViewModel => () => new DocumentListView(),
                 _ => () => new TextBlock { Text = "Not Found: " + param.GetType().FullName }
             };

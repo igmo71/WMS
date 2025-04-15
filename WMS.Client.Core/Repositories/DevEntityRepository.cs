@@ -17,6 +17,9 @@ namespace WMS.Client.Core.Repositories
 
         public DevEntityRepository(Type type)
         {
+            if (!typeof(EntityBase).IsAssignableFrom(type))
+                throw new NotSupportedException();
+
             _type = type;
             Initialize();
         }
@@ -41,10 +44,25 @@ namespace WMS.Client.Core.Repositories
                 for (int i = 0; i < 100; i++)
                 {
                     List<OrderInProduct> products = new List<OrderInProduct>();
-                    for(int j = 0; j < random.Next(1, 10); j++)
+                    for(int j = 0; j < random.Next(1, 100); j++)
                         products.Add(new OrderInProduct() { Count = random.Next(1, 10), ProductId = productsList.ElementAt(random.Next(0, productsList.Count - 1)).Id});
 
-                    _entities.Add(new OrderIn() { Id = Guid.NewGuid(), DateTime = DateTime.UtcNow, Name = "Order In", Number = $"NUM-{random.Next(1000, 9999)}", Products = products });
+                    _entities.Add(new OrderIn() { Id = Guid.NewGuid(), DateTime = DateTime.UtcNow, Name = "Order Out", Number = $"NUM-{random.Next(1000, 9999)}", Products = products });
+                }
+            }
+
+            if (_type == typeof(OrderOut))
+            {
+                Random random = new Random();
+                List<Product> productsList = EntityRepositoryFactory.Get<Product>().GetList().OfType<Product>().ToList();
+
+                for (int i = 0; i < 100; i++)
+                {
+                    List<OrderOutProduct> products = new List<OrderOutProduct>();
+                    for (int j = 0; j < random.Next(1, 100); j++)
+                        products.Add(new OrderOutProduct() { Count = random.Next(1, 10), ProductId = productsList.ElementAt(random.Next(0, productsList.Count - 1)).Id });
+
+                    _entities.Add(new OrderOut() { Id = Guid.NewGuid(), DateTime = DateTime.UtcNow, Name = "Order In", Number = $"NUM-{random.Next(1000, 9999)}", Products = products });
                 }
             }
 

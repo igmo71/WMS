@@ -12,7 +12,8 @@ namespace WMS.Client.Core.Services
         {
             return entity switch
             {
-                OrderIn d => new ViewModelDescriptor($"{nameof(OrderInViewModel)}_{entity.Id}", () => new OrderInViewModel(d)),
+                OrderIn e => new ViewModelDescriptor($"{nameof(OrderInViewModel)}_{entity.Id}", () => new OrderInViewModel(e)),
+                OrderOut e => new ViewModelDescriptor($"{nameof(OrderOutViewModel)}_{entity.Id}", () => new OrderOutViewModel(e)),
                 _ => throw new NotSupportedException()
             };
         }
@@ -21,8 +22,10 @@ namespace WMS.Client.Core.Services
         {
             return type switch
             {
-                Type t when t == typeof(OrderIn) => new ViewModelDescriptor($"{nameof(DocumentListViewModel)}_{nameof(OrderIn)}", 
-                    () => new DocumentListViewModel(EntityRepositoryFactory.Get<OrderIn>()) { Name = "Order In" }),
+                Type t when t == typeof(OrderIn) => new ViewModelDescriptor($"{nameof(DocumentListViewModel)}_{nameof(OrderIn)}",
+                    () => new DocumentListViewModel("Order In", EntityRepositoryFactory.Get<OrderIn>())),
+                Type t when t == typeof(OrderOut) => new ViewModelDescriptor($"{nameof(DocumentListViewModel)}_{nameof(OrderOut)}",
+                    () => new DocumentListViewModel("Order Out", EntityRepositoryFactory.Get<OrderOut>())),
                 _ => throw new NotSupportedException()
             };
         }

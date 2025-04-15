@@ -5,8 +5,8 @@
              xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
 			 xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="WMS.Client.Core.Views.OrderInView"
-			 x:DataType="vm:OrderInViewModel">
+             x:Class="WMS.Client.Core.Views.OrderOutView"
+			 x:DataType="vm:OrderOutViewModel">
 	<Grid RowDefinitions="Auto, *"
 		  Margin="5">
 		<StackPanel Grid.Row="0"

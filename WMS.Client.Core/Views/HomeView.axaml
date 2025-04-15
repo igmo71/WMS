@@ -14,6 +14,11 @@
 				Margin="0,20">
 		<Button Content="Order In"
 				FontSize="30"
+				Width="200"
 				Command="{Binding OrderInCommand}"/>
+		<Button Content="Order Out"
+				FontSize="30"
+				Width="200"
+				Command="{Binding OrderOutCommand}"/>
 	</StackPanel>
 </UserControl>

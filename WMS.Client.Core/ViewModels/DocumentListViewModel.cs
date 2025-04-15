@@ -10,16 +10,18 @@ namespace WMS.Client.Core.ViewModels
 {
     internal class DocumentListViewModel : ViewModelBase
     {
+        private readonly string _name;
         private readonly IEntityRepository _repository;
         private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();
 
+        internal override string Name => _name;
         internal ObservableCollection<Document> Documents { get => _documents; }
 
         public RelayCommand OpenCommand { get; }
 
-        public DocumentListViewModel(IEntityRepository repository)
+        public DocumentListViewModel(string name, IEntityRepository repository)
         {
-            Name = "Documents";
+            _name = name;
             _repository = repository;
 
             GetDocuments();

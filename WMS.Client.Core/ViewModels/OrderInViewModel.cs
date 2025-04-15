@@ -10,24 +10,29 @@ namespace WMS.Client.Core.ViewModels
     internal class OrderInViewModel : ViewModelBase
     {
         private readonly OrderIn _model;
-        private readonly ObservableCollection<Product> _products = new ObservableCollection<Product>();
+        private readonly ObservableCollection<OrderInProduct> _products = new ObservableCollection<OrderInProduct>();
         private readonly IEntityRepository productsRepository = EntityRepositoryFactory.Get<Product>();
 
+        internal override string Name => $"{nameof(OrderIn)} {_model.Number} {_model.DateTime}";
         internal OrderIn Model => _model;
-        internal ObservableCollection<Product> Products => _products;
+        internal ObservableCollection<OrderInProduct> Products => _products;
 
         internal OrderInViewModel(OrderIn model)
         {
             _model = model;
-            Name = $"{nameof(OrderIn)} {_model.Number} {_model.DateTime}";
             UpdateProducts();
         }
 
         private void UpdateProducts()
         {
             _products.Clear();
-            _model.Products.ForEach((p) =>
-                _products.Add(productsRepository.GetById(p.ProductId) as Product ?? throw new ArgumentException()));
+            _model.Products.ForEach((p) => _products.Add(new OrderInProduct() { Product = productsRepository.GetById(p.ProductId) as Product ?? throw new ArgumentException(), Count = p.Count }));
+        }
+
+        internal class OrderInProduct
+        {
+            internal Product Product { get; set; }
+            internal double Count { get; set; }
         }
     }
 }

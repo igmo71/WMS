@@ -7,21 +7,22 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.DocumentListView"
 			 x:DataType="vm:DocumentListViewModel">
-	<Design.DataContext>
-		<vm:DocumentListViewModel />
-	</Design.DataContext>
-	<ListBox ItemsSource="{Binding Documents}"
-			 HorizontalAlignment="Stretch"
-			 bh:DoubleTappedBehaviour.Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-			 bh:DoubleTappedBehaviour.CommandParameter="{Binding $self.SelectedItem}">
-		<ListBox.ItemTemplate>
-			<DataTemplate>
-				<StackPanel Orientation="Horizontal">
-					<TextBlock Text="{Binding Name}"/>
-					<TextBlock Text="{Binding Number}" Padding="5,0"/>
-					<TextBlock Text="{Binding DateTime}"/>
-				</StackPanel>
-			</DataTemplate>
-		</ListBox.ItemTemplate>
-	</ListBox>
+	
+	<DataGrid ItemsSource="{Binding Documents}"
+			  Margin="5"
+			  BorderThickness="1"
+			  BorderBrush="Gray"
+			  GridLinesVisibility="All"
+			  IsReadOnly="True"
+			  bh:DoubleTappedBehaviour.Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+			  bh:DoubleTappedBehaviour.CommandParameter="{Binding $self.SelectedItem}">
+		<DataGrid.Columns>
+			<DataGridTextColumn Header="Number"
+								Binding="{Binding Number}"
+								Width="*"/>
+			<DataGridTextColumn Header="Date"
+								Binding="{Binding DateTime}"
+								Width="*"/>
+		</DataGrid.Columns>
+	</DataGrid>
 </UserControl>
