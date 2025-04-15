@@ -20,18 +20,19 @@ namespace WMS.Backend.MessageBus.Kafka
 
             var producerConfig = new ProducerConfig
             {
-                BootstrapServers = _configuration.BootstrapServers
+                BootstrapServers = _configuration.BootstrapServers,
+                Debug = "all"
             };
 
             _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
         }
 
-        internal async Task ProduceAsync(string topic, string message, byte[]? correlationId = null)
+        internal async Task ProduceAsync(string topic, string? message, byte[]? correlationId = null)
         {
             using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {Topic} {Message} {CorrelationId}",
                 nameof(ProduceAsync), topic, message, correlationId);
 
-            var kafkaMessage = new Message<Null, string>() { Value = message };
+            var kafkaMessage = new Message<Null, string>() { Value = message ?? "No Data" };
 
             if (correlationId is not null)
                 kafkaMessage.Headers = new Headers

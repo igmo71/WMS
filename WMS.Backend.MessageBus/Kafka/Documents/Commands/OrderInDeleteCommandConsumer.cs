@@ -28,7 +28,7 @@ namespace WMS.Backend.MessageBus.Kafka.Documents.Commands
                 BootstrapServers = _configuration.BootstrapServers,
                 GroupId = $"{nameof(OrderInDeleteCommandConsumer)}Group",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = false
+                //EnableAutoCommit = false
             };
 
             _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();

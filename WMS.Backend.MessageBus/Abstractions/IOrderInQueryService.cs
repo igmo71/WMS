@@ -7,5 +7,8 @@ namespace WMS.Backend.MessageBus.Abstractions
     {
         Task OrderInGetListQueryProduce(OrderInGetListQuery orderQuery);
         Task OrderInGetListResponseProduce(List<OrderIn>? orders, byte[]? correlationId = null);
+
+        Task OrderInGetByIdQueryProduce(Guid id);
+        Task OrderInGetByIdResponseProduce(OrderIn? order, byte[]? correlationId = null);
     }
 }

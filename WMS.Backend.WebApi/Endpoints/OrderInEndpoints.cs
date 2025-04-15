@@ -23,9 +23,17 @@ public static class OrderInEndpoints
         group.MapGet("/", GetOrderList).WithName("GetOrderInList");
         group.MapGet("/{id}", GetOrderById).WithName("GetOrderInById");
 
-        group.MapPost("/kafka", CreateOrderViaKafka).WithName("CreateOrderViaKafka");
-        group.MapDelete("/{id}/kafka", DeleteOrderViaKafka).WithName("DeleteOrderInViaKafka");
-        group.MapGet("/kafka", GetOrderListViaKafka).WithName("GetOrderInListViaKafka");
+
+        var groupKafka = routes.MapGroup("/api/orders-in/kafka")
+            .WithTags($"{nameof(OrderIn)}/Kafka")
+            .WithOpenApi()
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+
+        groupKafka.MapPost("/", CreateOrderViaKafka).WithName("CreateOrderViaKafka");
+        groupKafka.MapDelete("/{id}", DeleteOrderViaKafka).WithName("DeleteOrderInViaKafka");
+        groupKafka.MapGet("/", GetOrderListViaKafka).WithName("GetOrderInListViaKafka");
+        groupKafka.MapGet("/{id}", GetOrderByIdViaKafka).WithName("GetOrderInByIdViaKafka");
     }
 
     private static async Task<Created<OrderIn>> CreateOrder(
@@ -107,5 +115,14 @@ public static class OrderInEndpoints
         var result = await orderService.GetOrderByIdAsync(id);
 
         return result is OrderIn model ? TypedResults.Ok(model) : TypedResults.NotFound();
+    }
+
+    private static async Task<Ok> GetOrderByIdViaKafka(
+        [FromServices] IOrderInQueryService orderQueryService,
+        [FromRoute] Guid id)
+    {
+        await orderQueryService.OrderInGetByIdQueryProduce(id);
+
+        return TypedResults.Ok();
     }
 }

@@ -7,22 +7,21 @@ using Serilog.Events;
 using SerilogTracing;
 using System.Text.Json;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Backend.Application.Services.OrderServices;
 using WMS.Backend.Common;
 using WMS.Backend.MessageBus.Abstractions;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.MessageBus.Kafka.Documents.Queries
 {
-    internal class OrderInGetListQueryConsumer : BackgroundService
+    internal class OrderInGetByIdQueryConsumer : BackgroundService
     {
         private readonly KafkaConfiguration _configuration;
-        private readonly ILogger _log = Log.ForContext<OrderInGetListQueryConsumer>();
+        private readonly ILogger _log = Log.ForContext<OrderInGetByIdQueryConsumer>();
         private readonly IConsumer<Ignore, string> _consumer;
         private readonly IServiceProvider _services;
         private readonly IOrderInQueryService _orderQueryService;
 
-        public OrderInGetListQueryConsumer(
+        public OrderInGetByIdQueryConsumer(
             IConfiguration configuration, 
             IServiceProvider services,
             IOrderInQueryService orderQueryService)
@@ -33,7 +32,7 @@ namespace WMS.Backend.MessageBus.Kafka.Documents.Queries
             var consumerConfig = new ConsumerConfig
             {
                 BootstrapServers = _configuration.BootstrapServers,
-                GroupId = $"{nameof(OrderInGetListQueryConsumer)}Group",
+                GroupId = $"{nameof(OrderInGetByIdQueryConsumer)}Group",
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
 
@@ -47,9 +46,9 @@ namespace WMS.Backend.MessageBus.Kafka.Documents.Queries
         {
             await Task.Delay(AppConfig.BACKGROUND_SERVICE_DELAY, stoppingToken);
 
-            _log.Information("{Consumer} Start", nameof(OrderInGetListQueryConsumer));
+            _log.Information("{Consumer} Start", nameof(OrderInGetByIdQueryConsumer));
 
-            var topic = KafkaConfiguration.OrderInGetListQuery;
+            var topic = KafkaConfiguration.OrderInGetByIdQuery;
 
             _consumer.Subscribe(topic);
 
@@ -75,9 +74,9 @@ namespace WMS.Backend.MessageBus.Kafka.Documents.Queries
 
                 _log.Debug("{Source} {Message} {CorrelationId}", nameof(ProcessMessage), message, correlationId);
 
-                var orders = await GetOrderList(message);
+                var order = await GetOrderById(message);
 
-                await _orderQueryService.OrderInGetListResponseProduce(orders, correlationId);
+                await _orderQueryService.OrderInGetByIdResponseProduce(order, correlationId);
             }
             catch (Exception ex)
             {
@@ -86,26 +85,23 @@ namespace WMS.Backend.MessageBus.Kafka.Documents.Queries
             }
         }
 
-        private async Task<List<OrderIn>?> GetOrderList(string message)
+        private async Task<OrderIn?> GetOrderById(string message)
         {
-            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source}", nameof(GetOrderList));
+            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source}", nameof(GetOrderById));
 
-            var orderInGetListQuery = JsonSerializer.Deserialize<OrderInGetListQuery>(message);
+            var id = JsonSerializer.Deserialize<Guid>(message);
 
-            activityListener.AddProperty("{OrderInGetListQuery}", orderInGetListQuery, destructureObjects: true);
-
-            if(orderInGetListQuery is null)
-                return default;
+            activityListener.AddProperty("{Id}", id);
 
             using var scope = _services.CreateScope();
 
             var orderService = scope.ServiceProvider.GetRequiredService<IOrderInService>();
 
-            var orders = await orderService.GetOrderListAsync(orderInGetListQuery);
+            var order = await orderService.GetOrderByIdAsync(id);
 
-            activityListener.AddProperty("{Orders}", orders, destructureObjects: true);
+            activityListener.AddProperty("{Order}", order, destructureObjects: true);
 
-            return orders;
+            return order;
         }
     }
 }

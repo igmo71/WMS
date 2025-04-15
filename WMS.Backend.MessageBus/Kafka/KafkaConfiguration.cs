@@ -2,16 +2,19 @@
 {
     internal class KafkaConfiguration
     {
-        public const string Section = "Kafka";
+        internal const string Section = "Kafka";
 
-        public const string OrderInCreateCommand = "OrderInCreateCommand";
-        public const string OrderInCreatedEvent = "OrderInCreatedEvent";
+        internal const string OrderInCreateCommand = "OrderInCreateCommand";
+        internal const string OrderInCreatedEvent = "OrderInCreatedEvent";
 
-        public const string OrderInDeleteCommand = "OrderInDeleteCommand";
-        public const string OrderInDeletedEvent = "OrderInDeletedEvent";
+        internal const string OrderInDeleteCommand = "OrderInDeleteCommand";
+        internal const string OrderInDeletedEvent = "OrderInDeletedEvent";
 
-        public const string OrderInGetListQuery = "OrderInGetListQuery";
-        public const string OrderInGetListResponse = "OrderInGetListResponse";
+        internal const string OrderInGetListQuery = "OrderInGetListQuery";
+        internal const string OrderInGetListResponse = "OrderInGetListResponse";
+
+        internal const string OrderInGetByIdQuery = "OrderInGetByIdQuery";
+        internal const string OrderInGetByIdResponse = "OrderInGetByIdResponse";
 
         public string? BootstrapServers { get; set; }
     }

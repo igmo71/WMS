@@ -79,7 +79,7 @@ namespace WMS.Backend.Application.Services.OrderServices
                 order.Products = products;
             }
 
-            _log.Debug("{Source} {OrderId} {@Order}", nameof(GetOrderListAsync), id, order);
+            _log.Debug("{Source} {OrderId} {@Order}", nameof(GetOrderByIdAsync), id, order);
 
             return order;
         }

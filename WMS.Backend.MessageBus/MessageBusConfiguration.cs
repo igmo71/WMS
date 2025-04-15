@@ -23,6 +23,7 @@ namespace WMS.Backend.MessageBus
             services.AddHostedService<OrderInCreateCommandConsumer>();
             services.AddHostedService<OrderInDeleteCommandConsumer>();
             services.AddHostedService<OrderInGetListQueryConsumer>();
+            services.AddHostedService<OrderInGetByIdQueryConsumer>();
 
             return services;
         }
