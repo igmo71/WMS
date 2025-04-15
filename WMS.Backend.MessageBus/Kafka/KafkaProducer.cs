@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
 using SerilogTracing;
+using WMS.Backend.Common;
 
 namespace WMS.Backend.MessageBus.Kafka
 {
@@ -27,7 +28,7 @@ namespace WMS.Backend.MessageBus.Kafka
 
         internal async Task ProduceAsync(string topic, string message, byte[]? correlationId = null)
         {
-            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {Topic} {Message} {CorrelationId}", 
+            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {Topic} {Message} {CorrelationId}",
                 nameof(ProduceAsync), topic, message, correlationId);
 
             var kafkaMessage = new Message<Null, string>() { Value = message };
@@ -35,7 +36,7 @@ namespace WMS.Backend.MessageBus.Kafka
             if (correlationId is not null)
                 kafkaMessage.Headers = new Headers
                 {
-                    { "СorrelationId", correlationId }
+                    { AppConfig.CORRELATION_ID, correlationId }
                 };
 
             var deliveryResult = await _producer.ProduceAsync(topic, kafkaMessage);

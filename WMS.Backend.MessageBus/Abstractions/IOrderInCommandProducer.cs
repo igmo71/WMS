@@ -4,6 +4,7 @@ namespace WMS.Backend.MessageBus.Abstractions
 {
     public interface IOrderInCommandProducer
     {
-        Task CreateOrderCommandProduce(OrderInCreateCommand createOrderCommand);
+        Task OrderInCreateCommandProduce(OrderInCreateCommand createOrderCommand);
+        Task OrderInDeleteCommandProduce(Guid id);
     }
 }

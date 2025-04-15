@@ -6,7 +6,7 @@ namespace WMS.Backend.Infrastructure.Repositories
 {
     internal static class OrderInRepositoryExtensions
     {
-        public static IQueryable<OrderIn> HandleQuery(this IQueryable<OrderIn> query, OrderQuery orderQuery)
+        public static IQueryable<OrderIn> HandleQuery(this IQueryable<OrderIn> query, OrderInGetListQuery orderQuery)
         {
             query = orderQuery.orderBy is null 
                 ? query.OrderBy(e => e.DateTime) 

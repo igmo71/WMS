@@ -78,7 +78,7 @@ namespace WMS.Backend.Infrastructure.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<List<OrderIn>> GetListAsync(OrderQuery orderQuery)
+        public async Task<List<OrderIn>> GetListAsync(OrderInGetListQuery orderQuery)
         {
             var result = await _dbContext.OrdersIn
                 .AsNoTracking()

@@ -5,7 +5,7 @@ namespace WMS.Backend.Application.Abstractions.Repositories
 {
     public interface IOrderInProductRepository
     {
-        Task<int> CreateRangeAsync(Guid orderId, List<CreateOrderInProduct>? createOrderInProducts);
+        Task<int> CreateRangeAsync(Guid orderId, List<OrderInProductCreateCommand>? orderInProductCreateCommand);
         Task<List<OrderInProduct>> GetListAsync(Guid orderId);
     }
 }

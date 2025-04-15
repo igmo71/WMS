@@ -18,7 +18,7 @@ namespace WMS.Backend.Application.Services.OrderServices
         private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
         private readonly IOrderInEventProducer _orderEventProducer = orderEventProducer;
 
-        public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand, byte[]? correlationId)
+        public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand, byte[]? correlationId = null)
         {
             try
             {
@@ -30,7 +30,7 @@ namespace WMS.Backend.Application.Services.OrderServices
 
                 await transaction.CommitAsync();
 
-                await _orderEventProducer.OrderCreatedEventProduce(order, correlationId);
+                await _orderEventProducer.OrderInCreatedEventProduce(order, correlationId);
 
                 _log.Debug("{Source} {@Order}, {CorrelationId}", nameof(CreateOrderAsync), order, correlationId);
 
@@ -49,14 +49,16 @@ namespace WMS.Backend.Application.Services.OrderServices
             _log.Debug("{Source} {IsSuccess} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
         }
 
-        public async Task DeleteOrderAsync(Guid id)
+        public async Task DeleteOrderAsync(Guid id, byte[]? correlationId = null)
         {
             await _orderRepository.DeleteAsync(id);
+
+            await _orderEventProducer.OrderInDeletedEventProduce(id, correlationId);
 
             _log.Debug("{Source} {IsSuccess} {@OrderId}", nameof(DeleteOrderAsync), id);
         }
 
-        public async Task<List<OrderIn>> GetOrderListAsync(OrderQuery orderQuery)
+        public async Task<List<OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery)
         {
             using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {@OrderQuery}", nameof(GetOrderListAsync), orderQuery);
 

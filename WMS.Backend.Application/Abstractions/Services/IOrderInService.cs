@@ -7,8 +7,8 @@ namespace WMS.Backend.Application.Abstractions.Services
     {
         Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createCommand, byte[]? correlationId = null);
         Task UpdateOrderAsync(Guid id, OrderIn order);
-        Task DeleteOrderAsync(Guid id);
-        Task<List<OrderIn>> GetOrderListAsync(OrderQuery orderQuery);
+        Task DeleteOrderAsync(Guid id, byte[]? correlationId = null);
+        Task<List<OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery);
         Task<OrderIn?> GetOrderByIdAsync(Guid id);
     }
 }

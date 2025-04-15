@@ -8,6 +8,9 @@
         public const int DESCRIPTION_MAX_LENGTH = 400;
         // DEFAULT
         public const int DEFAULT_SKIP = 0;
-        public const int DEFAULT_TAKE = 100;        
+        public const int DEFAULT_TAKE = 100;
+
+        public const int BACKGROUND_SERVICE_DELAY = 100;
+        public const string CORRELATION_ID = "CorrelationId";
     }
 }
