@@ -19,7 +19,7 @@ namespace WMS.Backend.Domain.Models.Documents
             DateTime = DateTime.UtcNow;
             Operation = operation;
             DocumentId = document.Id;
-            Document = JsonSerializer.Serialize(document);
+            Document = JsonSerializer.Serialize(document, AppConfig.JsonSerializerOptions);
         }
     }
 }

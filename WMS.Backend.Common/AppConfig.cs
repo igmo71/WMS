@@ -1,6 +1,10 @@
-﻿namespace WMS.Backend.Common
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
+
+namespace WMS.Backend.Common
 {
-    public class AppConfig
+    public static class AppConfig
     {
         // MAX_LENGTH
         public const int NUMBER_MAX_LENGTH = 50;
@@ -12,5 +16,10 @@
 
         public const int BACKGROUND_SERVICE_DELAY = 100;
         public const string CORRELATION_ID = "CorrelationId";
+
+        public static readonly JsonSerializerOptions JsonSerializerOptions = new()
+        {
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
+        };
     }
 }

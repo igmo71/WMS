@@ -46,7 +46,7 @@ namespace WMS.Backend.Application.Services.OrderServices
         {
             await _orderRepository.UpdateAsync(id, order);
 
-            _log.Debug("{Source} {IsSuccess} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
+            _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
         }
 
         public async Task DeleteOrderAsync(Guid id, byte[]? correlationId = null)
@@ -55,7 +55,7 @@ namespace WMS.Backend.Application.Services.OrderServices
 
             await _orderEventProducer.OrderInDeletedEventProduce(id, correlationId);
 
-            _log.Debug("{Source} {IsSuccess} {@OrderId}", nameof(DeleteOrderAsync), id);
+            _log.Debug("{Source} {OrderId}", nameof(DeleteOrderAsync), id);
         }
 
         public async Task<List<OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery)
