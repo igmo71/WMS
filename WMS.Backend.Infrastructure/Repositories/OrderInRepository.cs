@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using WMS.Backend.Application.Abstractions.Repositories;
@@ -11,11 +12,13 @@ using WMS.Shared.Models.Documents;
 namespace WMS.Backend.Infrastructure.Repositories
 {
     internal class OrderInRepository(
-        AppDbContext dbContext,
-        IOptions<AppSettings> options) : IOrderInRepository
+        AppDbContext dbContext, 
+        IOptions<AppSettings> options,
+        ICorrelationContext correlationContext) : IOrderInRepository
     {
         private readonly AppDbContext _dbContext = dbContext;
         private readonly AppSettings _appSettings = options.Value;
+        private readonly ICorrelationContext _correlationContext = correlationContext;
 
         public async Task<IDbContextTransaction> BeginTransactionAsync()
         {
@@ -38,41 +41,40 @@ namespace WMS.Backend.Infrastructure.Repositories
             return result;
         }
 
-        public async Task UpdateAsync(Guid id, OrderIn order)
+        public async Task UpdateAsync(Guid id, OrderIn updatedOrder)
         {
-            var existing = await _dbContext.OrdersIn
+            var existingOrder = await _dbContext.OrdersIn
                 .FirstOrDefaultAsync(e => e.Id == id)
                     ?? throw new ApplicationException($"Order Not Found by {id}");
 
             if (_appSettings.UseArchiving)
-                await ArchiveAsync(existing, ArchiveOperation.Update);
+            {
+                var archivedOrder = new OrderInArchive(existingOrder, ArchiveOperation.Update, _correlationContext.CorrelationId);
 
-            _dbContext.Entry(existing).CurrentValues.SetValues(order);
+                await _dbContext.OrdersInArchive.AddAsync(archivedOrder);
+            }
+
+            _dbContext.Entry(existingOrder).CurrentValues.SetValues(updatedOrder);
 
             await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            var existing = await _dbContext.OrdersIn
+            var existingOrder = await _dbContext.OrdersIn
                 .FirstOrDefaultAsync(e => e.Id == id);
 
-            if (existing == null)
+            if (existingOrder == null)
                 return;
 
             if (_appSettings.UseArchiving)
-                await ArchiveAsync(existing, ArchiveOperation.Delete);
+            {
+                var archivedOrder = new OrderInArchive(existingOrder, ArchiveOperation.Delete, _correlationContext.CorrelationId);
 
-            _dbContext.OrdersIn.Remove(existing);
+                await _dbContext.OrdersInArchive.AddAsync(archivedOrder);
+            }
 
-            await _dbContext.SaveChangesAsync();
-        }
-
-        private async Task ArchiveAsync(OrderIn existing, ArchiveOperation operation)
-        {
-            var archived = new OrderInArchive(existing, operation);
-
-            await _dbContext.OrdersInArchive.AddAsync(archived);
+            _dbContext.OrdersIn.Remove(existingOrder);
 
             await _dbContext.SaveChangesAsync();
         }

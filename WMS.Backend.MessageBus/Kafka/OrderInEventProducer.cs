@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using WMS.Backend.Application.Abstractions.MessageBus;
+using WMS.Backend.Common;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.MessageBus.Kafka
@@ -8,22 +9,22 @@ namespace WMS.Backend.MessageBus.Kafka
     {
         private readonly KafkaProducer _kafkaProducer = kafkaProducer;
 
-        public async Task OrderInCreatedEventProduce(OrderIn order, byte[]? correlationId = null)
+        public async Task OrderInCreatedEventProduce(OrderIn order)
         {
-            var message = JsonSerializer.Serialize(order);
-
-            var topic = KafkaConfiguration.OrderInCreated;
-
-            await _kafkaProducer.ProduceAsync(topic, message, correlationId);
+            await _kafkaProducer.ProduceAsync(KafkaConfig.OrderInCreated,
+                message: JsonSerializer.Serialize(order, AppConfig.JsonSerializerOptions));
         }
 
-        public async Task OrderInDeletedEventProduce(Guid id, byte[]? correlationId = null)
+        public async Task OrderInUpdatedEventProduce(OrderIn order)
         {
-            var message = JsonSerializer.Serialize(id);
+            await _kafkaProducer.ProduceAsync(KafkaConfig.OrderInUpdated,
+                message: JsonSerializer.Serialize(order, AppConfig.JsonSerializerOptions));
+        }
 
-            var topic = KafkaConfiguration.OrderInDeleted;
-
-            await _kafkaProducer.ProduceAsync(topic, message, correlationId);
+        public async Task OrderInDeletedEventProduce(Guid id)
+        {
+            await _kafkaProducer.ProduceAsync(KafkaConfig.OrderInDeleted,
+                message: id.ToString());
         }
     }
 }

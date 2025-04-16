@@ -12,7 +12,7 @@ using WMS.Backend.Infrastructure.Data;
 namespace WMS.Backend.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250410100527_CreateOrderInArchive")]
+    [Migration("20250416104301_CreateOrderInArchive")]
     partial class CreateOrderInArchive
     {
         /// <inheritdoc />
@@ -31,21 +31,47 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Document")
+                    b.Property<string>("Archive")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Operation")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.ToTable("OrdersInArchive");
+                });
+
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProductArchive", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Archive")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Operation")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderInProductsArchive");
                 });
 
             modelBuilder.Entity("WMS.Shared.Models.Catalogs.Product", b =>

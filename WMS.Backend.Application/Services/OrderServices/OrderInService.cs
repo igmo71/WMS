@@ -4,6 +4,7 @@ using SerilogTracing;
 using WMS.Backend.Application.Abstractions.MessageBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
+using WMS.Backend.Common;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderServices
@@ -11,49 +12,57 @@ namespace WMS.Backend.Application.Services.OrderServices
     internal class OrderInService(
         IOrderInRepository orderRepository,
         IOrderInProductRepository orderProductRepository,
-        IOrderInEventProducer orderEventProducer) : IOrderInService
+        IOrderInEventProducer orderEventProducer
+        ) : IOrderInService
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
         private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
         private readonly IOrderInEventProducer _orderEventProducer = orderEventProducer;
 
-        public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand, byte[]? correlationId = null)
+        public async Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createOrderCommand)
         {
-            try
-            {
-                await using var transaction = await _orderRepository.BeginTransactionAsync();
+            await using var transaction = await _orderRepository.BeginTransactionAsync();
 
-                var order = await _orderRepository.CreateAsync(createOrderCommand);
+            var order = await _orderRepository.CreateAsync(createOrderCommand);
 
-                var productCount = await _orderProductRepository.CreateRangeAsync(order.Id, createOrderCommand.Products);
+            var productCount = await _orderProductRepository.CreateRangeAsync(order.Id, createOrderCommand.Products);
 
-                await transaction.CommitAsync();
+            await _orderEventProducer.OrderInCreatedEventProduce(order);
 
-                await _orderEventProducer.OrderInCreatedEventProduce(order, correlationId);
+            await transaction.CommitAsync();
 
-                _log.Debug("{Source} {@Order}, {CorrelationId}", nameof(CreateOrderAsync), order, correlationId);
+            _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
 
-                return order;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return order;
         }
 
         public async Task UpdateOrderAsync(Guid id, OrderIn order)
         {
+            await using var transaction = await _orderRepository.BeginTransactionAsync();
+
             await _orderRepository.UpdateAsync(id, order);
+
+            await _orderProductRepository.UpdateRangeAsync(id, order.Products);
+
+            await _orderEventProducer.OrderInUpdatedEventProduce(order);
+
+            await transaction.CommitAsync();
 
             _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
         }
 
-        public async Task DeleteOrderAsync(Guid id, byte[]? correlationId = null)
+        public async Task DeleteOrderAsync(Guid id)
         {
+            await using var transaction = await _orderRepository.BeginTransactionAsync();
+
+            await _orderProductRepository.DeleteRangeAsync(id);
+
             await _orderRepository.DeleteAsync(id);
 
-            await _orderEventProducer.OrderInDeletedEventProduce(id, correlationId);
+            await _orderEventProducer.OrderInDeletedEventProduce(id);
+
+            await transaction.CommitAsync();
 
             _log.Debug("{Source} {OrderId}", nameof(DeleteOrderAsync), id);
         }

@@ -15,7 +15,10 @@ namespace WMS.Backend.Common
         public const int DEFAULT_TAKE = 100;
 
         public const int BACKGROUND_SERVICE_DELAY = 100;
-        public const string CORRELATION_ID = "CorrelationId";
+        public const string CORRELATION_HEADER = "X-Correlation-ID";
+
+
+        public const string NO_DATA = "No Data";
 
         public static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {

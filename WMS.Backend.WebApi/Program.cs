@@ -4,6 +4,7 @@ using WMS.Backend.Common;
 using WMS.Backend.Infrastructure;
 using WMS.Backend.MessageBus;
 using WMS.Backend.WebApi.Endpoints;
+using WMS.Backend.WebApi.Middleware;
 
 namespace WMS.Backend.WebApi
 {
@@ -28,6 +29,9 @@ namespace WMS.Backend.WebApi
 
                 builder.Services.AddAuthorization();
 
+                builder.Services.AddSingleton<ICorrelationContext, CorrelationContext>();
+                builder.Services.AddTransient<CorrelationIdMiddleware>();
+
                 builder.Services.AddOpenApi();
 
                 builder.Services.AddEndpointsApiExplorer();
@@ -49,6 +53,8 @@ namespace WMS.Backend.WebApi
                     //    options.SwaggerEndpoint("/openapi/v1.json", "OpenAPI V1");
                     //});
                 }
+
+                app.UseMiddleware<CorrelationIdMiddleware>();
 
                 app.UseHttpsRedirection();
 
