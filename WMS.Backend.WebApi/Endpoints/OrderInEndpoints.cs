@@ -17,19 +17,15 @@ public static class OrderInEndpoints
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         group.MapPost("/", CreateOrder).WithName("CreateOrderIn");
-
         group.MapPut("/{id}", UpdateOrder).WithName("UpdateOrderIn");
-
         group.MapDelete("/{id}", DeleteOrder).WithName("DeleteOrderIn");
-
         group.MapGet("/", GetOrderList).WithName("GetOrderInList");
-
         group.MapGet("/{id}", GetOrderById).WithName("GetOrderInById");
     }
 
-    private static async Task<Results<Created<OrderIn>, ProblemHttpResult>> CreateOrder(
+    private static async Task<Created<OrderIn>> CreateOrder(
         [FromServices] IOrderInService orderService,
-        [FromBody] CreateOrderInCommand createCommand)
+        [FromBody] OrderInCreateCommand createCommand)
     {
         var result = await orderService.CreateOrderAsync(createCommand);
 
@@ -55,20 +51,20 @@ public static class OrderInEndpoints
         return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Ok<List<OrderIn>>, NotFound, ProblemHttpResult>> GetOrderList(
+    private static async Task<Results<Ok<List<OrderIn>>, NotFound>> GetOrderList(
         [FromServices] IOrderInService orderService,
         [FromQuery] string? orderBy = null,
         [FromQuery] int? skip = null,
         [FromQuery] int? take = null)
     {
-        var orderQuery = new OrderQuery(orderBy, skip, take);
+        var orderQuery = new OrderInGetListQuery(orderBy, skip, take);
 
         var result = await orderService.GetOrderListAsync(orderQuery);
 
         return result is List<OrderIn> model ? TypedResults.Ok(model) : TypedResults.NotFound();
     }
 
-    private static async Task<Results<Ok<OrderIn>, NotFound, ProblemHttpResult>> GetOrderById(
+    private static async Task<Results<Ok<OrderIn>, NotFound>> GetOrderById(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {

@@ -10,12 +10,12 @@ namespace WMS.Backend.Infrastructure.Repositories
     {
         private readonly AppDbContext _dbContext = dbContext;
 
-        public async Task<int> CreateRangeAsync(Guid orderId, List<CreateOrderInProduct>? createOrderInProducts)
+        public async Task<int> CreateRangeAsync(Guid orderId, List<OrderInProductCreateCommand>? orderInProductCreateCommand)
         {
-            if(createOrderInProducts is null)
+            if(orderInProductCreateCommand is null)
                 return 0;
 
-            var orderInProducts = createOrderInProducts
+            var orderInProducts = orderInProductCreateCommand
                 .Select(e => new OrderInProduct { OrderId = orderId, ProductId = e.ProductId, Count = e.Count });
 
             await _dbContext.AddRangeAsync(orderInProducts);

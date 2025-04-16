@@ -22,7 +22,7 @@ namespace WMS.Backend.Infrastructure.Repositories
             return await _dbContext.Database.BeginTransactionAsync();
         }
 
-        public async Task<OrderIn> CreateAsync(CreateOrderInCommand createOrderCommand)
+        public async Task<OrderIn> CreateAsync(OrderInCreateCommand createOrderCommand)
         {
             var newOrder = new OrderIn
             {
@@ -78,7 +78,7 @@ namespace WMS.Backend.Infrastructure.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<List<OrderIn>> GetListAsync(OrderQuery orderQuery)
+        public async Task<List<OrderIn>> GetListAsync(OrderInGetListQuery orderQuery)
         {
             var result = await _dbContext.OrdersIn
                 .AsNoTracking()
