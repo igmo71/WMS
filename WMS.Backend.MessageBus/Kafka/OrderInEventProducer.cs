@@ -2,7 +2,7 @@
 using WMS.Backend.Application.Abstractions.MessageBus;
 using WMS.Shared.Models.Documents;
 
-namespace WMS.Backend.MessageBus.Kafka.Documents.Events
+namespace WMS.Backend.MessageBus.Kafka
 {
     internal class OrderInEventProducer(KafkaProducer kafkaProducer) : IOrderInEventProducer
     {
@@ -12,7 +12,7 @@ namespace WMS.Backend.MessageBus.Kafka.Documents.Events
         {
             var message = JsonSerializer.Serialize(order);
 
-            var topic = KafkaConfiguration.OrderInCreatedEvent;
+            var topic = KafkaConfiguration.OrderInCreated;
 
             await _kafkaProducer.ProduceAsync(topic, message, correlationId);
         }
@@ -21,7 +21,7 @@ namespace WMS.Backend.MessageBus.Kafka.Documents.Events
         {
             var message = JsonSerializer.Serialize(id);
 
-            var topic = KafkaConfiguration.OrderInDeletedEvent;
+            var topic = KafkaConfiguration.OrderInDeleted;
 
             await _kafkaProducer.ProduceAsync(topic, message, correlationId);
         }

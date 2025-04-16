@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.OrderServices;
-using WMS.Backend.MessageBus.Abstractions;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.WebApi.Endpoints;
@@ -22,18 +21,6 @@ public static class OrderInEndpoints
         group.MapDelete("/{id}", DeleteOrder).WithName("DeleteOrderIn");
         group.MapGet("/", GetOrderList).WithName("GetOrderInList");
         group.MapGet("/{id}", GetOrderById).WithName("GetOrderInById");
-
-
-        var groupKafka = routes.MapGroup("/api/orders-in/kafka")
-            .WithTags($"{nameof(OrderIn)}/Kafka")
-            .WithOpenApi()
-            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
-
-        groupKafka.MapPost("/", CreateOrderViaKafka).WithName("CreateOrderViaKafka");
-        groupKafka.MapDelete("/{id}", DeleteOrderViaKafka).WithName("DeleteOrderInViaKafka");
-        groupKafka.MapGet("/", GetOrderListViaKafka).WithName("GetOrderInListViaKafka");
-        groupKafka.MapGet("/{id}", GetOrderByIdViaKafka).WithName("GetOrderInByIdViaKafka");
     }
 
     private static async Task<Created<OrderIn>> CreateOrder(
@@ -43,15 +30,6 @@ public static class OrderInEndpoints
         var result = await orderService.CreateOrderAsync(createCommand);
 
         return TypedResults.Created($"/api/orders-in/{result.Id}", result);
-    }
-
-    private static async Task<Ok> CreateOrderViaKafka(
-        [FromServices] IOrderInCommandProducer commandProducer,
-        [FromBody] OrderInCreateCommand createCommand)
-    {
-        await commandProducer.OrderInCreateCommandProduce(createCommand);
-
-        return TypedResults.Ok();
     }
 
     private static async Task<Results<NoContent, NotFound>> UpdateOrder(
@@ -73,15 +51,6 @@ public static class OrderInEndpoints
         return TypedResults.NoContent();
     }
 
-    private static async Task<Ok> DeleteOrderViaKafka(
-        [FromServices] IOrderInCommandProducer commandProducer,
-        [FromRoute] Guid id)
-    {
-        await commandProducer.OrderInDeleteCommandProduce(id);
-
-        return TypedResults.Ok();
-    }
-
     private static async Task<Results<Ok<List<OrderIn>>, NotFound>> GetOrderList(
         [FromServices] IOrderInService orderService,
         [FromQuery] string? orderBy = null,
@@ -95,19 +64,6 @@ public static class OrderInEndpoints
         return result is List<OrderIn> model ? TypedResults.Ok(model) : TypedResults.NotFound();
     }
 
-    private static async Task<Ok> GetOrderListViaKafka(
-        [FromServices] IOrderInQueryService orderQueryService,
-        [FromQuery] string? orderBy = null,
-        [FromQuery] int? skip = null,
-        [FromQuery] int? take = null)
-    {
-        var orderQuery = new OrderInGetListQuery(orderBy, skip, take);
-
-        await orderQueryService.OrderInGetListQueryProduce(orderQuery);
-
-        return TypedResults.Ok();
-    }
-
     private static async Task<Results<Ok<OrderIn>, NotFound>> GetOrderById(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
@@ -115,14 +71,5 @@ public static class OrderInEndpoints
         var result = await orderService.GetOrderByIdAsync(id);
 
         return result is OrderIn model ? TypedResults.Ok(model) : TypedResults.NotFound();
-    }
-
-    private static async Task<Ok> GetOrderByIdViaKafka(
-        [FromServices] IOrderInQueryService orderQueryService,
-        [FromRoute] Guid id)
-    {
-        await orderQueryService.OrderInGetByIdQueryProduce(id);
-
-        return TypedResults.Ok();
     }
 }
