@@ -38,7 +38,6 @@ namespace WMS.Backend.Infrastructure.Repositories
             return result;
         }
 
-
         public async Task UpdateAsync(Guid id, OrderIn order)
         {
             var existing = await _dbContext.OrdersIn

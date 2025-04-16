@@ -16,6 +16,14 @@ namespace WMS.Backend.Infrastructure.Repositories
                 .Skip(orderQuery.Skip ?? AppConfig.DEFAULT_SKIP)
                 .Take(orderQuery.Take ?? AppConfig.DEFAULT_TAKE);
 
+            if (orderQuery.DateBegin is not null)
+                query = query.Where(e => e.DateTime >= orderQuery.DateBegin);
+            if (orderQuery.DateEnd is not null)
+                query = query.Where(e => e.DateTime < orderQuery.DateEnd);
+
+            if (!string.IsNullOrEmpty(orderQuery.NumberSubstring))
+                query = query.Where(e => e.Number != null && e.Number.Contains(orderQuery.NumberSubstring));
+
             return query;
         }
     }
