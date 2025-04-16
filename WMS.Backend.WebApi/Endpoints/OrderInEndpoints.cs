@@ -55,9 +55,12 @@ public static class OrderInEndpoints
         [FromServices] IOrderInService orderService,
         [FromQuery] string? orderBy = null,
         [FromQuery] int? skip = null,
-        [FromQuery] int? take = null)
+        [FromQuery] int? take = null,
+        [FromQuery] DateTime? dateBegin = null,
+        [FromQuery] DateTime? dateEnd = null,
+        [FromQuery] string? numberSubstring = null)
     {
-        var orderQuery = new OrderInGetListQuery(orderBy, skip, take);
+        var orderQuery = new OrderInGetListQuery(orderBy, skip, take, dateBegin, dateEnd, numberSubstring);
 
         var result = await orderService.GetOrderListAsync(orderQuery);
 
