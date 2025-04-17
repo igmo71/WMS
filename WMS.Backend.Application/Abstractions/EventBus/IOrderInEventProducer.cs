@@ -4,8 +4,8 @@ namespace WMS.Backend.Application.Abstractions.EventBus
 {
     public interface IOrderInEventProducer
     {
-        Task OrderInCreatedEventProduce(OrderIn order);
-        Task OrderInUpdatedEventProduce(OrderIn order);
-        Task OrderInDeletedEventProduce(Guid orderId);
+        Task OrderCreatedEventProduce(OrderIn order);
+        Task OrderUpdatedEventProduce(OrderIn order);
+        Task OrderDeletedEventProduce(Guid orderId);
     }
 }

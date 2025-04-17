@@ -25,9 +25,9 @@ public static class OrderInEndpoints
 
     private static async Task<Created<OrderIn>> CreateOrder(
         [FromServices] IOrderInService orderService,
-        [FromBody] OrderInCreateCommand createCommand)
+        [FromBody] OrderIn order)
     {
-        var result = await orderService.CreateOrderAsync(createCommand);
+        var result = await orderService.CreateOrderAsync(order);
 
         return TypedResults.Created($"/api/orders-in/{result.Id}", result);
     }

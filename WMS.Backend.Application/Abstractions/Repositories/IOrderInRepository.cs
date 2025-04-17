@@ -7,7 +7,7 @@ namespace WMS.Backend.Application.Abstractions.Repositories
     public interface IOrderInRepository
     {
         Task<IDbContextTransaction> BeginTransactionAsync();
-        Task<OrderIn> CreateAsync(OrderInCreateCommand createOrderCommand);
+        Task<OrderIn> CreateAsync(OrderIn order);
         Task UpdateAsync(Guid id, OrderIn order);
         Task DeleteAsync(Guid id);
         Task<List<OrderIn>> GetListAsync(OrderInGetListQuery orderQuery);
