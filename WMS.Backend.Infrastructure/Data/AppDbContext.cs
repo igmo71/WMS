@@ -28,12 +28,16 @@ namespace WMS.Backend.Infrastructure.Data
             modelBuilder.Entity<OrderIn>().HasKey(e => e.Id);
             modelBuilder.Entity<OrderIn>().Property(e => e.Number).HasMaxLength(AppConfig.NUMBER_MAX_LENGTH);
             modelBuilder.Entity<OrderIn>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
-            modelBuilder.Entity<OrderIn>().HasMany(e => e.Products).WithOne()
-                .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
+            modelBuilder.Entity<OrderIn>().HasMany(e => e.Products).WithOne(e => e.Order)
+                .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<OrderInArchive>().HasKey(e => e.Id);
 
             modelBuilder.Entity<OrderInProduct>().HasKey(e => new { e.OrderId, e.ProductId });
+            modelBuilder.Entity<OrderInProduct>().HasOne(e => e.Product).WithMany()
+                .HasForeignKey(e => e.ProductId).HasPrincipalKey(e => e.Id)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OrderOut>().HasKey(e => e.Id);
             modelBuilder.Entity<OrderOut>().Property(e => e.Number).HasMaxLength(AppConfig.NUMBER_MAX_LENGTH);
