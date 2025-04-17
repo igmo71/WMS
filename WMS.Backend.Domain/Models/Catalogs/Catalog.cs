@@ -1,6 +1,4 @@
-﻿using WMS.Backend.Domain.Models;
-
-namespace WMS.Shared.Models.Catalogs
+﻿namespace WMS.Backend.Domain.Models.Catalogs
 {
     public abstract class Catalog : EntityBase
     {

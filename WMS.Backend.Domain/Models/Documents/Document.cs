@@ -1,11 +1,9 @@
-﻿namespace WMS.Shared.Abstractions.Models
+﻿namespace WMS.Backend.Domain.Models.Documents
 {
-    public abstract class Document
+    public abstract class Document : EntityBase
     {
-        public Guid Id { get; set; }
         public string? Name { get; set; }
         public string? Number { get; set; }
         public DateTime DateTime { get; set; }
-
     }
 }

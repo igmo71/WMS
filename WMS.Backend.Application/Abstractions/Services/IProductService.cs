@@ -1,5 +1,5 @@
 ﻿using WMS.Backend.Application.Services.ProductServices;
-using WMS.Shared.Models.Catalogs;
+using WMS.Backend.Domain.Models.Catalogs;
 
 namespace WMS.Backend.Application.Abstractions.Services
 {

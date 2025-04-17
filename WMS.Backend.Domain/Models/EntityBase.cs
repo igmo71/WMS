@@ -1,4 +1,4 @@
-﻿namespace WMS.Shared.Models
+﻿namespace WMS.Backend.Domain.Models
 {
     public abstract class EntityBase
     {

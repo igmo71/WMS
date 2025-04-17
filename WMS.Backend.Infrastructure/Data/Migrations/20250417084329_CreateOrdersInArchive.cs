@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WMS.Backend.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateOrderInArchive : Migration
+    public partial class CreateOrdersInArchive : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,8 +18,8 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Operation = table.Column<int>(type: "integer", nullable: false),
-                    DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Document = table.Column<string>(type: "text", nullable: true)
+                    ArchivelId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Archive = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

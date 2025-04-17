@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using WMS.Backend.Application.Services.OrderServices;
-using WMS.Shared.Models.Documents;
+using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Abstractions.Repositories
 {
