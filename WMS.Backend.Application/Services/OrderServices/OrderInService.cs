@@ -4,21 +4,18 @@ using SerilogTracing;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Backend.Common;
 using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderServices
 {
     internal class OrderInService(
         IOrderInRepository orderRepository,
-        IOrderInProductRepository orderProductRepository,
         IOrderInEventProducer orderEventProducer
         ) : IOrderInService
     {
-        private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
-        private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
         private readonly IOrderInEventProducer _orderEventProducer = orderEventProducer;
+        private readonly ILogger _log = Log.ForContext<OrderInService>();
 
         public async Task<OrderIn> CreateOrderAsync(OrderIn newOrder)
         {
@@ -34,8 +31,6 @@ namespace WMS.Backend.Application.Services.OrderServices
         public async Task UpdateOrderAsync(Guid id, OrderIn order)
         {
             await _orderRepository.UpdateAsync(id, order);
-
-            //await _orderProductRepository.UpdateRangeAsync(id, order.Products);
 
             await _orderEventProducer.OrderUpdatedEventProduce(order);
 
