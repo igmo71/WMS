@@ -25,7 +25,10 @@ namespace WMS.Backend.MessageBus.Kafka
                 //Debug = "all"
             };
 
-            _producer = new ProducerBuilder<Guid, OrderIn?>(producerConfig).Build();
+            _producer = new ProducerBuilder<Guid, OrderIn?>(producerConfig)
+                .SetKeySerializer(new JsonSerializer<Guid>())
+                .SetValueSerializer(new JsonSerializer<OrderIn?>())
+                .Build();
         }
 
         public async Task OrderInCreatedEventProduce(OrderIn order) => 

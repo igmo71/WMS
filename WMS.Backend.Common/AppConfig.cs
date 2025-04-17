@@ -24,7 +24,9 @@ namespace WMS.Backend.Common
 
         public static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {
-            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic),
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
         };
     }
 }

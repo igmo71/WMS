@@ -12,12 +12,10 @@ namespace WMS.Backend.Infrastructure.Repositories
 {
     internal class OrderInRepository(
         AppDbContext dbContext, 
-        IOptions<AppSettings> options,
-        ICorrelationContext correlationContext) : IOrderInRepository
+        IOptions<AppSettings> options) : IOrderInRepository
     {
         private readonly AppDbContext _dbContext = dbContext;
         private readonly AppSettings _appSettings = options.Value;
-        private readonly ICorrelationContext _correlationContext = correlationContext;
 
         public async Task<IDbContextTransaction> BeginTransactionAsync()
         {

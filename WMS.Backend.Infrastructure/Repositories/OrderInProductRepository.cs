@@ -8,14 +8,9 @@ using WMS.Backend.Infrastructure.Data;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {
-    public class OrderInProductRepository(
-        AppDbContext dbContext, 
-        IOptions<AppSettings> options, 
-        ICorrelationContext correlationContext) : IOrderInProductRepository
+    public class OrderInProductRepository(AppDbContext dbContext) : IOrderInProductRepository
     {
         private readonly AppDbContext _dbContext = dbContext;
-        private readonly AppSettings _appSettings = options.Value;
-        private readonly ICorrelationContext _correlationContext = correlationContext;
 
         public async Task<int> CreateRangeAsync(Guid orderId, List<OrderInProductCreateCommand>? orderInProductCreateCommand)
         {
@@ -71,8 +66,8 @@ namespace WMS.Backend.Infrastructure.Repositories
                 else
                 {
                     //_dbContext.Entry(existingProduct).CurrentValues.SetValues(updatedProduct); 
-                        // Exception: The property 'OrderInProduct.OrderId' is part of a key and so cannot be modified or marked as modified.
-                        // To change the principal of an existing entity with an identifying foreign key, first delete the dependent and invoke 'SaveChanges', and then associate the dependent with the new principal.
+                    // Exception: The property 'OrderInProduct.OrderId' is part of a key and so cannot be modified or marked as modified.
+                    // To change the principal of an existing entity with an identifying foreign key, first delete the dependent and invoke 'SaveChanges', and then associate the dependent with the new principal.
                     existingProduct.Count = updatedProduct.Count;
 
                 }
@@ -90,7 +85,7 @@ namespace WMS.Backend.Infrastructure.Repositories
                 .ToListAsync();
 
             if (existingProducts is null)
-                return 0;           
+                return 0;
 
             _dbContext.OrderInProducts.RemoveRange(existingProducts);
 
