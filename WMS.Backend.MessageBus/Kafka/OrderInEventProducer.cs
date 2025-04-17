@@ -1,17 +1,15 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using Serilog.Events;
-using SerilogTracing;
 using WMS.Backend.Application.Abstractions.EventBus;
-using WMS.Backend.Domain.Models.Documents;
+using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.MessageBus.Kafka
 {
     internal class OrderInEventProducer : IOrderInEventProducer
     {
         private readonly KafkaConfig _kafkaConfig;
-        private readonly IProducer<Guid, OrderIn?> _producer;
+        private readonly IProducer<Guid, Dto.OrderIn?> _producer;
         private readonly ILogger _log = Log.ForContext<OrderInEventProducer>();
 
         public OrderInEventProducer(IConfiguration configuration)
@@ -25,38 +23,37 @@ namespace WMS.Backend.MessageBus.Kafka
                 //Debug = "all"
             };
 
-            _producer = new ProducerBuilder<Guid, OrderIn?>(producerConfig)
+            _producer = new ProducerBuilder<Guid, Dto.OrderIn?>(producerConfig)
                 .SetKeySerializer(new JsonSerializer<Guid>())
-                .SetValueSerializer(new JsonSerializer<OrderIn?>())
+                .SetValueSerializer(new JsonSerializer<Dto.OrderIn?>())
                 .Build();
         }
 
-        public async Task OrderCreatedEventProduce(OrderIn order) => await Produce(order, KafkaConfig.OrderInCreated);
-
-        public async Task OrderUpdatedEventProduce(OrderIn order) => await Produce(order, KafkaConfig.OrderInUpdated);
-
-        public async Task Produce(OrderIn order, string operation)
+        public async Task OrderCreatedEventProduce(Dto.OrderIn orderDto)
         {
-            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {Topic} {@OrderIn}",
-                nameof(Produce), operation, order);
+            var message = new Message<Guid, Dto.OrderIn?>() { Key = orderDto.Id, Value = orderDto };
 
-            var message = new Message<Guid, OrderIn?>() { Key = order.Id, Value = order };
+            var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInCreated, message);
 
-            var deliveryResult = await _producer.ProduceAsync(topic: operation, message);
+            _log.Debug("{Source} {Topic} {@OrderIn}", nameof(OrderCreatedEventProduce), KafkaConfig.OrderInCreated, orderDto);
+        }
 
-            activity.AddProperty("{DeliveryResult}", deliveryResult, destructureObjects: true);
+        public async Task OrderUpdatedEventProduce(Dto.OrderIn orderDto)
+        {
+            var message = new Message<Guid, Dto.OrderIn?>() { Key = orderDto.Id, Value = orderDto };
+
+            var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInUpdated, message);
+
+            _log.Debug("{Source} {Topic} {@OrderIn}", nameof(OrderCreatedEventProduce), KafkaConfig.OrderInUpdated, orderDto);
         }
 
         public async Task OrderDeletedEventProduce(Guid orderId)
         {
-            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {Topic} {OrderId}",
-                nameof(Produce), KafkaConfig.OrderInDeleted, orderId);
-
-            var message = new Message<Guid, OrderIn?>() { Key = orderId, Value = null };
+            var message = new Message<Guid, Dto.OrderIn?>() { Key = orderId, Value = null };
 
             var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInDeleted, message);
 
-            activity.AddProperty("{DeliveryResult}", deliveryResult, destructureObjects: true);
+            _log.Debug("{Source} {Topic} {OrderId}", nameof(OrderDeletedEventProduce), KafkaConfig.OrderInUpdated, orderId);
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Unicode;
 
 namespace WMS.Backend.Common
@@ -19,9 +18,6 @@ namespace WMS.Backend.Common
 
         // TODO: CorrelationId Не используется сейчас
         public const string CORRELATION_HEADER = "X-Correlation-ID";
-
-
-        public const string NO_DATA = "No Data";
 
         public static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {

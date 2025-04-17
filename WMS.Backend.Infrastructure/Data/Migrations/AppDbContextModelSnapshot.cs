@@ -83,7 +83,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
                     b.Property<string>("Archive")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ArchivelId")
+                    b.Property<Guid>("ArchiveId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateTime")

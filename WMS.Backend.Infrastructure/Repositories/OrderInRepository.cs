@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Services.OrderServices;
@@ -9,17 +8,10 @@ using WMS.Backend.Infrastructure.Data;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {
-    internal class OrderInRepository(
-        AppDbContext dbContext,
-        IOptions<AppSettings> options) : IOrderInRepository
+    internal class OrderInRepository(AppDbContext dbContext, IOptions<AppSettings> options) : IOrderInRepository
     {
         private readonly AppDbContext _dbContext = dbContext;
         private readonly AppSettings _appSettings = options.Value;
-
-        public async Task<IDbContextTransaction> BeginTransactionAsync()
-        {
-            return await _dbContext.Database.BeginTransactionAsync();
-        }
 
         public async Task<OrderIn> CreateAsync(OrderIn order)
         {

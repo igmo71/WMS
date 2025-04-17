@@ -12,8 +12,8 @@ using WMS.Backend.Infrastructure.Data;
 namespace WMS.Backend.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250417123915_AddNavigationProperties")]
-    partial class AddNavigationProperties
+    [Migration("20250417190119_CreateOrdersInArchive")]
+    partial class CreateOrdersInArchive
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -86,7 +86,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
                     b.Property<string>("Archive")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ArchivelId")
+                    b.Property<Guid>("ArchiveId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateTime")

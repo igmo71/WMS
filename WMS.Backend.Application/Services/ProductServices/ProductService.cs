@@ -12,13 +12,8 @@ namespace WMS.Backend.Application.Services.ProductServices
         private readonly ILogger _log = Log.ForContext<ProductService>();
         private readonly IProductRepository _productRepository = productRepository;
 
-        public async Task<Product> CreateProductAsync(CreateProductCommand createCommand)
+        public async Task<Product> CreateProductAsync(Product newProduct)
         {
-            var newProduct = new Product
-            {
-                Name = createCommand.Name
-            };
-
             var product = await _productRepository.CreateAsync(newProduct);
 
             _log.Debug("{Source} {@Product}", nameof(CreateProductAsync), product);
@@ -46,11 +41,11 @@ namespace WMS.Backend.Application.Services.ProductServices
 
         public async Task<List<Product>> GetProductListAsync(ProductQuery productQuery)
         {
-            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {@ProductQuery}", nameof(GetProductListAsync), productQuery);
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {@ProductQuery}", nameof(GetProductListAsync), productQuery);
 
             var products = await _productRepository.GetListAsync(productQuery);
 
-            activityListener.AddProperty("Products", products, destructureObjects: true);
+            activity.AddProperty("Products", products, destructureObjects: true);
 
             return products;
         }

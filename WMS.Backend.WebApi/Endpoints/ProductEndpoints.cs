@@ -29,9 +29,9 @@ namespace WMS.Backend.WebApi.Endpoints
 
         private static async Task<Results<Created<Product>, ProblemHttpResult>> CreateProduct(
             [FromServices] IProductService productService,
-            [FromBody] CreateProductCommand createCommand)
+            [FromBody] Product product)
         {
-            var result = await productService.CreateProductAsync(createCommand);
+            var result = await productService.CreateProductAsync(product);
 
             return TypedResults.Created($"/api/products/{result.Id}", result);
         }
