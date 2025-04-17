@@ -18,6 +18,8 @@ namespace WMS.Client.Core.Services
                 HomeViewModel => () => new HomeView(),
                 OrderInViewModel => () => new OrderInView(),
                 OrderOutViewModel => () => new OrderOutView(),
+                CatalogListViewModel => () => new CatalogListView(),
+                ProductViewModel => () => new ProductView(),
                 DocumentListViewModel => () => new DocumentListView(),
                 _ => () => new TextBlock { Text = "Not Found: " + param.GetType().FullName }
             };

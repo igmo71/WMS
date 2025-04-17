@@ -2,6 +2,7 @@
 using WMS.Client.Core.Repositories;
 using WMS.Client.Core.ViewModels;
 using WMS.Shared.Models;
+using WMS.Shared.Models.Catalogs;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.Services
@@ -14,6 +15,7 @@ namespace WMS.Client.Core.Services
             {
                 OrderIn e => new ViewModelDescriptor($"{nameof(OrderInViewModel)}_{entity.Id}", () => new OrderInViewModel(e)),
                 OrderOut e => new ViewModelDescriptor($"{nameof(OrderOutViewModel)}_{entity.Id}", () => new OrderOutViewModel(e)),
+                Product e => new ViewModelDescriptor($"{nameof(ProductViewModel)}_{entity.Id}", () => new ProductViewModel(e)),
                 _ => throw new NotSupportedException()
             };
         }
@@ -26,6 +28,8 @@ namespace WMS.Client.Core.Services
                     () => new DocumentListViewModel("Order In", EntityRepositoryFactory.Get<OrderIn>())),
                 Type t when t == typeof(OrderOut) => new ViewModelDescriptor($"{nameof(DocumentListViewModel)}_{nameof(OrderOut)}",
                     () => new DocumentListViewModel("Order Out", EntityRepositoryFactory.Get<OrderOut>())),
+                Type t when t == typeof(Product) => new ViewModelDescriptor($"{nameof(CatalogListViewModel)}_{nameof(Product)}",
+                    () => new CatalogListViewModel("Products", EntityRepositoryFactory.Get<Product>())),
                 _ => throw new NotSupportedException()
             };
         }
