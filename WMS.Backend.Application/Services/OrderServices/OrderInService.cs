@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using Serilog.Events;
 using SerilogTracing;
-using WMS.Backend.Application.Abstractions.MessageBus;
+using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Common;

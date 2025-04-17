@@ -53,13 +53,6 @@ namespace WMS.Backend.Infrastructure.Repositories
             {
                 if (!updatedProducts.Any(e => e.ProductId == existingProduct.ProductId))
                 {
-                    if (_appSettings.UseArchiving)
-                    {
-                        var archivedProduct = new OrderInProductArchive(existingProduct, ArchiveOperation.Delete, _correlationContext.CorrelationId);
-
-                        _dbContext.OrderInProductsArchive.Add(archivedProduct);
-                    }
-
                     _dbContext.OrderInProducts.Remove(existingProduct);
                 }
             }
@@ -77,13 +70,6 @@ namespace WMS.Backend.Infrastructure.Repositories
                 }
                 else
                 {
-                    if (_appSettings.UseArchiving)
-                    {
-                        var archivedProduct = new OrderInProductArchive(existingProduct, ArchiveOperation.Update, _correlationContext.CorrelationId);
-
-                        _dbContext.OrderInProductsArchive.Add(archivedProduct);
-                    }
-
                     //_dbContext.Entry(existingProduct).CurrentValues.SetValues(updatedProduct); 
                         // Exception: The property 'OrderInProduct.OrderId' is part of a key and so cannot be modified or marked as modified.
                         // To change the principal of an existing entity with an identifying foreign key, first delete the dependent and invoke 'SaveChanges', and then associate the dependent with the new principal.
@@ -104,16 +90,7 @@ namespace WMS.Backend.Infrastructure.Repositories
                 .ToListAsync();
 
             if (existingProducts is null)
-                return 0;
-
-            if (_appSettings.UseArchiving)
-            {
-                var archivedProducts = existingProducts
-                    .Select(e => new OrderInProductArchive(e, ArchiveOperation.Delete, _correlationContext.CorrelationId))
-                    .ToList();
-
-                _dbContext.OrderInProductsArchive.AddRange(archivedProducts);
-            }
+                return 0;           
 
             _dbContext.OrderInProducts.RemoveRange(existingProducts);
 

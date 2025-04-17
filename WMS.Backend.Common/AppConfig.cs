@@ -15,6 +15,8 @@ namespace WMS.Backend.Common
         public const int DEFAULT_TAKE = 100;
 
         public const int BACKGROUND_SERVICE_DELAY = 100;
+
+        // TODO: CorrelationId Не используется сейчас
         public const string CORRELATION_HEADER = "X-Correlation-ID";
 
 

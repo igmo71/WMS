@@ -3,20 +3,20 @@ using WMS.Backend.Common;
 
 namespace WMS.Backend.Domain.Models
 {
-    public abstract class EntityArchive<T> : EntityBase
+    public abstract class EntityArchive<T> : EntityBase where T : EntityBase
     {
-        public string CorrelationId { get; set; }
         public DateTime DateTime { get; set; }
         public ArchiveOperation Operation { get; set; }
+        public Guid ArchivelId { get; set; }
         public string? Archive { get; set; }
 
         protected EntityArchive() { }
 
-        protected EntityArchive(T archive, ArchiveOperation operation, string correlationId)
+        protected EntityArchive(T archive, ArchiveOperation operation)
         {
-            CorrelationId = correlationId;
             DateTime = DateTime.UtcNow;
             Operation = operation;
+            ArchivelId = archive.Id;
             Archive = JsonSerializer.Serialize(archive, AppConfig.JsonSerializerOptions);
         }
     }

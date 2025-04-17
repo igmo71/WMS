@@ -48,7 +48,7 @@ namespace WMS.Backend.Infrastructure.Repositories
 
             if (_appSettings.UseArchiving)
             {
-                var archivedOrder = new OrderInArchive(existingOrder, ArchiveOperation.Update, _correlationContext.CorrelationId);
+                var archivedOrder = new OrderInArchive(existingOrder, ArchiveOperation.Update);
 
                 await _dbContext.OrdersInArchive.AddAsync(archivedOrder);
             }
@@ -68,7 +68,7 @@ namespace WMS.Backend.Infrastructure.Repositories
 
             if (_appSettings.UseArchiving)
             {
-                var archivedOrder = new OrderInArchive(existingOrder, ArchiveOperation.Delete, _correlationContext.CorrelationId);
+                var archivedOrder = new OrderInArchive(existingOrder, ArchiveOperation.Delete);
 
                 await _dbContext.OrdersInArchive.AddAsync(archivedOrder);
             }
