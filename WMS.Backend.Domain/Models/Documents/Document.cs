@@ -1,4 +1,4 @@
-﻿namespace WMS.Shared.Models.Documents
+﻿namespace WMS.Backend.Domain.Models.Documents
 {
     public abstract class Document : EntityBase
     {

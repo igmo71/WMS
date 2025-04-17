@@ -3,6 +3,7 @@ using WMS.Backend.Common;
 
 namespace WMS.Backend.WebApi.Middleware
 {
+    // TODO: CorrelationId Не используется сейчас
     public class CorrelationIdMiddleware(ICorrelationContext correlationContext) : IMiddleware
     {
         private readonly ICorrelationContext _correlationContext = correlationContext;

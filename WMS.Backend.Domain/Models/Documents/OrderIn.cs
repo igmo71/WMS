@@ -1,6 +1,4 @@
-﻿using WMS.Backend.Domain.Models.Documents;
-
-namespace WMS.Shared.Models.Documents
+﻿namespace WMS.Backend.Domain.Models.Documents
 {
     public class OrderIn : Document
     {

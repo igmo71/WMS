@@ -5,7 +5,7 @@ using WMS.Backend.Application.Abstractions.MessageBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Common;
-using WMS.Shared.Models.Documents;
+using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderServices
 {

@@ -1,4 +1,4 @@
-﻿using WMS.Shared.Models.Documents;
+﻿using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Abstractions.MessageBus
 {

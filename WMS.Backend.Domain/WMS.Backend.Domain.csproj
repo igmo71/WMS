@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WMS.Backend.Common\WMS.Backend.Common.csproj" />
-    <ProjectReference Include="..\WMS.Shared\WMS.Shared.csproj" />
   </ItemGroup>
 
 </Project>

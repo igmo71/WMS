@@ -5,7 +5,6 @@ using WMS.Backend.Application.Services.OrderServices;
 using WMS.Backend.Common;
 using WMS.Backend.Domain.Models.Documents;
 using WMS.Backend.Infrastructure.Data;
-using WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {

@@ -29,8 +29,10 @@ namespace WMS.Backend.WebApi
 
                 builder.Services.AddAuthorization();
 
-                builder.Services.AddSingleton<ICorrelationContext, CorrelationContext>();
-                builder.Services.AddTransient<CorrelationIdMiddleware>();
+                // TODO: CorrelationId Не используется сейчас
+                //builder.Services.AddSingleton<ICorrelationContext, CorrelationContext>();
+                //builder.Services.AddTransient<CorrelationIdMiddleware>();
+
 
                 builder.Services.AddOpenApi();
 
@@ -54,7 +56,8 @@ namespace WMS.Backend.WebApi
                     //});
                 }
 
-                app.UseMiddleware<CorrelationIdMiddleware>();
+                // TODO: CorrelationId Не используется сейчас
+                //app.UseMiddleware<CorrelationIdMiddleware>();
 
                 app.UseHttpsRedirection();
 

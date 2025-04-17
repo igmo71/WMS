@@ -1,6 +1,6 @@
 ﻿using WMS.Backend.Application.Services.ProductServices;
 using WMS.Backend.Common;
-using WMS.Shared.Models.Catalogs;
+using WMS.Backend.Domain.Models.Catalogs;
 
 namespace WMS.Backend.Infrastructure.Repositories
 {
