@@ -1,11 +1,11 @@
-﻿using WMS.Backend.Domain.Models.Documents;
+﻿using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Application.Abstractions.EventBus
 {
     public interface IOrderInEventProducer
     {
-        Task OrderCreatedEventProduce(OrderIn order);
-        Task OrderUpdatedEventProduce(OrderIn order);
+        Task OrderCreatedEventProduce(Dto.OrderIn orderDto);
+        Task OrderUpdatedEventProduce(Dto.OrderIn orderDto);
         Task OrderDeletedEventProduce(Guid orderId);
     }
 }

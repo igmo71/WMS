@@ -7,7 +7,7 @@ namespace WMS.Backend.Domain.Models
     {
         public DateTime DateTime { get; set; }
         public ArchiveOperation Operation { get; set; }
-        public Guid ArchivelId { get; set; }
+        public Guid ArchiveId { get; set; }
         public string? Archive { get; set; }
 
         protected EntityArchive() { }
@@ -16,7 +16,7 @@ namespace WMS.Backend.Domain.Models
         {
             DateTime = DateTime.UtcNow;
             Operation = operation;
-            ArchivelId = archive.Id;
+            ArchiveId = archive.Id;
             Archive = JsonSerializer.Serialize(archive, AppConfig.JsonSerializerOptions);
         }
     }

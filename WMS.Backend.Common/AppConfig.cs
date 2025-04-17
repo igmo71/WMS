@@ -19,14 +19,13 @@ namespace WMS.Backend.Common
         // TODO: CorrelationId Не используется сейчас
         public const string CORRELATION_HEADER = "X-Correlation-ID";
 
-
-        public const string NO_DATA = "No Data";
-
         public static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {
-            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic),
+            //ReferenceHandler = ReferenceHandler.Preserve,
+            //MaxDepth = 3,
+            WriteIndented = false,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
         };
     }
 }

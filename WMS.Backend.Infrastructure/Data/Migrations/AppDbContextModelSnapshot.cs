@@ -83,7 +83,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
                     b.Property<string>("Archive")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ArchivelId")
+                    b.Property<Guid>("ArchiveId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateTime")
@@ -109,6 +109,8 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
                         .HasColumnType("double precision");
 
                     b.HasKey("OrderId", "ProductId");
+
+                    b.HasIndex("ProductId");
 
                     b.ToTable("OrderInProducts");
                 });
@@ -153,11 +155,21 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProduct", b =>
                 {
-                    b.HasOne("WMS.Backend.Domain.Models.Documents.OrderIn", null)
+                    b.HasOne("WMS.Backend.Domain.Models.Documents.OrderIn", "Order")
                         .WithMany("Products")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("WMS.Backend.Domain.Models.Catalogs.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderOutProduct", b =>

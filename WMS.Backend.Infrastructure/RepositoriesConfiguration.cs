@@ -20,6 +20,7 @@ namespace WMS.Backend.Infrastructure
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseNpgsql(connectionString);
+                options.EnableSensitiveDataLogging();
             });
 
             services.AddScoped<IOrderInRepository, OrderInRepository>();
