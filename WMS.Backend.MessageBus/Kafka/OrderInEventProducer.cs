@@ -31,16 +31,14 @@ namespace WMS.Backend.MessageBus.Kafka
                 .Build();
         }
 
-        public async Task OrderInCreatedEventProduce(OrderIn order) => 
-            await OrderInEventProduce(order, KafkaConfig.OrderInCreated);
+        public async Task OrderCreatedEventProduce(OrderIn order) => await Produce(order, KafkaConfig.OrderInCreated);
 
-        public async Task OrderInUpdatedEventProduce(OrderIn order) => 
-            await OrderInEventProduce(order, KafkaConfig.OrderInUpdated);
+        public async Task OrderUpdatedEventProduce(OrderIn order) => await Produce(order, KafkaConfig.OrderInUpdated);
 
-        public async Task OrderInEventProduce(OrderIn order, string operation)
+        public async Task Produce(OrderIn order, string operation)
         {
             using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {Topic} {@OrderIn}",
-                nameof(OrderInEventProduce), operation, order);
+                nameof(Produce), operation, order);
 
             var message = new Message<Guid, OrderIn?>() { Key = order.Id, Value = order };
 
@@ -49,12 +47,12 @@ namespace WMS.Backend.MessageBus.Kafka
             activity.AddProperty("{DeliveryResult}", deliveryResult, destructureObjects: true);
         }
 
-        public async Task OrderInDeletedEventProduce(Guid orderId) 
+        public async Task OrderDeletedEventProduce(Guid orderId)
         {
             using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {Topic} {OrderId}",
-                nameof(OrderInEventProduce), KafkaConfig.OrderInDeleted, orderId);
+                nameof(Produce), KafkaConfig.OrderInDeleted, orderId);
 
-            var message = new Message<Guid, OrderIn?> () { Key = orderId, Value = null };
+            var message = new Message<Guid, OrderIn?>() { Key = orderId, Value = null };
 
             var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInDeleted, message);
 

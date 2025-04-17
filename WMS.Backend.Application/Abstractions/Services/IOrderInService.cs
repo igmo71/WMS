@@ -5,7 +5,7 @@ namespace WMS.Backend.Application.Abstractions.Services
 {
     public interface IOrderInService
     {
-        Task<OrderIn> CreateOrderAsync(OrderInCreateCommand createCommand);
+        Task<OrderIn> CreateOrderAsync(OrderIn order);
         Task UpdateOrderAsync(Guid id, OrderIn order);
         Task DeleteOrderAsync(Guid id);
         Task<List<OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery);

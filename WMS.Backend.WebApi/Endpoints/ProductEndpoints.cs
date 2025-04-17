@@ -59,9 +59,10 @@ namespace WMS.Backend.WebApi.Endpoints
             [FromServices] IProductService productService,
             [FromQuery] string? orderBy,
             [FromQuery] int? skip = null,
-            [FromQuery] int? take = null)
+            [FromQuery] int? take = null,
+            [FromQuery] string? nameSubstring = null)
         {
-            var productQuery = new ProductQuery(orderBy, skip, take);
+            var productQuery = new ProductQuery(orderBy, skip, take, nameSubstring);
 
             var result = await productService.GetProductListAsync(productQuery);
 
