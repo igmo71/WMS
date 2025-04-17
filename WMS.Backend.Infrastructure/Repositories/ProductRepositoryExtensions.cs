@@ -16,6 +16,9 @@ namespace WMS.Backend.Infrastructure.Repositories
                 .Skip(productQuery.Skip ?? AppConfig.DEFAULT_SKIP)
                 .Take(productQuery.Take ?? AppConfig.DEFAULT_TAKE);
 
+            if (!string.IsNullOrEmpty(productQuery.NameSubstring))
+                query = query.Where(e => e.Name != null && e.Name.Contains(productQuery.NameSubstring));
+
             return query;
         }
     }
