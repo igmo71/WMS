@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.OrderServices;
 using WMS.Backend.Application.Services.ProductServices;
+using WMS.Backend.Common;
 
 namespace WMS.Backend.Application
 {
@@ -10,7 +11,9 @@ namespace WMS.Backend.Application
     {
         public static IServiceCollection AddAppServices(this IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            serviceCollection.AddScoped<IOrderService, OrderService>();
+            var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>();
+
+            serviceCollection.AddScoped<IOrderInService, OrderInService>();
             serviceCollection.AddScoped<IProductService, ProductService>();
 
             return serviceCollection;

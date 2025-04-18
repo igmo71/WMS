@@ -12,8 +12,17 @@
 	</Design.DataContext>
 	<StackPanel HorizontalAlignment="Center"
 				Margin="0,20">
-		<Button Content="Documents"
+		<Button Content="Order In"
 				FontSize="30"
-				Command="{Binding DocumentsCommand}"/>
+				Width="200"
+				Command="{Binding OrderInCommand}"/>
+		<Button Content="Order Out"
+				FontSize="30"
+				Width="200"
+				Command="{Binding OrderOutCommand}"/>
+		<Button Content="Products"
+				FontSize="30"
+				Width="200"
+				Command="{Binding ProductsCommand}"/>
 	</StackPanel>
 </UserControl>

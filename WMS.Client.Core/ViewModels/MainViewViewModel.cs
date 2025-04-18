@@ -5,12 +5,12 @@ using WMS.Client.Core.Infrastructure;
 
 namespace WMS.Client.Core.ViewModels
 {
-    internal partial class MainViewModel : ViewModelBase
+    internal partial class MainViewModel : SafeBindable
     {
         private readonly ObservableCollection<ViewModelBase> _pages = new ObservableCollection<ViewModelBase>();
-        private PageViewModelBase _currentPage;
+        private ViewModelBase _currentPage;
 
-        internal PageViewModelBase CurrentPage { get => LockAndGet(ref _currentPage); set => NavigationService.SetCurrent(value); }
+        internal ViewModelBase CurrentPage { get => LockAndGet(ref _currentPage); set => NavigationService.SetCurrent(value); }
         internal ObservableCollection<ViewModelBase> Pages => _pages;
 
         internal RelayCommand SetCurrentCommand { get; }
@@ -25,12 +25,12 @@ namespace WMS.Client.Core.ViewModels
 
             SetCurrentCommand = new RelayCommand((p) =>
             {
-                if (p is PageViewModelBase page)
+                if (p is ViewModelBase page)
                     NavigationService.SetCurrent(page);
             });
         }
 
-        private void UpdateCurrent(PageViewModelBase vm) => SetAndNotify(ref _currentPage, vm, nameof(CurrentPage));
+        private void UpdateCurrent(ViewModelBase vm) => SetAndNotify(ref _currentPage, vm, nameof(CurrentPage));
 
         private void UpdatePages()
         {

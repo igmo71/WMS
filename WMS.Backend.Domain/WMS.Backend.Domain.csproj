@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WMS.Shared\WMS.Shared.csproj" />
+    <ProjectReference Include="..\WMS.Backend.Common\WMS.Backend.Common.csproj" />
   </ItemGroup>
 
 </Project>

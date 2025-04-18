@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.Common", "WMS.B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Shared", "WMS.Shared\WMS.Shared.csproj", "{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.MessageBus", "WMS.Backend.MessageBus\WMS.Backend.MessageBus.csproj", "{CA9446BE-C0A2-46A8-8179-01CF579A3708}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Core", "WMS.Client.Core\WMS.Client.Core.csproj", "{CFF12522-ECD5-455E-B7CB-551A108FC764}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Android", "WMS.Client.Android\WMS.Client.Android.csproj", "{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}"
@@ -70,6 +72,10 @@ Global
 		{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC7DEFDB-6D1E-4883-8FCB-B28FC643D016}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA9446BE-C0A2-46A8-8179-01CF579A3708}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA9446BE-C0A2-46A8-8179-01CF579A3708}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA9446BE-C0A2-46A8-8179-01CF579A3708}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA9446BE-C0A2-46A8-8179-01CF579A3708}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
