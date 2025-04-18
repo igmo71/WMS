@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WMS.Backend.Application\WMS.Backend.Application.csproj" />
     <ProjectReference Include="..\WMS.Backend.Infrastructure\WMS.Backend.Infrastructure.csproj" />
+    <ProjectReference Include="..\WMS.Backend.MessageBus\WMS.Backend.MessageBus.csproj" />
   </ItemGroup>
 
 </Project>

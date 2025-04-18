@@ -34,7 +34,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Catalogs.Warehouse", b =>
@@ -49,29 +49,7 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Warehouses", (string)null);
-                });
-
-            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.Order", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<string>("Number")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Warehouses");
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderIn", b =>
@@ -93,10 +71,33 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OrdersIn", (string)null);
+                    b.ToTable("OrdersIn");
                 });
 
-            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProducts", b =>
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInArchive", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Archive")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ArchiveId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Operation")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrdersInArchive");
+                });
+
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProduct", b =>
                 {
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid");
@@ -109,12 +110,71 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("OrderId", "ProductId");
 
-                    b.ToTable("OrderInProducts", (string)null);
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("OrderInProducts");
                 });
 
-            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProducts", b =>
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderOut", b =>
                 {
-                    b.HasOne("WMS.Backend.Domain.Models.Documents.OrderIn", null)
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Number")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrdersOut");
+                });
+
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderOutProduct", b =>
+                {
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Count")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("OrderId", "ProductId");
+
+                    b.ToTable("OrderOutProducts");
+                });
+
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderInProduct", b =>
+                {
+                    b.HasOne("WMS.Backend.Domain.Models.Documents.OrderIn", "Order")
+                        .WithMany("Products")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WMS.Backend.Domain.Models.Catalogs.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderOutProduct", b =>
+                {
+                    b.HasOne("WMS.Backend.Domain.Models.Documents.OrderOut", null)
                         .WithMany("Products")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -122,6 +182,11 @@ namespace WMS.Backend.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderIn", b =>
+                {
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("WMS.Backend.Domain.Models.Documents.OrderOut", b =>
                 {
                     b.Navigation("Products");
                 });

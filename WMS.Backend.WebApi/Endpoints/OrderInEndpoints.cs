@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.OrderServices;
-using WMS.Shared.Models.Documents;
+using WMS.Backend.Domain.Models.Documents;
+using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.WebApi.Endpoints;
 
@@ -17,63 +18,62 @@ public static class OrderInEndpoints
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         group.MapPost("/", CreateOrder).WithName("CreateOrderIn");
-
         group.MapPut("/{id}", UpdateOrder).WithName("UpdateOrderIn");
-
         group.MapDelete("/{id}", DeleteOrder).WithName("DeleteOrderIn");
-
         group.MapGet("/", GetOrderList).WithName("GetOrderInList");
-
         group.MapGet("/{id}", GetOrderById).WithName("GetOrderInById");
     }
 
-    private static async Task<Results<Created<OrderIn>, ProblemHttpResult>> CreateOrder(
+    private static async Task<Created<Dto.OrderIn>> CreateOrder(
         [FromServices] IOrderInService orderService,
-        [FromBody] CreateOrderInCommand createCommand)
+        [FromBody] Dto.OrderIn orderDto)
     {
-        var result = await orderService.CreateOrderAsync(createCommand);
+        var result = await orderService.CreateOrderByDtoAsync(orderDto);
 
         return TypedResults.Created($"/api/orders-in/{result.Id}", result);
     }
 
-    private static async Task<Results<Ok, NotFound>> UpdateOrder(
+    private static async Task<Results<NoContent, NotFound>> UpdateOrder(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id,
-        [FromBody] OrderIn order)
+        [FromBody] Dto.OrderIn order)
     {
-        var isSuccess = await orderService.UpdateOrderAsync(id, order);
+        await orderService.UpdateOrderByDtoAsync(id, order);
 
-        return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
+        return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Ok, NotFound>> DeleteOrder(
+    private static async Task<Results<NoContent, NotFound>> DeleteOrder(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {
-        var isSuccess = await orderService.DeleteOrderAsync(id);
+        await orderService.DeleteOrderAsync(id);
 
-        return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
+        return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Ok<List<OrderIn>>, NotFound, ProblemHttpResult>> GetOrderList(
+    private static async Task<Results<Ok<List<Dto.OrderIn>>, NotFound>> GetOrderList(
         [FromServices] IOrderInService orderService,
         [FromQuery] string? orderBy = null,
         [FromQuery] int? skip = null,
-        [FromQuery] int? take = null)
+        [FromQuery] int? take = null,
+        [FromQuery] DateTime? dateBegin = null,
+        [FromQuery] DateTime? dateEnd = null,
+        [FromQuery] string? numberSubstring = null)
     {
-        var orderQuery = new OrderQuery(orderBy, skip, take);
+        var orderQuery = new OrderInGetListQuery(orderBy, skip, take, dateBegin, dateEnd, numberSubstring);
 
-        var result = await orderService.GetOrderListAsync(orderQuery);
+        var result = await orderService.GetOrderDtoListAsync(orderQuery);
 
-        return result is List<OrderIn> model ? TypedResults.Ok(model) : TypedResults.NotFound();
+        return result is List<Dto.OrderIn> dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
     }
 
-    private static async Task<Results<Ok<OrderIn>, NotFound, ProblemHttpResult>> GetOrderById(
+    private static async Task<Results<Ok<Dto.OrderIn>, NotFound>> GetOrderById(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {
-        var result = await orderService.GetOrderByIdAsync(id);
+        var result = await orderService.GetOrderDtoByIdAsync(id);
 
-        return result is OrderIn model ? TypedResults.Ok(model) : TypedResults.NotFound();
+        return result is Dto.OrderIn dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
     }
 }

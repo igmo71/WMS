@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.ProductServices;
-using WMS.Shared.Models.Catalogs;
+using WMS.Backend.Domain.Models.Catalogs;
 
 namespace WMS.Backend.WebApi.Endpoints
 {
@@ -29,9 +29,9 @@ namespace WMS.Backend.WebApi.Endpoints
 
         private static async Task<Results<Created<Product>, ProblemHttpResult>> CreateProduct(
             [FromServices] IProductService productService,
-            [FromBody] CreateProductCommand createCommand)
+            [FromBody] Product product)
         {
-            var result = await productService.CreateProductAsync(createCommand);
+            var result = await productService.CreateProductAsync(product);
 
             return TypedResults.Created($"/api/products/{result.Id}", result);
         }
@@ -59,9 +59,10 @@ namespace WMS.Backend.WebApi.Endpoints
             [FromServices] IProductService productService,
             [FromQuery] string? orderBy,
             [FromQuery] int? skip = null,
-            [FromQuery] int? take = null)
+            [FromQuery] int? take = null,
+            [FromQuery] string? nameSubstring = null)
         {
-            var productQuery = new ProductQuery(orderBy, skip, take);
+            var productQuery = new ProductQuery(orderBy, skip, take, nameSubstring);
 
             var result = await productService.GetProductListAsync(productQuery);
 

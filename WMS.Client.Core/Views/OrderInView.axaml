@@ -7,9 +7,11 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.OrderInView"
 			 x:DataType="vm:OrderInViewModel">
-	<Grid RowDefinitions="Auto, *"
+	<Grid RowDefinitions="Auto, Auto, *"
 		  Margin="5">
-		<StackPanel Grid.Row="0"
+		<Button Content="Save"
+				Command="{Binding SaveCommand}"/>
+		<StackPanel Grid.Row="1"
 					Orientation="Horizontal">
 			<Label VerticalAlignment="Center"
 				   Content="Number"/>
@@ -18,7 +20,7 @@
 				   Content="Date"/>
 			<TextBox Text="{Binding Model.DateTime}"/>
 		</StackPanel>
-		<DataGrid Grid.Row="1"
+		<DataGrid Grid.Row="2"
 				  ItemsSource="{Binding Products}"
 				  Margin="0,5,0,0"
 				  BorderThickness="1"

@@ -1,82 +1,105 @@
 ﻿using Serilog;
 using Serilog.Events;
 using SerilogTracing;
+using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Shared.Models.Documents;
+using WMS.Backend.Domain.Models.Documents;
+using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderServices
 {
-    internal class OrderInService(
-        IOrderInRepository orderRepository,
-        IOrderInProductRepository orderProductRepository) : IOrderInService
+    internal class OrderInService(IOrderInRepository orderRepository, IOrderInEventProducer orderEventProducer) : IOrderInService
     {
-        private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
-        private readonly IOrderInProductRepository _orderProductRepository = orderProductRepository;
+        private readonly IOrderInEventProducer _orderEventProducer = orderEventProducer;
+        private readonly ILogger _log = Log.ForContext<OrderInService>();
 
-        public async Task<OrderIn> CreateOrderAsync(CreateOrderInCommand createOrderCommand)
+        public async Task<Dto.OrderIn> CreateOrderByDtoAsync(Dto.OrderIn newOrderDto)
         {
-            await using var transaction = await _orderRepository.BeginTransactionAsync();
+            var newOrder = OrderInMapping.FromDto(newOrderDto);
 
-            try
-            {
-                var order = await _orderRepository.CreateAsync(createOrderCommand);
+            var order = await CreateOrderAsync(newOrder);
 
-                var productCount = await _orderProductRepository.CreateRangeAsync(order.Id, createOrderCommand.Products);
+            var orderDto = OrderInMapping.ToDto(order);
 
-                _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
+            await _orderEventProducer.OrderCreatedEventProduce(orderDto);
 
-                await transaction.CommitAsync();
-
-                return order;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return orderDto;
         }
 
-        public async Task<bool> UpdateOrderAsync(Guid id, OrderIn order)
+        public async Task<OrderIn> CreateOrderAsync(OrderIn newOrder)
         {
-            var result = await _orderRepository.UpdateAsync(id, order);
+            var order = await _orderRepository.CreateAsync(newOrder);
 
-            _log.Debug("{Source} {IsSuccess} {OrderId} {@Order}", nameof(UpdateOrderAsync), result, id, order);
+            _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
 
-            return result;
+            return order;
         }
 
-        public async Task<bool> DeleteOrderAsync(Guid id)
+        public async Task UpdateOrderByDtoAsync(Guid id, Dto.OrderIn orderDto)
         {
-            var result = await _orderRepository.DeleteAsync(id);
+            var order = OrderInMapping.FromDto(orderDto);
 
-            _log.Debug("{Source} {IsSuccess} {@OrderId}", nameof(DeleteOrderAsync), result, id);
+            await UpdateOrderAsync(id, order);
 
-            return result;
+            await _orderEventProducer.OrderUpdatedEventProduce(orderDto);
+
+            _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
         }
 
-        public async Task<List<OrderIn>> GetOrderListAsync(OrderQuery orderQuery)
+        public async Task UpdateOrderAsync(Guid id, OrderIn order)
         {
-            using var activityListener = _log.StartActivity(LogEventLevel.Debug, "{Source} {@OrderQuery}", nameof(GetOrderListAsync), orderQuery);
+            await _orderRepository.UpdateAsync(id, order);
+
+            _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderAsync), id, order);
+        }
+
+        public async Task DeleteOrderAsync(Guid id)
+        {
+            await _orderRepository.DeleteAsync(id);
+
+            await _orderEventProducer.OrderDeletedEventProduce(id);
+
+            _log.Debug("{Source} {OrderId}", nameof(DeleteOrderAsync), id);
+        }
+
+        public async Task<List<Dto.OrderIn>> GetOrderDtoListAsync(OrderInGetListQuery orderQuery)
+        {
+            var orders = await GetOrderListAsync(orderQuery);
+
+            var orderDtoList = orders.Select(o => OrderInMapping.ToDto(o)).ToList();
+
+            return orderDtoList;
+        }
+
+        public async Task<List<OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery)
+        {
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {@OrderQuery}", nameof(GetOrderListAsync), orderQuery);
 
             var orders = await _orderRepository.GetListAsync(orderQuery);
 
-            activityListener.AddProperty("Orders", orders, destructureObjects: true);
+            activity.AddProperty("Orders", orders, destructureObjects: true);
 
             return orders;
         }
 
+        public async Task<Dto.OrderIn?> GetOrderDtoByIdAsync(Guid id)
+        {
+            var order = await GetOrderByIdAsync(id);
+
+            var orderDto = OrderInMapping.ToDto(order);
+
+            return orderDto;
+        }
+
         public async Task<OrderIn?> GetOrderByIdAsync(Guid id)
         {
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {OrderId}", nameof(GetOrderByIdAsync), id);
+
             var order = await _orderRepository.GetByIdAsync(id);
 
-            if (order is not null)
-            {
-                var products = await _orderProductRepository.GetListAsync(id);
-                order.Products = products;
-            }
-
-            _log.Debug("{Source} {OrderId} {@Order}", nameof(GetOrderListAsync), id, order);
+            activity.AddProperty("Order", order, destructureObjects: true);
 
             return order;
         }

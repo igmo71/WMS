@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Repositories;
 using WMS.Shared.Models.Catalogs;
@@ -17,10 +18,14 @@ namespace WMS.Client.Core.ViewModels
         internal OrderIn Model => _model;
         internal ObservableCollection<OrderInProduct> Products => _products;
 
+        internal RelayCommand SaveCommand { get; }
+
         internal OrderInViewModel(OrderIn model)
         {
             _model = model;
             UpdateProducts();
+
+            SaveCommand = new RelayCommand(p => EntityRepositoryFactory.Get<OrderIn>().Update(_model));
         }
 
         private void UpdateProducts()
