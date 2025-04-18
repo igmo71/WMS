@@ -25,26 +25,26 @@ public static class OrderInEndpoints
     }
 
     private static async Task<Created<Dto.OrderIn>> CreateOrder(
-        [FromServices] IOrderInService orderService,
+        [FromServices] IOrderInWebService orderService,
         [FromBody] Dto.OrderIn orderDto)
     {
-        var result = await orderService.CreateOrderByDtoAsync(orderDto);
+        var result = await orderService.CreateOrderAsync(orderDto);
 
         return TypedResults.Created($"/api/orders-in/{result.Id}", result);
     }
 
     private static async Task<Results<NoContent, NotFound>> UpdateOrder(
-        [FromServices] IOrderInService orderService,
+        [FromServices] IOrderInWebService orderService,
         [FromRoute] Guid id,
         [FromBody] Dto.OrderIn order)
     {
-        await orderService.UpdateOrderByDtoAsync(id, order);
+        await orderService.UpdateOrderAsync(id, order);
 
         return TypedResults.NoContent();
     }
 
     private static async Task<Results<NoContent, NotFound>> DeleteOrder(
-        [FromServices] IOrderInService orderService,
+        [FromServices] IOrderInWebService orderService,
         [FromRoute] Guid id)
     {
         await orderService.DeleteOrderAsync(id);
@@ -53,7 +53,7 @@ public static class OrderInEndpoints
     }
 
     private static async Task<Results<Ok<List<Dto.OrderIn>>, NotFound>> GetOrderList(
-        [FromServices] IOrderInService orderService,
+        [FromServices] IOrderInWebService orderService,
         [FromQuery] string? orderBy = null,
         [FromQuery] int? skip = null,
         [FromQuery] int? take = null,
@@ -63,16 +63,16 @@ public static class OrderInEndpoints
     {
         var orderQuery = new OrderInGetListQuery(orderBy, skip, take, dateBegin, dateEnd, numberSubstring);
 
-        var result = await orderService.GetOrderDtoListAsync(orderQuery);
+        var result = await orderService.GetOrderListAsync(orderQuery);
 
         return result is List<Dto.OrderIn> dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
     }
 
     private static async Task<Results<Ok<Dto.OrderIn>, NotFound>> GetOrderById(
-        [FromServices] IOrderInService orderService,
+        [FromServices] IOrderInWebService orderService,
         [FromRoute] Guid id)
     {
-        var result = await orderService.GetOrderDtoByIdAsync(id);
+        var result = await orderService.GetOrderByIdAsync(id);
 
         return result is Dto.OrderIn dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
     }
