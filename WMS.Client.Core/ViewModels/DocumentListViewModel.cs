@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
@@ -23,6 +24,7 @@ namespace WMS.Client.Core.ViewModels
         {
             _name = name;
             _repository = repository;
+            _repository.EntityUpdated += OnEntityUpdated;
 
             GetDocuments();
 
@@ -38,6 +40,17 @@ namespace WMS.Client.Core.ViewModels
                     }
                 }
             });
+        }
+
+        private void OnEntityUpdated(object? sender, EntityChangedEventArgs e)
+        {
+            if (_repository.Type == e.Entity.GetType()) 
+            {
+                //int index = _documents.ToList().FindIndex((d) => d.Id == e.Entity.Id);
+                //if (index > 0)
+                //    _documents[index] = e.Entity as Document ?? throw new InvalidCastException();
+                GetDocuments();
+            }
         }
 
         private void GetDocuments()
