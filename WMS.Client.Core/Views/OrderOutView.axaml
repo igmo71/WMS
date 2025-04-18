@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
+			 xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WMS.Client.Core.Views.OrderOutView"
+			 x:DataType="vm:OrderOutViewModel">
+	<Grid RowDefinitions="Auto, *"
+		  Margin="5">
+		<StackPanel Grid.Row="0"
+					Orientation="Horizontal">
+			<Label VerticalAlignment="Center"
+				   Content="Number"/>
+			<TextBox Text="{Binding Model.Number}"/>
+			<Label VerticalAlignment="Center"
+				   Content="Date"/>
+			<TextBox Text="{Binding Model.DateTime}"/>
+		</StackPanel>
+		<DataGrid Grid.Row="1"
+				  ItemsSource="{Binding Products}"
+				  Margin="0,5,0,0"
+				  BorderThickness="1"
+				  BorderBrush="Gray"
+				  GridLinesVisibility="All">
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="Product" 
+									Binding="{Binding Product.Name}"
+									Width="2*"/>
+				<DataGridTextColumn Header="Count"
+									Binding="{Binding Count}"
+									Width="*"/>
+			</DataGrid.Columns>
+		</DataGrid>
+	</Grid>
+</UserControl>
