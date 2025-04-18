@@ -14,7 +14,7 @@ namespace WMS.Backend.Domain.Models
 
         protected EntityArchive(T archive, ArchiveOperation operation)
         {
-            DateTime = DateTime.UtcNow;
+            DateTime = DateTime.Now;
             Operation = operation;
             ArchiveId = archive.Id;
             Archive = JsonSerializer.Serialize(archive, AppConfig.JsonSerializerOptions);

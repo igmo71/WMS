@@ -28,6 +28,9 @@ namespace WMS.Backend.Infrastructure.Data
             modelBuilder.Entity<OrderIn>().HasKey(e => e.Id);
             modelBuilder.Entity<OrderIn>().Property(e => e.Number).HasMaxLength(AppConfig.NUMBER_MAX_LENGTH);
             modelBuilder.Entity<OrderIn>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
+            modelBuilder.Entity<OrderIn>().Property(e => e.DateTime).HasConversion(
+                dt => DateTime.SpecifyKind(dt, DateTimeKind.Local).ToUniversalTime(),
+                dt => dt.ToLocalTime());
             modelBuilder.Entity<OrderIn>().HasMany(e => e.Products).WithOne(e => e.Order)
                 .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -38,10 +41,16 @@ namespace WMS.Backend.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OrderInArchive>().HasKey(e => e.Id);
+            modelBuilder.Entity<OrderInArchive>().Property(e => e.DateTime).HasConversion(
+                dt => DateTime.SpecifyKind(dt, DateTimeKind.Local).ToUniversalTime(),
+                dt => dt.ToLocalTime());
 
             modelBuilder.Entity<OrderOut>().HasKey(e => e.Id);
             modelBuilder.Entity<OrderOut>().Property(e => e.Number).HasMaxLength(AppConfig.NUMBER_MAX_LENGTH);
             modelBuilder.Entity<OrderOut>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
+            modelBuilder.Entity<OrderOut>().Property(e => e.DateTime).HasConversion(
+                dt => DateTime.SpecifyKind(dt, DateTimeKind.Local).ToUniversalTime(),
+                dt => dt.ToLocalTime());
             modelBuilder.Entity<OrderOut>().HasMany(e => e.Products).WithOne()
                 .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
 

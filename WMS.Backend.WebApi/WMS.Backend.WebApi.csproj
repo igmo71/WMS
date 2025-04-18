@@ -26,8 +26,4 @@
     <ProjectReference Include="..\WMS.Backend.MessageBus\WMS.Backend.MessageBus.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Mapping\" />
-  </ItemGroup>
-
 </Project>

@@ -15,8 +15,10 @@ WORKDIR /src
 COPY ["WMS.Backend.WebApi/WMS.Backend.WebApi.csproj", "WMS.Backend.WebApi/"]
 COPY ["WMS.Backend.Application/WMS.Backend.Application.csproj", "WMS.Backend.Application/"]
 COPY ["WMS.Backend.Domain/WMS.Backend.Domain.csproj", "WMS.Backend.Domain/"]
-COPY ["WMS.Shared.Abstractions/WMS.Shared.Abstractions.csproj", "WMS.Shared.Abstractions/"]
+COPY ["WMS.Backend.Common/WMS.Backend.Common.csproj", "WMS.Backend.Common/"]
+COPY ["WMS.Shared/WMS.Shared.csproj", "WMS.Shared/"]
 COPY ["WMS.Backend.Infrastructure/WMS.Backend.Infrastructure.csproj", "WMS.Backend.Infrastructure/"]
+COPY ["WMS.Backend.MessageBus/WMS.Backend.MessageBus.csproj", "WMS.Backend.MessageBus/"]
 RUN dotnet restore "./WMS.Backend.WebApi/WMS.Backend.WebApi.csproj"
 COPY . .
 WORKDIR "/src/WMS.Backend.WebApi"
