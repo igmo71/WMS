@@ -77,9 +77,9 @@ namespace WMS.Client.Core.Repositories
 
                 for (int i = 0; i < 100; i++)
                 {
-                    List<OrderInProduct> orderProducts = new List<OrderInProduct>();
+                    List<OrderIn.OrderInProduct> orderProducts = new List<OrderIn.OrderInProduct>();
                     for(int j = 0; j < random.Next(1, 100); j++)
-                        orderProducts.Add(new OrderInProduct()
+                        orderProducts.Add(new OrderIn.OrderInProduct()
                         {
                             Count = random.Next(1, 10),
                             ProductId = productsRepository.ElementAt(random.Next(0, productsRepository.Count - 1)).Id
@@ -103,9 +103,9 @@ namespace WMS.Client.Core.Repositories
 
                 for (int i = 0; i < 100; i++)
                 {
-                    List<OrderOutProduct> orderProducts = new List<OrderOutProduct>();
+                    List<OrderOut.OrderOutProduct> orderProducts = new List<OrderOut.OrderOutProduct>();
                     for (int j = 0; j < random.Next(1, 100); j++)
-                        orderProducts.Add(new OrderOutProduct()
+                        orderProducts.Add(new OrderOut.OrderOutProduct()
                         {
                             Count = random.Next(1, 10),
                             ProductId = productsRepository.ElementAt(random.Next(0, productsRepository.Count - 1)).Id
