@@ -7,8 +7,12 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.ProductView"
 			 x:DataType="vm:ProductViewModel">
-	<Grid RowDefinitions="Auto"
+	<Grid RowDefinitions="Auto, Auto"
 		  Margin="5">
-		<TextBox Text="{Binding Model.Name}"/>
+		<Button Content="Save"
+				Margin="0,0,0,5"
+				Command="{Binding SaveCommand}"/>
+		<TextBox Grid.Row="1"
+				 Text="{Binding Model.Name}"/>
 	</Grid>
 </UserControl>

@@ -7,19 +7,24 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.CatalogListView"
 			 x:DataType="vm:CatalogListViewModel">
-	
-	<DataGrid ItemsSource="{Binding Catalog}"
-			  Margin="5"
-			  BorderThickness="1"
-			  BorderBrush="Gray"
-			  GridLinesVisibility="All"
-			  IsReadOnly="True"
-			  bh:DoubleTappedBehaviour.Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-			  bh:DoubleTappedBehaviour.CommandParameter="{Binding $self.SelectedItem}">
-		<DataGrid.Columns>
-			<DataGridTextColumn Header="Name"
-								Binding="{Binding Name}"
-								Width="*"/>
-		</DataGrid.Columns>
-	</DataGrid>
+	<Grid RowDefinitions="Auto, *">
+		<Button Content="Create"
+				Margin="5,5,5,0"
+				Command="{Binding CreateCommand}"/>
+		<DataGrid Grid.Row="1"
+				  ItemsSource="{Binding Catalog}"
+				  Margin="5"
+				  BorderThickness="1"
+				  BorderBrush="Gray"
+				  GridLinesVisibility="All"
+				  IsReadOnly="True"
+				  bh:DoubleTappedBehaviour.Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+				  bh:DoubleTappedBehaviour.CommandParameter="{Binding $self.SelectedItem}">
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="Name"
+									Binding="{Binding Name}"
+									Width="*"/>
+			</DataGrid.Columns>
+		</DataGrid>
+	</Grid>
 </UserControl>

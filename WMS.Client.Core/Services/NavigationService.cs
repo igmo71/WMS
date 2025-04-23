@@ -11,12 +11,12 @@ namespace WMS.Client.Core.Services
         private static readonly Dictionary<string, ViewModelBase> _pages = new Dictionary<string, ViewModelBase>();
         private static ViewModelBase _current;
 
-        internal static List<ViewModelBase> Pages
+        internal static ViewModelBase[] Pages
         {
             get
             {
                 lock (_lock)
-                    return _pages.Select(kvp => kvp.Value).ToList();
+                    return _pages.Select(kvp => kvp.Value).ToArray();
             }
         }
 
@@ -29,8 +29,8 @@ namespace WMS.Client.Core.Services
             }
         }
 
-        internal static event Action<ViewModelBase> CurrentChanged;
-        internal static event Action PagesChanged;
+        internal static event EventHandler<CurrentChangedEventArgs> CurrentChanged;
+        internal static event EventHandler PagesChanged;
 
         static NavigationService() => AddPage(nameof(HomeViewModel), () => new HomeViewModel());
 
@@ -51,7 +51,7 @@ namespace WMS.Client.Core.Services
             }
 
             if (invokeEvent)
-                PagesChanged?.Invoke();
+                PagesChanged?.Invoke(null, EventArgs.Empty);
 
             if (setCurrent)
                 SetCurrent(vm);
@@ -73,7 +73,7 @@ namespace WMS.Client.Core.Services
             }
 
             if (invokeEvent)
-                CurrentChanged?.Invoke(vm);
+                CurrentChanged?.Invoke(null, new CurrentChangedEventArgs(vm));
         }
 
         internal static void ClosePage(ViewModelBase vm)
@@ -85,19 +85,36 @@ namespace WMS.Client.Core.Services
 
             lock (_lock)
             {
-                List<string> keys = _pages.Where(kvp => kvp.Value == vm).Select(kvp => kvp.Key).ToList();
-                if (keys.Any())
+                string key = _pages.FirstOrDefault(kvp => kvp.Value == vm).Key;
+                if (key != null)
                 {
-                    keys.ForEach(k => _pages.Remove(k));
                     invokeEvent = true;
-                    if (_pages.Any())
-                        SetCurrent(_pages.LastOrDefault().Value);
+                    _pages.Remove(key);
                 }
             }
 
             if (invokeEvent)
-                PagesChanged?.Invoke();
+                PagesChanged?.Invoke(null, EventArgs.Empty);
         }
 
+        internal static void UpdateUniqueKey(string newKey, ViewModelBase vm)
+        {
+            lock (_lock)
+            {
+                string oldKey = _pages.FirstOrDefault(kvp => kvp.Value == vm).Key;
+                if (oldKey != null)
+                {
+                    _pages.Remove(oldKey);
+                    _pages.Add(newKey, vm);
+                }
+            }
+        }
+    }
+
+    internal class CurrentChangedEventArgs : EventArgs
+    {
+        internal ViewModelBase ViewModel { get; }
+
+        internal CurrentChangedEventArgs(ViewModelBase vm) => ViewModel = vm;
     }
 }

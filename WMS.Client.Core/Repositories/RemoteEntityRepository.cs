@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Services;
@@ -15,6 +16,8 @@ namespace WMS.Client.Core.Repositories
     {
         private readonly Type _type;
         private readonly string _api;
+
+        Type IEntityRepository.Type => _type;
 
         public event EventHandler<EntityChangedEventArgs> EntityCreated;
         public event EventHandler<EntityChangedEventArgs> EntityDeleted;
@@ -33,8 +36,6 @@ namespace WMS.Client.Core.Repositories
             _api = apis.GetValueOrDefault(_type) ?? throw new NotSupportedException();
         }
 
-        Type IEntityRepository.Type => _type;
-
         IEnumerable<EntityBase> IEntityRepository.GetList()
         {
             Task<IEnumerable<TEntity>> task = HTTPClientProvider.Instance.GetFromJsonAsync<IEnumerable<TEntity>>(_api);
@@ -51,12 +52,15 @@ namespace WMS.Client.Core.Repositories
             return task.Result;
         }
 
-        void IEntityRepository.Create(EntityBase entity)
+        EntityBase IEntityRepository.Create(EntityBase entity)
         {
-            Task<HttpResponseMessage> task = HTTPClientProvider.Instance.PostAsJsonAsync(_api, (TEntity)entity);
-            task.Wait();
+            HttpResponseMessage responce = HTTPClientProvider.Instance.PostAsJsonAsync(_api, (TEntity)entity).GetAwaiter().GetResult();
+            string body = responce.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
-            EntityCreated?.Invoke(this, new EntityChangedEventArgs(entity));
+            EntityBase newEntity = JsonSerializer.Deserialize<TEntity>(body, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase } );
+            EntityCreated?.Invoke(this, new EntityChangedEventArgs(newEntity));
+
+            return newEntity;
         }
 
         void IEntityRepository.Delete(EntityBase entity)
@@ -69,9 +73,7 @@ namespace WMS.Client.Core.Repositories
 
         void IEntityRepository.Update(EntityBase entity)
         {
-            Task<HttpResponseMessage> task = HTTPClientProvider.Instance.PutAsJsonAsync($"{_api}/{entity.Id}", (TEntity)entity);
-            task.Wait();
-
+            HttpResponseMessage responce = HTTPClientProvider.Instance.PutAsJsonAsync($"{_api}/{entity.Id}", (TEntity)entity).GetAwaiter().GetResult();
             EntityUpdated?.Invoke(this, new EntityChangedEventArgs(entity));
         }
     }

@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
@@ -11,18 +12,22 @@ namespace WMS.Client.Core.ViewModels
     internal class CatalogListViewModel : ViewModelBase
     {
         private readonly string _name;
-        private readonly IEntityRepository _repository;
+        private readonly ICatalogDescriptor _descriptor;
         private readonly ObservableCollection<Catalog> _catalog = new ObservableCollection<Catalog>();
 
         internal override string Name => _name;
         internal ObservableCollection<Catalog> Catalog => _catalog;
 
         public RelayCommand OpenCommand { get; }
+        public RelayCommand CreateCommand { get; }
 
-        public CatalogListViewModel(string name, IEntityRepository repository)
+        public CatalogListViewModel(string name, ICatalogDescriptor descriptor)
         {
             _name = name;
-            _repository = repository;
+            _descriptor = descriptor;
+
+            _descriptor.Repository.EntityCreated += OnEntityCreated;
+            _descriptor.Repository.EntityUpdated += OnEntityUpdated;
 
             GetProducts();
 
@@ -30,20 +35,26 @@ namespace WMS.Client.Core.ViewModels
             {
                 if (p is EntityBase header)
                 {
-                    EntityBase entity = _repository.GetById(header.Id);
-                    if (entity != null)
-                    {
-                        ViewModelDescriptor descriptor = ViewModelResolver.GetMain(entity);
-                        NavigationService.AddPage(descriptor.UniqueKey, descriptor.Factory);
-                    }
+                    ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id) as Catalog ?? throw new InvalidCastException());
+                    NavigationService.AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
                 }
             });
+
+            CreateCommand = new RelayCommand((p) =>
+            {
+                ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.CreateNew());
+                NavigationService.AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
+            });
         }
+
+        private void OnEntityUpdated(object? sender, EntityChangedEventArgs e) => GetProducts();
+
+        private void OnEntityCreated(object? sender, EntityChangedEventArgs e) => GetProducts();
 
         private void GetProducts()
         {
             _catalog.Clear();
-            _repository.GetList().OfType<Catalog>().ToList().ForEach(_catalog.Add);
+            _descriptor.Repository.GetList().OfType<Catalog>().ToList().ForEach(_catalog.Add);
         }
     }
 }

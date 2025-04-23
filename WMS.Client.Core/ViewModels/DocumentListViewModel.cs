@@ -4,7 +4,6 @@ using System.Linq;
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Services;
-using WMS.Shared.Models;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.ViewModels
@@ -12,7 +11,7 @@ namespace WMS.Client.Core.ViewModels
     internal class DocumentListViewModel : ViewModelBase
     {
         private readonly string _name;
-        private readonly IEntityRepository _repository;
+        private readonly IDocumentDescriptor _descriptor;
         private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();
 
         internal override string Name => _name;
@@ -20,31 +19,27 @@ namespace WMS.Client.Core.ViewModels
 
         public RelayCommand OpenCommand { get; }
 
-        public DocumentListViewModel(string name, IEntityRepository repository)
+        public DocumentListViewModel(string name, IDocumentDescriptor descriptor)
         {
             _name = name;
-            _repository = repository;
-            _repository.EntityUpdated += OnEntityUpdated;
+            _descriptor = descriptor;
+            _descriptor.Repository.EntityUpdated += OnEntityUpdated;
 
             GetDocuments();
 
             OpenCommand = new RelayCommand((p) =>
             {
-                if (p is EntityBase header)
+                if (p is Document header)
                 {
-                    EntityBase entity = _repository.GetById(header.Id);
-                    if (entity != null)
-                    {
-                        ViewModelDescriptor descriptor = ViewModelResolver.GetMain(entity);
-                        NavigationService.AddPage(descriptor.UniqueKey, descriptor.Factory);
-                    }
+                    ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id) as Document ?? throw new InvalidCastException());
+                    NavigationService.AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
                 }
             });
         }
 
         private void OnEntityUpdated(object? sender, EntityChangedEventArgs e)
         {
-            if (_repository.Type == e.Entity.GetType()) 
+            if (_descriptor.Repository.Type == e.Entity.GetType())
             {
                 //int index = _documents.ToList().FindIndex((d) => d.Id == e.Entity.Id);
                 //if (index > 0)
@@ -56,7 +51,7 @@ namespace WMS.Client.Core.ViewModels
         private void GetDocuments()
         {
             _documents.Clear();
-            _repository.GetList().OfType<Document>().ToList().ForEach(_documents.Add);
+            _descriptor.Repository.GetList().OfType<Document>().ToList().ForEach(_documents.Add);
         }
     }
 }

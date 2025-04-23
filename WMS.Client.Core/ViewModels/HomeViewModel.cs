@@ -1,4 +1,5 @@
-﻿using WMS.Client.Core.Infrastructure;
+﻿using WMS.Client.Core.Descriptors;
+using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Services;
 using WMS.Shared.Models.Catalogs;
 using WMS.Shared.Models.Documents;
@@ -17,19 +18,19 @@ namespace WMS.Client.Core.ViewModels
         {
             OrderInCommand = new RelayCommand((p) => 
             {
-                ViewModelDescriptor descriptor = ViewModelResolver.GetList(typeof(OrderIn));
+                ViewModelDescriptor descriptor = EntityDescriptorFactory.GetDocument<OrderIn>().GetList();
                 NavigationService.AddPage(descriptor.UniqueKey, descriptor.Factory);
             });
 
             OrderOutCommand = new RelayCommand((p) => 
             {
-                ViewModelDescriptor descriptor = ViewModelResolver.GetList(typeof(OrderOut));
+                ViewModelDescriptor descriptor = EntityDescriptorFactory.GetDocument<OrderOut>().GetList();
                 NavigationService.AddPage(descriptor.UniqueKey, descriptor.Factory);
             });
 
             ProductsCommand = new RelayCommand((p) => 
             {
-                ViewModelDescriptor descriptor = ViewModelResolver.GetList(typeof(Product));
+                ViewModelDescriptor descriptor = EntityDescriptorFactory.GetCatalog<Product>().GetList();
                 NavigationService.AddPage(descriptor.UniqueKey, descriptor.Factory);
             });
         }

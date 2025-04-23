@@ -13,7 +13,7 @@ namespace WMS.Client.Core.Interfaces
         internal Type Type { get; }
         internal EntityBase GetById(Guid id);
         internal IEnumerable<EntityBase> GetList();
-        internal void Create(EntityBase entity);
+        internal EntityBase Create(EntityBase entity);
         internal void Delete(EntityBase entity);
         internal void Update(EntityBase entity);
 

@@ -24,15 +24,19 @@ namespace WMS.Client.Core.Repositories
 
         IEnumerable<EntityBase> IEntityRepository.GetList() => _entities.ToArray();
 
-        void IEntityRepository.Create(EntityBase entity)
+        EntityBase IEntityRepository.Create(EntityBase entity)
         {
             if (entity is TEntity item)
             {
                 if (_entities.Any(e => e.Id == item.Id))
                     throw new InvalidOperationException();
 
+                item.Id = Guid.NewGuid();
+
                 _entities.Add(item);
                 EntityCreated?.Invoke(this, new EntityChangedEventArgs(entity));
+
+                return entity;
             }
             else
                 throw new ArgumentException();
