@@ -5,7 +5,7 @@ using WMS.Client.Core.Repositories;
 using WMS.Shared.Models.Catalogs;
 using WMS.Shared.Models.Documents;
 
-namespace WMS.Client.Core.ViewModels
+namespace WMS.Client.Core.ViewModels.Documents
 {
     internal class OrderOutViewModel : ViewModelBase
     {
@@ -13,7 +13,7 @@ namespace WMS.Client.Core.ViewModels
         private readonly ObservableCollection<OrderOutProduct> _products = new ObservableCollection<OrderOutProduct>();
         private readonly IEntityRepository productsRepository = EntityRepositoryFactory.Get<Product>();
 
-        internal override string Name => $"{nameof(OrderOut)} {_model.Number} {_model.DateTime}";
+        internal override string Title => $"{nameof(OrderOut)} {_model.Number} {_model.DateTime}";
         internal OrderOut Model => _model;
         internal ObservableCollection<OrderOutProduct> Products => _products;
 

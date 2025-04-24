@@ -7,7 +7,7 @@ using WMS.Client.Core.Services;
 using WMS.Shared.Models;
 using WMS.Shared.Models.Catalogs;
 
-namespace WMS.Client.Core.ViewModels
+namespace WMS.Client.Core.ViewModels.Catalogs
 {
     internal class CatalogListViewModel : ViewModelBase
     {
@@ -15,7 +15,7 @@ namespace WMS.Client.Core.ViewModels
         private readonly ICatalogDescriptor _descriptor;
         private readonly ObservableCollection<Catalog> _catalog = new ObservableCollection<Catalog>();
 
-        internal override string Name => _name;
+        internal override string Title => _name;
         internal ObservableCollection<Catalog> Catalog => _catalog;
 
         public RelayCommand OpenCommand { get; }

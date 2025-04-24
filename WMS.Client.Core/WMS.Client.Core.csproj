@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Views\CatalogListView.axaml.cs">
+    <Compile Update="Views\Catalogs\CatalogListView.axaml.cs">
       <DependentUpon>CatalogListView.axaml</DependentUpon>
     </Compile>
     <Compile Update="Views\HomeView.axaml.cs">
@@ -36,10 +36,10 @@
     <Compile Update="Views\MainView.axaml.cs">
       <DependentUpon>MainView.axaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\ProductView.axaml.cs">
+    <Compile Update="Views\Catalogs\ProductView.axaml.cs">
       <DependentUpon>ProductView.axaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\OrderOutView.axaml.cs">
+    <Compile Update="Views\Documents\OrderOutView.axaml.cs">
       <DependentUpon>OrderOutView.axaml</DependentUpon>
     </Compile>
   </ItemGroup>

@@ -2,7 +2,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using System;
 using WMS.Client.Core.ViewModels;
+using WMS.Client.Core.ViewModels.Catalogs;
+using WMS.Client.Core.ViewModels.Documents;
 using WMS.Client.Core.Views;
+using WMS.Client.Core.Views.Catalogs;
+using WMS.Client.Core.Views.Documents;
 
 namespace WMS.Client.Core.Services
 {

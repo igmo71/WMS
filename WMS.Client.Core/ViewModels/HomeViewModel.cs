@@ -8,7 +8,7 @@ namespace WMS.Client.Core.ViewModels
 {
     internal class HomeViewModel : ViewModelBase
     {
-        internal override string Name => "Home";
+        internal override string Title => "Home";
         internal override bool Persistent => true;
         internal RelayCommand OrderInCommand { get; }
         internal RelayCommand OrderOutCommand { get; }

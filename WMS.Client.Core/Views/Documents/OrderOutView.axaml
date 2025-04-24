@@ -2,16 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
+             xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels.Documents"
 			 xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="WMS.Client.Core.Views.OrderInView"
-			 x:DataType="vm:OrderInViewModel">
-	<Grid RowDefinitions="Auto, Auto, *"
+             x:Class="WMS.Client.Core.Views.Documents.OrderOutView"
+			 x:DataType="vm:OrderOutViewModel">
+	<Grid RowDefinitions="Auto, *"
 		  Margin="5">
-		<Button Content="Save"
-				Command="{Binding SaveCommand}"/>
-		<StackPanel Grid.Row="1"
+		<StackPanel Grid.Row="0"
 					Orientation="Horizontal">
 			<Label VerticalAlignment="Center"
 				   Content="Number"/>
@@ -20,7 +18,7 @@
 				   Content="Date"/>
 			<TextBox Text="{Binding Model.DateTime}"/>
 		</StackPanel>
-		<DataGrid Grid.Row="2"
+		<DataGrid Grid.Row="1"
 				  ItemsSource="{Binding Products}"
 				  Margin="0,5,0,0"
 				  BorderThickness="1"

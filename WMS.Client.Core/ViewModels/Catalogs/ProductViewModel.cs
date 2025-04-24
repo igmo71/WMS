@@ -5,14 +5,14 @@ using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Services;
 using WMS.Shared.Models.Catalogs;
 
-namespace WMS.Client.Core.ViewModels
+namespace WMS.Client.Core.ViewModels.Catalogs
 {
     internal class ProductViewModel : ViewModelBase
     {
         private Product _model;
         private ICatalogDescriptor _descriptor = EntityDescriptorFactory.GetCatalog<Product>();
 
-        internal override string Name => _model.Id != Guid.Empty ? $"Product: {_model.Name}" : $"Product: New";
+        internal override string Title => _model.Id != Guid.Empty ? $"Product: {_model.Name}" : $"Product: New";
         internal Product Model { get => LockAndGet(ref _model); private set => SetAndNotify(ref _model, value); }
 
         internal RelayCommand SaveCommand { get; }
@@ -34,7 +34,7 @@ namespace WMS.Client.Core.ViewModels
                     OnPropertyChanged(nameof(Model));
                 }
 
-                OnPropertyChanged(nameof(Name));
+                OnPropertyChanged(nameof(Title));
             });
         }
     }

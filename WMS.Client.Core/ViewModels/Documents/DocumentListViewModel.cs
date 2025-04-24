@@ -6,7 +6,7 @@ using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Services;
 using WMS.Shared.Models.Documents;
 
-namespace WMS.Client.Core.ViewModels
+namespace WMS.Client.Core.ViewModels.Documents
 {
     internal class DocumentListViewModel : ViewModelBase
     {
@@ -14,7 +14,7 @@ namespace WMS.Client.Core.ViewModels
         private readonly IDocumentDescriptor _descriptor;
         private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();
 
-        internal override string Name => _name;
+        internal override string Title => _name;
         internal ObservableCollection<Document> Documents { get => _documents; }
 
         public RelayCommand OpenCommand { get; }

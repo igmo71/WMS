@@ -6,7 +6,7 @@ using WMS.Client.Core.Repositories;
 using WMS.Shared.Models.Catalogs;
 using WMS.Shared.Models.Documents;
 
-namespace WMS.Client.Core.ViewModels
+namespace WMS.Client.Core.ViewModels.Documents
 {
     internal class OrderInViewModel : ViewModelBase
     {
@@ -14,7 +14,7 @@ namespace WMS.Client.Core.ViewModels
         private readonly ObservableCollection<OrderInProduct> _products = new ObservableCollection<OrderInProduct>();
         private readonly IEntityRepository productsRepository = EntityRepositoryFactory.Get<Product>();
 
-        internal override string Name => $"{nameof(OrderIn)} {_model.Number} {_model.DateTime}";
+        internal override string Title => $"{nameof(OrderIn)} {_model.Number} {_model.DateTime}";
         internal OrderIn Model => _model;
         internal ObservableCollection<OrderInProduct> Products => _products;
 

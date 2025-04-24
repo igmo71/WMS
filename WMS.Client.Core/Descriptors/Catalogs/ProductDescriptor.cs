@@ -2,7 +2,7 @@
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Repositories;
-using WMS.Client.Core.ViewModels;
+using WMS.Client.Core.ViewModels.Catalogs;
 using WMS.Shared.Models.Catalogs;
 
 namespace WMS.Client.Core.Descriptors.Catalogs
