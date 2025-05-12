@@ -27,7 +27,7 @@ namespace WMS.Backend.Infrastructure.Repositories
             var existingOrder = await _dbContext.OrdersIn
                 .Include(e => e.Products)
                 .FirstOrDefaultAsync(e => e.Id == id)
-                    ?? throw new ApplicationException($"Order Not Found by {id}");
+                    ?? throw new NotFoundException(nameof(OrderIn), id);
 
             if (_appSettings.UseArchiving)
                 await _dbContext.OrdersInArchive.AddAsync(new OrderInArchive(existingOrder, ArchiveOperation.Update));
@@ -47,10 +47,8 @@ namespace WMS.Backend.Infrastructure.Repositories
         {
             var existingOrder = await _dbContext.OrdersIn
                 .Include(e => e.Products)
-                .FirstOrDefaultAsync(e => e.Id == id);
-
-            if (existingOrder == null)
-                return;
+                .FirstOrDefaultAsync(e => e.Id == id)
+                    ?? throw new NotFoundException(nameof(OrderIn), id);
 
             if (_appSettings.UseArchiving)
                 await _dbContext.OrdersInArchive.AddAsync(new OrderInArchive(existingOrder, ArchiveOperation.Delete));

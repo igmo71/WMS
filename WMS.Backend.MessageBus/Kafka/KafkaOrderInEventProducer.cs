@@ -15,7 +15,7 @@ namespace WMS.Backend.MessageBus.Kafka
         public KafkaOrderInEventProducer(IConfiguration configuration)
         {
             _kafkaConfig = configuration.GetSection(KafkaConfig.Section).Get<KafkaConfig>()
-                ?? throw new ApplicationException("Kafka Configuration Not Found");
+                ?? throw new InvalidOperationException("Kafka Configuration Not Found");
 
             var producerConfig = new ProducerConfig
             {
@@ -51,7 +51,7 @@ namespace WMS.Backend.MessageBus.Kafka
             var cts = new CancellationTokenSource(1000);
             try
             {
-                var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInUpdated, message);
+                var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInUpdated, message, cts.Token);
 
                 _log.Debug("{Source} {Topic} {@OrderIn}", nameof(OrderCreatedEventProduce), KafkaConfig.OrderInUpdated, orderDto);
             }
@@ -67,7 +67,7 @@ namespace WMS.Backend.MessageBus.Kafka
             var cts = new CancellationTokenSource(1000);
             try
             {
-                var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInDeleted, message);
+                var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInDeleted, message, cts.Token);
 
                 _log.Debug("{Source} {Topic} {OrderId}", nameof(OrderDeletedEventProduce), KafkaConfig.OrderInUpdated, orderId);
             }
