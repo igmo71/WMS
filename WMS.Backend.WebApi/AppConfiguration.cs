@@ -3,9 +3,9 @@ using SerilogTracing;
 
 namespace WMS.Backend.WebApi
 {
-    public class AppConfiguration
+    internal class AppConfiguration
     {
-        public static void ConfigureSerilog()
+        internal static void ConfigureSerilog()
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
@@ -20,7 +20,7 @@ namespace WMS.Backend.WebApi
                 .CreateLogger();
         }
 
-        public static IDisposable ConfigureSerilogTrasing()
+        internal static IDisposable ConfigureSerilogTrasing()
         {
             var activityListener = new ActivityListenerConfiguration()
                 .Instrument.WithDefaultInstrumentation(withDefaults: true) // TODO: ???
