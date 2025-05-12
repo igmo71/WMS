@@ -69,6 +69,8 @@ namespace WMS.Backend.WebApi
                 // TODO: CorrelationId Не используется сейчас
                 //app.UseMiddleware<CorrelationIdMiddleware>();
 
+                app.UseSerilogRequestLogging();
+
                 app.UseHttpsRedirection();
 
                 app.UseAuthorization();
