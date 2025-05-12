@@ -13,8 +13,8 @@ namespace WMS.Backend.Infrastructure.Repositories
                 : query.OrderBy(RepoUtils.GetOrderByExpression<OrderIn>(orderQuery.OrderBy));
 
             query = query
-                .Skip(orderQuery.Skip ?? AppConfig.DEFAULT_SKIP)
-                .Take(orderQuery.Take ?? AppConfig.DEFAULT_TAKE);
+                .Skip(orderQuery.Skip ?? AppSettings.DEFAULT_SKIP)
+                .Take(orderQuery.Take ?? AppSettings.DEFAULT_TAKE);
 
             if (orderQuery.DateBegin is not null)
                 query = query.Where(e => e.DateTime >= orderQuery.DateBegin);
