@@ -13,8 +13,8 @@ namespace WMS.Backend.Infrastructure.Repositories
                 : query.OrderBy(RepoUtils.GetOrderByExpression<Product>(productQuery.orderBy));
 
             query = query
-                .Skip(productQuery.Skip ?? AppConfig.DEFAULT_SKIP)
-                .Take(productQuery.Take ?? AppConfig.DEFAULT_TAKE);
+                .Skip(productQuery.Skip ?? AppSettings.DEFAULT_SKIP)
+                .Take(productQuery.Take ?? AppSettings.DEFAULT_TAKE);
 
             if (!string.IsNullOrEmpty(productQuery.NameSubstring))
                 query = query.Where(e => e.Name != null && e.Name.Contains(productQuery.NameSubstring));

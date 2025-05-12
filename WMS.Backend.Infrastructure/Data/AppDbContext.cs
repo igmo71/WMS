@@ -26,8 +26,8 @@ namespace WMS.Backend.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderIn>().HasKey(e => e.Id);
-            modelBuilder.Entity<OrderIn>().Property(e => e.Number).HasMaxLength(AppConfig.NUMBER_MAX_LENGTH);
-            modelBuilder.Entity<OrderIn>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
+            modelBuilder.Entity<OrderIn>().Property(e => e.Number).HasMaxLength(AppSettings.NUMBER_MAX_LENGTH);
+            modelBuilder.Entity<OrderIn>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);
             modelBuilder.Entity<OrderIn>().Property(e => e.DateTime).HasConversion(
                 dt => DateTime.SpecifyKind(dt, DateTimeKind.Local).ToUniversalTime(),
                 dt => dt.ToLocalTime());
@@ -46,8 +46,8 @@ namespace WMS.Backend.Infrastructure.Data
                 dt => dt.ToLocalTime());
 
             modelBuilder.Entity<OrderOut>().HasKey(e => e.Id);
-            modelBuilder.Entity<OrderOut>().Property(e => e.Number).HasMaxLength(AppConfig.NUMBER_MAX_LENGTH);
-            modelBuilder.Entity<OrderOut>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
+            modelBuilder.Entity<OrderOut>().Property(e => e.Number).HasMaxLength(AppSettings.NUMBER_MAX_LENGTH);
+            modelBuilder.Entity<OrderOut>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);
             modelBuilder.Entity<OrderOut>().Property(e => e.DateTime).HasConversion(
                 dt => DateTime.SpecifyKind(dt, DateTimeKind.Local).ToUniversalTime(),
                 dt => dt.ToLocalTime());
@@ -57,10 +57,10 @@ namespace WMS.Backend.Infrastructure.Data
             modelBuilder.Entity<OrderOutProduct>().HasKey(e => new { e.OrderId, e.ProductId });
 
             modelBuilder.Entity<Product>().HasKey(e => e.Id);
-            modelBuilder.Entity<Product>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
+            modelBuilder.Entity<Product>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);
 
             modelBuilder.Entity<Warehouse>().HasKey(e => e.Id);
-            modelBuilder.Entity<Warehouse>().Property(e => e.Name).HasMaxLength(AppConfig.NAME_MAX_LENGTH);
+            modelBuilder.Entity<Warehouse>().Property(e => e.Name).HasMaxLength(AppSettings.NAME_MAX_LENGTH);
         }
     }
 }
