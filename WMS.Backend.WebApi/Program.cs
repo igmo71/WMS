@@ -32,6 +32,8 @@ namespace WMS.Backend.WebApi
                 //builder.Services.AddSingleton<ICorrelationContext, CorrelationContext>();
                 //builder.Services.AddTransient<CorrelationIdMiddleware>();
 
+                builder.Services.AddProblemDetails();
+                builder.Services.AddExceptionHandler<AppExceptionHandler>();
 
                 builder.Services.AddOpenApi();
 
@@ -55,6 +57,9 @@ namespace WMS.Backend.WebApi
 
                 var app = builder.Build();
 
+                app.UseExceptionHandler();
+                //app.UseStatusCodePages();
+
                 //if (app.Environment.IsDevelopment())
                 {
                     app.MapOpenApi();
@@ -65,6 +70,8 @@ namespace WMS.Backend.WebApi
                     //    options.SwaggerEndpoint("/openapi/v1.json", "OpenAPI V1");
                     //});
                 }
+
+                app.UseSerilogRequestLogging();
 
                 // TODO: CorrelationId Не используется сейчас
                 //app.UseMiddleware<CorrelationIdMiddleware>();
