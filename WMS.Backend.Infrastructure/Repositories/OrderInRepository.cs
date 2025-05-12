@@ -34,13 +34,11 @@ namespace WMS.Backend.Infrastructure.Repositories
 
             _dbContext.Entry(existingOrder).CurrentValues.SetValues(updatedOrder);
 
-            if (updatedOrder.Products is not null)
-            {
-                if (existingOrder.Products is not null)
-                    _dbContext.OrderInProducts.RemoveRange(existingOrder.Products);
+            if (existingOrder.Products is not null)
+                _dbContext.OrderInProducts.RemoveRange(existingOrder.Products);
 
+            if (updatedOrder.Products is not null)
                 _dbContext.OrderInProducts.AddRange(updatedOrder.Products);
-            }
 
             await _dbContext.SaveChangesAsync();
         }
