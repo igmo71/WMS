@@ -1,4 +1,5 @@
 using Serilog;
+using System.Reflection;
 using WMS.Backend.Application;
 using WMS.Backend.Common;
 using WMS.Backend.Infrastructure;
@@ -15,14 +16,14 @@ namespace WMS.Backend.WebApi
 
             using var activityListener = AppConfiguration.ConfigureSerilogTrasing();
 
+            var appName = Assembly.GetEntryAssembly()?.GetName().Name;
             try
             {
-                Log.Information("Hello, {Name}! App is Starting up...", Environment.UserName);
+                Log.Information("Hello, {Name}! {Application} is Starting up...", Environment.UserName, appName);
 
                 var builder = WebApplication.CreateBuilder(args);
 
-                builder.Services.Configure<AppSettings>(
-                    builder.Configuration.GetSection(nameof(AppSettings)));
+                builder.Services.Configure<AppSettings>(builder.Configuration.GetSection(nameof(AppSettings)));
 
                 builder.Services.AddSerilog();
 
@@ -86,10 +87,11 @@ namespace WMS.Backend.WebApi
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "Application terminated unexpectedly");
+                Log.Fatal(ex, "{Application} terminated unexpectedly", appName);
             }
             finally
             {
+                Log.Information("{Application} is Shutting down...", appName);
                 Log.CloseAndFlush();
             }
         }
