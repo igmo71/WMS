@@ -9,7 +9,6 @@ namespace WMS.Client.Core.ViewModels
 {
     internal partial class MainViewModel : SafeBindable
     {
-        private readonly object _lock = new();
         private readonly ObservableCollection<ViewModelBase> _pages = new();
         private ViewModelBase _currentPage;
 
@@ -39,7 +38,7 @@ namespace WMS.Client.Core.ViewModels
 
         private void SyncPages()
         {
-            lock (_lock)
+            lock (GetLock(nameof(_pages)))
             {
                 ViewModelBase[] navigatorPages = NavigationService.Pages;
                 List<ViewModelBase> removePages = _pages.Except(navigatorPages).ToList();

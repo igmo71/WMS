@@ -12,7 +12,7 @@
 	<Design.DataContext>
 		<vm:MainViewModel />
 	</Design.DataContext>
-	<Grid RowDefinitions="Auto, *">
+	<Grid RowDefinitions="Auto, *, Auto">
 		<Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto">
 			<Label Name="CurrentName"
 				   Grid.Column="0"
@@ -70,7 +70,19 @@
 			</Button>
 		</Grid>
 		<TransitioningContentControl Grid.Row="1"
+									 Margin="5"
 									 HorizontalAlignment="Stretch"
 									 Content="{Binding CurrentPage}"/>
+		<ItemsControl Grid.Row="2"
+					  HorizontalAlignment="Right"
+					  ItemsSource="{Binding CurrentPage.Commands}">
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<Button Content="{Binding Name}"
+							Command="{Binding}"
+							Margin="5,0,5,5"/>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
 	</Grid>
 </UserControl>

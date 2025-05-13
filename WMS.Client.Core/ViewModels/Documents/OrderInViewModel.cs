@@ -12,26 +12,29 @@ namespace WMS.Client.Core.ViewModels.Documents
     {
         private readonly OrderIn _model;
         private readonly ObservableCollection<OrderInProduct> _products = new ObservableCollection<OrderInProduct>();
-        private readonly IEntityRepository productsRepository = EntityRepositoryFactory.Get<Product>();
+        private readonly IEntityRepository _repository = EntityRepositoryFactory.Get<OrderIn>();
+        private readonly IEntityRepository _productsRepository = EntityRepositoryFactory.Get<Product>();
 
         internal override string Title => $"{nameof(OrderIn)} {_model.Number} {_model.DateTime}";
         internal OrderIn Model => _model;
         internal ObservableCollection<OrderInProduct> Products => _products;
-
-        internal RelayCommand SaveCommand { get; }
 
         internal OrderInViewModel(OrderIn model)
         {
             _model = model;
             UpdateProducts();
 
-            SaveCommand = new RelayCommand(p => EntityRepositoryFactory.Get<OrderIn>().Update(_model));
+            Commands.Add(new RelayCommand(p =>
+            {
+                _repository.Update(_model);
+                OnPropertyChanged(nameof(Title));
+            }) { Name = "Save" });
         }
 
         private void UpdateProducts()
         {
             _products.Clear();
-            _model.Products.ForEach((p) => _products.Add(new OrderInProduct() { Product = productsRepository.GetById(p.ProductId) as Product ?? throw new ArgumentException(), Count = p.Count }));
+            _model.Products.ForEach((p) => _products.Add(new OrderInProduct() { Product = _productsRepository.GetById(p.ProductId) as Product ?? throw new ArgumentException(), Count = p.Count }));
         }
 
         internal class OrderInProduct

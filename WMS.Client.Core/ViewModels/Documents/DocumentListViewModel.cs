@@ -10,18 +10,18 @@ namespace WMS.Client.Core.ViewModels.Documents
 {
     internal class DocumentListViewModel : ViewModelBase
     {
-        private readonly string _name;
+        private readonly string _title;
         private readonly IDocumentDescriptor _descriptor;
         private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();
 
-        internal override string Title => _name;
+        internal override string Title => _title;
         internal ObservableCollection<Document> Documents { get => _documents; }
 
         public RelayCommand OpenCommand { get; }
 
         public DocumentListViewModel(string name, IDocumentDescriptor descriptor)
         {
-            _name = name;
+            _title = name;
             _descriptor = descriptor;
             _descriptor.Repository.EntityUpdated += OnEntityUpdated;
 
@@ -40,12 +40,7 @@ namespace WMS.Client.Core.ViewModels.Documents
         private void OnEntityUpdated(object? sender, EntityChangedEventArgs e)
         {
             if (_descriptor.Repository.Type == e.Entity.GetType())
-            {
-                //int index = _documents.ToList().FindIndex((d) => d.Id == e.Entity.Id);
-                //if (index > 0)
-                //    _documents[index] = e.Entity as Document ?? throw new InvalidCastException();
                 GetDocuments();
-            }
         }
 
         private void GetDocuments()

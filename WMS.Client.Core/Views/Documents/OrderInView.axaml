@@ -7,12 +7,8 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.Documents.OrderInView"
 			 x:DataType="vm:OrderInViewModel">
-	<Grid RowDefinitions="Auto, Auto, *"
-		  Margin="5">
-		<Button Content="Save"
-				Command="{Binding SaveCommand}"/>
-		<StackPanel Grid.Row="1"
-					Orientation="Horizontal">
+	<Grid RowDefinitions="Auto, *">
+		<StackPanel Orientation="Horizontal">
 			<Label VerticalAlignment="Center"
 				   Content="Number"/>
 			<TextBox Text="{Binding Model.Number}"/>
@@ -20,7 +16,7 @@
 				   Content="Date"/>
 			<TextBox Text="{Binding Model.DateTime}"/>
 		</StackPanel>
-		<DataGrid Grid.Row="2"
+		<DataGrid Grid.Row="1"
 				  ItemsSource="{Binding Products}"
 				  Margin="0,5,0,0"
 				  BorderThickness="1"
@@ -32,7 +28,8 @@
 									Width="2*"/>
 				<DataGridTextColumn Header="Count"
 									Binding="{Binding Count}"
-									Width="*"/>
+									Width="*"
+									IsReadOnly="False"/>
 			</DataGrid.Columns>
 		</DataGrid>
 	</Grid>

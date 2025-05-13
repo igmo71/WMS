@@ -3,10 +3,13 @@ using System.Windows.Input;
 
 namespace WMS.Client.Core.Infrastructure
 {
-    internal class RelayCommand : ICommand
+    internal class RelayCommand : SafeBindable, ICommand
     {
+        private string _name = "Unknown";
         private readonly Action<object> _execute;
         private readonly Predicate<object> _canExecute;
+
+        public string Name { get => LockAndGet(ref _name); set => SetAndNotify(ref _name, value); }
 
         public event EventHandler? CanExecuteChanged;
 

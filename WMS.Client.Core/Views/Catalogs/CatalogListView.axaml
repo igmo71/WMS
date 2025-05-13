@@ -7,13 +7,9 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WMS.Client.Core.Views.Catalogs.CatalogListView"
 			 x:DataType="vm:CatalogListViewModel">
-	<Grid RowDefinitions="Auto, *">
-		<Button Content="Create"
-				Margin="5,5,5,0"
-				Command="{Binding CreateCommand}"/>
-		<DataGrid Grid.Row="1"
+	<Grid RowDefinitions="*">
+		<DataGrid Grid.Row="0"
 				  ItemsSource="{Binding Catalog}"
-				  Margin="5"
 				  BorderThickness="1"
 				  BorderBrush="Gray"
 				  GridLinesVisibility="All"

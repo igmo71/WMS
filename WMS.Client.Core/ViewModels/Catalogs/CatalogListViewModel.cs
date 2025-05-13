@@ -11,19 +11,18 @@ namespace WMS.Client.Core.ViewModels.Catalogs
 {
     internal class CatalogListViewModel : ViewModelBase
     {
-        private readonly string _name;
+        private readonly string _title;
         private readonly ICatalogDescriptor _descriptor;
         private readonly ObservableCollection<Catalog> _catalog = new ObservableCollection<Catalog>();
 
-        internal override string Title => _name;
+        internal override string Title => _title;
         internal ObservableCollection<Catalog> Catalog => _catalog;
 
         public RelayCommand OpenCommand { get; }
-        public RelayCommand CreateCommand { get; }
 
         public CatalogListViewModel(string name, ICatalogDescriptor descriptor)
         {
-            _name = name;
+            _title = name;
             _descriptor = descriptor;
 
             _descriptor.Repository.EntityCreated += OnEntityCreated;
@@ -40,11 +39,12 @@ namespace WMS.Client.Core.ViewModels.Catalogs
                 }
             });
 
-            CreateCommand = new RelayCommand((p) =>
+            Commands.Add(new RelayCommand((p) =>
             {
                 ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.CreateNew());
                 NavigationService.AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
-            });
+            })
+            { Name = "Create" });
         }
 
         private void OnEntityUpdated(object? sender, EntityChangedEventArgs e) => GetProducts();

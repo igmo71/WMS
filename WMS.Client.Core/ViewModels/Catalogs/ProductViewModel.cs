@@ -15,13 +15,11 @@ namespace WMS.Client.Core.ViewModels.Catalogs
         internal override string Title => _model.Id != Guid.Empty ? $"Product: {_model.Name}" : $"Product: New";
         internal Product Model { get => LockAndGet(ref _model); private set => SetAndNotify(ref _model, value); }
 
-        internal RelayCommand SaveCommand { get; }
-
         public ProductViewModel(Product model)
         {
             _model = model;
 
-            SaveCommand = new RelayCommand(p =>
+            Commands.Add(new RelayCommand(p =>
             {
                 if (Model.Id == Guid.Empty)
                 {
@@ -35,7 +33,8 @@ namespace WMS.Client.Core.ViewModels.Catalogs
                 }
 
                 OnPropertyChanged(nameof(Title));
-            });
+            })
+            { Name = "Save" });
         }
     }
 }
