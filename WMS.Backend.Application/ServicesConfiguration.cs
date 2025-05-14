@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Backend.Application.Services.OrderServices;
+using WMS.Backend.Application.Services.OrderInServices;
 using WMS.Backend.Application.Services.ProductServices;
 using WMS.Backend.Common;
 

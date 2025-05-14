@@ -1,15 +1,13 @@
 ﻿using Serilog;
-using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Domain.Models.Documents;
 
-namespace WMS.Backend.Application.Services.OrderServices
+namespace WMS.Backend.Application.Services.OrderInServices
 {
-    internal class OrderInService(IOrderInRepository orderRepository, IOrderInEventProducer orderEventProducer) : IOrderInService
+    internal class OrderInService(IOrderInRepository orderRepository) : IOrderInService
     {
         private readonly IOrderInRepository _orderRepository = orderRepository;
-        private readonly IOrderInEventProducer _orderEventProducer = orderEventProducer;
         private readonly ILogger _log = Log.ForContext<OrderInService>();
 
         

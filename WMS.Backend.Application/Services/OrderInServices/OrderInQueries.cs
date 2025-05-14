@@ -1,4 +1,4 @@
-﻿namespace WMS.Backend.Application.Services.OrderServices
+﻿namespace WMS.Backend.Application.Services.OrderInServices
 {
     public record OrderInGetListQuery(
         string? OrderBy, 

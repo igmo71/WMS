@@ -1,7 +1,7 @@
 ﻿using WMS.Backend.Domain.Models.Documents;
 using Dto = WMS.Shared.Models.Documents;
 
-namespace WMS.Backend.Application.Services.OrderServices
+namespace WMS.Backend.Application.Services.OrderInServices
 {
     internal class OrderInMapping
     {

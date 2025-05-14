@@ -3,7 +3,7 @@ using WMS.Backend.Application.Abstractions.Services;
 using Dto = WMS.Shared.Models.Documents;
 
 
-namespace WMS.Backend.Application.Services.OrderServices
+namespace WMS.Backend.Application.Services.OrderInServices
 {
     internal class OrderInWebService(IOrderInService orderService, IOrderInEventProducer orderEventProducer) : IOrderInWebService
     {
@@ -18,7 +18,7 @@ namespace WMS.Backend.Application.Services.OrderServices
 
             var orderDto = OrderInMapping.ToDto(order);
 
-            await _orderEventProducer.OrderCreatedEventProduce(orderDto);
+            await _orderEventProducer.CreatedEventProduce(orderDto);
 
             return orderDto;
         }
@@ -29,14 +29,14 @@ namespace WMS.Backend.Application.Services.OrderServices
 
             await _orderService.UpdateOrderAsync(id, order);
 
-            await _orderEventProducer.OrderUpdatedEventProduce(orderDto);
+            await _orderEventProducer.UpdatedEventProduce(orderDto);
         }
 
         public async Task DeleteOrderAsync(Guid id)
         {
             await _orderService.DeleteOrderAsync(id);
 
-            await _orderEventProducer.OrderDeletedEventProduce(id);
+            await _orderEventProducer.DeletedEventProduce(id);
         }
 
         public async Task<List<Dto.OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery)

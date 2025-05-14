@@ -20,6 +20,7 @@ namespace WMS.Backend.MessageBus.Kafka
             var producerConfig = new ProducerConfig
             {
                 BootstrapServers = _kafkaConfig.BootstrapServers,
+                CancellationDelayMaxMs = 1000
                 //Debug = "all"
             };
 
@@ -29,51 +30,39 @@ namespace WMS.Backend.MessageBus.Kafka
                 .Build();
         }
 
-        public async Task OrderCreatedEventProduce(Dto.OrderIn orderDto)
+        public async Task CreatedEventProduce(Dto.OrderIn orderDto)
         {
             var message = new Message<Guid, Dto.OrderIn?>() { Key = orderDto.Id, Value = orderDto };
-            var cts = new CancellationTokenSource(1000);
-            try
-            {
-                var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInCreated, message, cts.Token);
 
-                _log.Debug("{Source} {Topic} {@OrderIn}", nameof(OrderCreatedEventProduce), KafkaConfig.OrderInCreated, orderDto);
-            }
-            catch (TaskCanceledException ex)
-            {
-                _log.Error(ex, "{Source} {Topic} {@OrderIn}", nameof(OrderCreatedEventProduce), KafkaConfig.OrderInCreated, orderDto);
-            }
+            await EventProduce(KafkaConfig.OrderInCreated, message);            
         }
 
-        public async Task OrderUpdatedEventProduce(Dto.OrderIn orderDto)
+        public async Task UpdatedEventProduce(Dto.OrderIn orderDto)
         {
             var message = new Message<Guid, Dto.OrderIn?>() { Key = orderDto.Id, Value = orderDto };
-            var cts = new CancellationTokenSource(1000);
-            try
-            {
-                var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInUpdated, message, cts.Token);
 
-                _log.Debug("{Source} {Topic} {@OrderIn}", nameof(OrderCreatedEventProduce), KafkaConfig.OrderInUpdated, orderDto);
-            }
-            catch (TaskCanceledException ex)
-            {
-                _log.Error(ex, "{Source} {Topic} {@OrderIn}", nameof(OrderCreatedEventProduce), KafkaConfig.OrderInUpdated, orderDto);
-            }
+            await EventProduce(KafkaConfig.OrderInUpdated, message);            
         }
 
-        public async Task OrderDeletedEventProduce(Guid orderId)
+        public async Task DeletedEventProduce(Guid orderId)
         {
             var message = new Message<Guid, Dto.OrderIn?>() { Key = orderId, Value = null };
+
+            await EventProduce(KafkaConfig.OrderInDeleted, message);
+        }
+
+        private async Task EventProduce(string topic, Message<Guid, Dto.OrderIn?> message)
+        {
             var cts = new CancellationTokenSource(1000);
             try
             {
-                var deliveryResult = await _producer.ProduceAsync(topic: KafkaConfig.OrderInDeleted, message, cts.Token);
+                var deliveryResult = await _producer.ProduceAsync(topic, message, cts.Token);
 
-                _log.Debug("{Source} {Topic} {OrderId}", nameof(OrderDeletedEventProduce), KafkaConfig.OrderInUpdated, orderId);
+                _log.Debug("{Source} {Topic} {Message}", nameof(EventProduce), topic, message);
             }
             catch (TaskCanceledException ex)
             {
-                _log.Error(ex, "{Source} {Topic} {OrderId}", nameof(OrderDeletedEventProduce), KafkaConfig.OrderInUpdated, orderId);
+                _log.Error(ex, "{Source} {Topic} {Message}", nameof(EventProduce), topic, message);
             }
         }
     }
