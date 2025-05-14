@@ -15,7 +15,10 @@ public static class OrderInEndpoints
             .WithTags(nameof(OrderIn))
             .WithOpenApi()
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            //.RequireAuthorization()
+            ;
 
         group.MapPost("/", CreateOrder).WithName("CreateOrderIn");
         group.MapPut("/{id}", UpdateOrder).WithName("UpdateOrderIn");
