@@ -8,7 +8,7 @@ using WMS.Client.Core.Views;
 using WMS.Client.Core.Views.Catalogs;
 using WMS.Client.Core.Views.Documents;
 
-namespace WMS.Client.Core.Services
+namespace WMS.Client.Core.Infrastructure
 {
     public class ViewLocator : IDataTemplate
     {
@@ -31,9 +31,6 @@ namespace WMS.Client.Core.Services
             return func.Invoke();
         }
 
-        public bool Match(object? data)
-        {
-            return data is ViewModelBase;
-        }
+        public bool Match(object? data) => data is ViewModelBase;
     }
 }

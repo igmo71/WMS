@@ -5,13 +5,13 @@ using WMS.Client.Core.ViewModels;
 
 namespace WMS.Client.Core.Services
 {
-    internal static class NavigationService
+    internal class NavigationService
     {
-        private static readonly object _lock = new object();
-        private static readonly Dictionary<string, ViewModelBase> _pages = new Dictionary<string, ViewModelBase>();
-        private static ViewModelBase _current;
+        private readonly object _lock = new object();
+        private readonly Dictionary<string, ViewModelBase> _pages = new Dictionary<string, ViewModelBase>();
+        private ViewModelBase _current;
 
-        internal static ViewModelBase[] Pages
+        internal ViewModelBase[] Pages
         {
             get
             {
@@ -20,7 +20,7 @@ namespace WMS.Client.Core.Services
             }
         }
 
-        internal static ViewModelBase Current
+        internal ViewModelBase Current
         {
             get
             {
@@ -29,12 +29,12 @@ namespace WMS.Client.Core.Services
             }
         }
 
-        internal static event EventHandler<CurrentChangedEventArgs> CurrentChanged;
-        internal static event EventHandler PagesChanged;
+        internal event EventHandler<CurrentChangedEventArgs> CurrentChanged;
+        internal event EventHandler PagesChanged;
 
-        static NavigationService() => AddPage(nameof(HomeViewModel), () => new HomeViewModel());
+        internal NavigationService() => AddPage(nameof(HomeViewModel), () => new HomeViewModel());
 
-        internal static ViewModelBase AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
+        internal ViewModelBase AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
         {
             ViewModelBase vm;
             bool invokeEvent = false;
@@ -59,7 +59,7 @@ namespace WMS.Client.Core.Services
             return vm;
         }
 
-        internal static void SetCurrent(ViewModelBase vm)
+        internal void SetCurrent(ViewModelBase vm)
         {
             bool invokeEvent = false;
 
@@ -76,7 +76,7 @@ namespace WMS.Client.Core.Services
                 CurrentChanged?.Invoke(null, new CurrentChangedEventArgs(vm));
         }
 
-        internal static void ClosePage(ViewModelBase vm)
+        internal void ClosePage(ViewModelBase vm)
         {
             if (vm.Persistent)
                 return;
@@ -97,7 +97,7 @@ namespace WMS.Client.Core.Services
                 PagesChanged?.Invoke(null, EventArgs.Empty);
         }
 
-        internal static void UpdateUniqueKey(string newKey, ViewModelBase vm)
+        internal void UpdateUniqueKey(string newKey, ViewModelBase vm)
         {
             lock (_lock)
             {

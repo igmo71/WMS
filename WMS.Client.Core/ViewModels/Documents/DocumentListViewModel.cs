@@ -32,7 +32,7 @@ namespace WMS.Client.Core.ViewModels.Documents
                 if (p is Document header)
                 {
                     ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id) as Document ?? throw new InvalidCastException());
-                    NavigationService.AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
+                    AppHost.GetService<NavigationService>().AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
                 }
             });
         }

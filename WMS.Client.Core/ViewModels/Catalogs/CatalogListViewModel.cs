@@ -35,14 +35,14 @@ namespace WMS.Client.Core.ViewModels.Catalogs
                 if (p is EntityBase header)
                 {
                     ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id) as Catalog ?? throw new InvalidCastException());
-                    NavigationService.AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
+                    AppHost.GetService<NavigationService>().AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
                 }
             });
 
             Commands.Add(new RelayCommand((p) =>
             {
                 ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.CreateNew());
-                NavigationService.AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
+                AppHost.GetService<NavigationService>().AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
             })
             { Name = "Create" });
         }

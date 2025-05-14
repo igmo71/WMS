@@ -12,6 +12,6 @@ namespace WMS.Client.Core.ViewModels
         internal RelayCommand CloseCommand { get; }
         internal ObservableCollection<RelayCommand> Commands { get; } = new();
 
-        protected ViewModelBase() => CloseCommand = new RelayCommand((p) => NavigationService.ClosePage(this), (p) => !Persistent);
+        protected ViewModelBase() => CloseCommand = new RelayCommand((p) => AppHost.GetService<NavigationService>().ClosePage(this), (p) => !Persistent);
     }
 }

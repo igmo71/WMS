@@ -12,23 +12,23 @@ namespace WMS.Client.Core.ViewModels
         private readonly ObservableCollection<ViewModelBase> _pages = new();
         private ViewModelBase _currentPage;
 
-        internal ViewModelBase CurrentPage { get => LockAndGet(ref _currentPage); set => NavigationService.SetCurrent(value); }
+        internal ViewModelBase CurrentPage { get => LockAndGet(ref _currentPage); set => AppHost.GetService<NavigationService>().SetCurrent(value); }
         internal ObservableCollection<ViewModelBase> Pages => _pages;
 
         internal RelayCommand SetCurrentCommand { get; }
 
         public MainViewModel()
         {
-            _currentPage = NavigationService.Current;
+            _currentPage = AppHost.GetService<NavigationService>().Current;
             SyncPages();
 
-            NavigationService.CurrentChanged += OnCurrentChanged;
-            NavigationService.PagesChanged += OnPagesChanged;
+            AppHost.GetService<NavigationService>().CurrentChanged += OnCurrentChanged;
+            AppHost.GetService<NavigationService>().PagesChanged += OnPagesChanged;
 
             SetCurrentCommand = new RelayCommand((p) =>
             {
                 if (p is ViewModelBase page)
-                    NavigationService.SetCurrent(page);
+                    AppHost.GetService<NavigationService>().SetCurrent(page);
             });
         }
 
@@ -40,7 +40,7 @@ namespace WMS.Client.Core.ViewModels
         {
             lock (GetLock(nameof(_pages)))
             {
-                ViewModelBase[] navigatorPages = NavigationService.Pages;
+                ViewModelBase[] navigatorPages = AppHost.GetService<NavigationService>().Pages;
                 List<ViewModelBase> removePages = _pages.Except(navigatorPages).ToList();
                 List<ViewModelBase> addPages = navigatorPages.Except(_pages).ToList();
 
@@ -52,7 +52,7 @@ namespace WMS.Client.Core.ViewModels
                     if (newCurrent == null)
                         newCurrent = _pages.Take(currentIndex).Where(vm => !removePages.Contains(vm)).LastOrDefault();
 
-                    NavigationService.SetCurrent(newCurrent);
+                    AppHost.GetService<NavigationService>().SetCurrent(newCurrent);
                 }
 
                 removePages.ForEach(vm => _pages.Remove(vm));

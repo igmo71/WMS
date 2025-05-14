@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Repositories;
@@ -10,7 +11,7 @@ namespace WMS.Client.Core.ViewModels.Documents
 {
     internal class OrderInViewModel : ViewModelBase
     {
-        private readonly OrderIn _model;
+        private OrderIn _model;
         private readonly ObservableCollection<OrderInProduct> _products = new ObservableCollection<OrderInProduct>();
         private readonly IEntityRepository _repository = EntityRepositoryFactory.Get<OrderIn>();
         private readonly IEntityRepository _productsRepository = EntityRepositoryFactory.Get<Product>();
@@ -26,9 +27,24 @@ namespace WMS.Client.Core.ViewModels.Documents
 
             Commands.Add(new RelayCommand(p =>
             {
+                _model.Products.Clear();
+                _products.ToList().ForEach(p => _model.Products.Add(new OrderIn.OrderInProduct() { ProductId = p.Product.Id, Count = p.Count }));
                 _repository.Update(_model);
+            })
+            { Name = "Save" });
+
+            _repository.EntityUpdated += ModelUpdated;
+        }
+
+        private void ModelUpdated(object? sender, EntityChangedEventArgs e)
+        {
+            AppHost.GetService<IUIService>().InvokeUIThread(() =>
+            {
+                _model = (OrderIn)e.Entity;
+                OnPropertyChanged(nameof(Model));
                 OnPropertyChanged(nameof(Title));
-            }) { Name = "Save" });
+                UpdateProducts();
+            });
         }
 
         private void UpdateProducts()

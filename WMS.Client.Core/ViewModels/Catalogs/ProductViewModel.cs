@@ -24,7 +24,7 @@ namespace WMS.Client.Core.ViewModels.Catalogs
                 if (Model.Id == Guid.Empty)
                 {
                     Model = _descriptor.Repository.Create(_model) as Product ?? throw new InvalidCastException();
-                    NavigationService.UpdateUniqueKey(_descriptor.GetUniqueKey(Model), this);
+                    AppHost.GetService<NavigationService>().UpdateUniqueKey(_descriptor.GetUniqueKey(Model), this);
                 }
                 else
                 {

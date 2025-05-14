@@ -31,8 +31,6 @@ namespace WMS.Client.Core
                 singleViewPlatform.MainView.DataContext = new MainViewModel();
             }
 
-            UIServiceProvider.Instance = new AvaloniaUIService();
-
             base.OnFrameworkInitializationCompleted();
         }
 
