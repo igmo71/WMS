@@ -14,7 +14,10 @@ namespace WMS.Backend.WebApi.Endpoints
                 .WithTags(nameof(Product))
                 .WithOpenApi()
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-                .ProducesProblem(StatusCodes.Status500InternalServerError);
+                .ProducesProblem(StatusCodes.Status401Unauthorized)
+                .ProducesProblem(StatusCodes.Status500InternalServerError)
+                //.RequireAuthorization()
+                ;
 
             routeGroup.MapPost("/", CreateProduct).WithName("CreateProduct");
 
@@ -27,7 +30,7 @@ namespace WMS.Backend.WebApi.Endpoints
             routeGroup.MapGet("/{id}", GetProductById).WithName("GetProductById");
         }
 
-        private static async Task<Results<Created<Product>, ProblemHttpResult>> CreateProduct(
+        private static async Task<Created<Product>> CreateProduct(
             [FromServices] IProductService productService,
             [FromBody] Product product)
         {
@@ -55,7 +58,7 @@ namespace WMS.Backend.WebApi.Endpoints
             return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
         }
 
-        private static async Task<Results<Ok<List<Product>>, NotFound, ProblemHttpResult>> GetProductList(
+        private static async Task<Results<Ok<List<Product>>, NotFound>> GetProductList(
             [FromServices] IProductService productService,
             [FromQuery] string? orderBy,
             [FromQuery] int? skip = null,
@@ -69,7 +72,7 @@ namespace WMS.Backend.WebApi.Endpoints
             return result is List<Product> model ? TypedResults.Ok(model) : TypedResults.NotFound();
         }
 
-        private static async Task<Results<Ok<Product>, NotFound, ProblemHttpResult>> GetProductById(
+        private static async Task<Results<Ok<Product>, NotFound>> GetProductById(
         [FromServices] IProductService productService,
         [FromRoute] Guid id)
         {

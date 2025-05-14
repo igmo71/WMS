@@ -2,7 +2,9 @@ using Serilog;
 using System.Reflection;
 using WMS.Backend.Application;
 using WMS.Backend.Common;
+using WMS.Backend.Domain.Models;
 using WMS.Backend.Infrastructure;
+using WMS.Backend.Infrastructure.Data;
 using WMS.Backend.MessageBus;
 using WMS.Backend.WebApi.Endpoints;
 
@@ -28,6 +30,9 @@ namespace WMS.Backend.WebApi
                 builder.Services.AddSerilog();
 
                 builder.Services.AddAuthorization();
+
+                builder.Services.AddIdentityApiEndpoints<AppUser>()
+                .AddEntityFrameworkStores<AppDbContext>();
 
                 // TODO: CorrelationId Не используется сейчас
                 //builder.Services.AddSingleton<ICorrelationContext, CorrelationContext>();
@@ -80,6 +85,8 @@ namespace WMS.Backend.WebApi
                 app.UseHttpsRedirection();
 
                 app.UseAuthorization();
+
+                app.MapIdentityApi<AppUser>();
 
                 app.MapAppEndpoints();
 
