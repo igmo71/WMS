@@ -10,7 +10,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
         private readonly IOrderInRepository _orderRepository = orderRepository;
         private readonly ILogger _log = Log.ForContext<OrderInService>();
 
-        
+
 
         public async Task<OrderIn> CreateOrderAsync(OrderIn newOrder)
         {
@@ -19,7 +19,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
             _log.Debug("{Source} {@Order}", nameof(CreateOrderAsync), order);
 
             return order;
-        }        
+        }
 
         public async Task UpdateOrderAsync(Guid id, OrderIn order)
         {
@@ -34,7 +34,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             _log.Debug("{Source} {OrderId}", nameof(DeleteOrderAsync), id);
         }
-        
+
         public async Task<List<OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery)
         {
             var orders = await _orderRepository.GetListAsync(orderQuery);

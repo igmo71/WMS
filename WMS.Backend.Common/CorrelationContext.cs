@@ -7,7 +7,7 @@
 
         public string CorrelationId
         {
-            get => _correlationId.Value ?? string.Empty; 
+            get => _correlationId.Value ?? string.Empty;
             set => _correlationId.Value = value;
         }
     }

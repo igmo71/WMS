@@ -8,8 +8,8 @@ namespace WMS.Backend.Infrastructure.Repositories
     {
         public static IQueryable<OrderIn> HandleQuery(this IQueryable<OrderIn> query, OrderInGetListQuery orderQuery)
         {
-            query = orderQuery.OrderBy is null 
-                ? query.OrderBy(e => e.DateTime) 
+            query = orderQuery.OrderBy is null
+                ? query.OrderBy(e => e.DateTime)
                 : query.OrderBy(RepoUtils.GetOrderByExpression<OrderIn>(orderQuery.OrderBy));
 
             query = query

@@ -27,7 +27,7 @@ namespace WMS.Backend.Common
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
         };
-                
+
         // appsettings.json
         public bool UseArchiving { get; set; }
     }

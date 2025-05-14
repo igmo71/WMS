@@ -15,12 +15,12 @@ namespace WMS.Backend.Infrastructure.Data
         public DbSet<OrderIn> OrdersIn { get; set; }
         public DbSet<OrderInProduct> OrderInProducts { get; set; }
         public DbSet<OrderInArchive> OrdersInArchive { get; set; }
-        
+
         public DbSet<OrderOut> OrdersOut { get; set; }
         public DbSet<OrderOutProduct> OrderOutProducts { get; set; }
-        
+
         public DbSet<Product> Products { get; set; }
-        
+
         public DbSet<Warehouse> Warehouses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

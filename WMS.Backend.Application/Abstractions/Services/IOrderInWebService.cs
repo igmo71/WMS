@@ -1,7 +1,6 @@
 ﻿using WMS.Backend.Application.Services.OrderInServices;
 using Dto = WMS.Shared.Models.Documents;
 
-
 namespace WMS.Backend.Application.Abstractions.Services
 {
     public interface IOrderInWebService

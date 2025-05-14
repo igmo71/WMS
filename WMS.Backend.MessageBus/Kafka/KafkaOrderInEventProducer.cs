@@ -34,14 +34,14 @@ namespace WMS.Backend.MessageBus.Kafka
         {
             var message = new Message<Guid, Dto.OrderIn?>() { Key = orderDto.Id, Value = orderDto };
 
-            await EventProduce(KafkaConfig.OrderInCreated, message);            
+            await EventProduce(KafkaConfig.OrderInCreated, message);
         }
 
         public async Task UpdatedEventProduce(Dto.OrderIn orderDto)
         {
             var message = new Message<Guid, Dto.OrderIn?>() { Key = orderDto.Id, Value = orderDto };
 
-            await EventProduce(KafkaConfig.OrderInUpdated, message);            
+            await EventProduce(KafkaConfig.OrderInUpdated, message);
         }
 
         public async Task DeletedEventProduce(Guid orderId)
