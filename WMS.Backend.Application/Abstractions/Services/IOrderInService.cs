@@ -1,14 +1,14 @@
 ﻿using WMS.Backend.Application.Services.OrderInServices;
-using WMS.Backend.Domain.Models.Documents;
+using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Application.Abstractions.Services
 {
     public interface IOrderInService
     {
-        Task<OrderIn> CreateOrderAsync(OrderIn order);
-        Task UpdateOrderAsync(Guid id, OrderIn order);
+        Task<Dto.OrderIn> CreateOrderAsync(Dto.OrderIn order);
+        Task UpdateOrderAsync(Guid id, Dto.OrderIn order);
         Task DeleteOrderAsync(Guid id);
-        Task<List<OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery);
-        Task<OrderIn?> GetOrderByIdAsync(Guid id);
+        Task<List<Dto.OrderIn>> GetOrderListAsync(OrderInGetListQuery orderQuery);
+        Task<Dto.OrderIn?> GetOrderByIdAsync(Guid id);
     }
 }

@@ -2,6 +2,7 @@
 {
     public enum ArchiveOperation
     {
-        Update, Delete
+        Update,
+        Delete
     }
 }
