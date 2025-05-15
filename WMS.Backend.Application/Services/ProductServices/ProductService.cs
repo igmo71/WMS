@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using Serilog.Events;
 using SerilogTracing;
+using WMS.Backend.Application.Abstractions.Cache;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -8,11 +9,15 @@ using Dto = WMS.Shared.Models.Catalogs;
 
 namespace WMS.Backend.Application.Services.ProductServices
 {
-    internal class ProductService(IProductRepository productRepository, IEventProducer<Dto.Product> eventProducer) : IProductService
+    internal class ProductService(
+        IProductRepository productRepository,
+        IEventProducer<Dto.Product> eventProducer,
+        IAppCache cache) : IProductService
     {
         private readonly ILogger _log = Log.ForContext<ProductService>();
         private readonly IProductRepository _productRepository = productRepository;
         private readonly IEventProducer<Dto.Product> _eventProducer = eventProducer;
+        private readonly IAppCache _cache = cache;
 
         public async Task<Dto.Product> CreateProductAsync(Dto.Product newProductDto)
         {
@@ -21,6 +26,8 @@ namespace WMS.Backend.Application.Services.ProductServices
             var product = await _productRepository.CreateAsync(newProduct);
 
             var productDto = ProductMapping.ToDto(product);
+
+            await _cache.SetAsync(productDto);
 
             await _eventProducer.CreatedEventProduce(productDto);
 
@@ -34,6 +41,8 @@ namespace WMS.Backend.Application.Services.ProductServices
             var product = ProductMapping.FromDto(productDto);
 
             var result = await _productRepository.UpdateAsync(id, product);
+
+            await _cache.SetAsync(productDto);
 
             await _eventProducer.UpdatedEventProduce(productDto);
 
@@ -68,14 +77,22 @@ namespace WMS.Backend.Application.Services.ProductServices
 
         public async Task<Dto.Product?> GetProductByIdAsync(Guid id)
         {
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {ProductId}", nameof(GetProductByIdAsync), id);
+
+            var productDto = await _cache.GetAsync<Dto.Product>(id);
+            if (productDto is not null)
+                return productDto;
+
             var product = await _productRepository.GetByIdAsync(id);
 
-            _log.Debug("{Source} {ProductId} {@Product}", nameof(GetProductListAsync), id, product);
-
-            if(product is null)
+            if (product is null)
                 return null;
 
-            var productDto = ProductMapping.ToDto(product);
+            productDto = ProductMapping.ToDto(product);
+
+            await _cache.SetAsync(productDto);
+
+            activity.AddProperty("ProductDto", productDto, destructureObjects: true);
 
             return productDto;
         }

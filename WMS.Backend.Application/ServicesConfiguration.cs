@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WMS.Backend.Application.Abstractions.Cache;
 using WMS.Backend.Application.Abstractions.Services;
+using WMS.Backend.Application.Services;
 using WMS.Backend.Application.Services.OrderInServices;
 using WMS.Backend.Application.Services.ProductServices;
-using WMS.Backend.Common;
 
 namespace WMS.Backend.Application
 {
@@ -11,7 +12,15 @@ namespace WMS.Backend.Application
     {
         public static IServiceCollection AddAppServices(this IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>();
+            //var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>();
+
+            serviceCollection.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration["Redis:Configuration"];
+                options.InstanceName = nameof(WMS.Backend);
+            });
+
+            serviceCollection.AddScoped<IAppCache, AppCache>();
 
             serviceCollection.AddScoped<IOrderInService, OrderInService>();
             serviceCollection.AddScoped<IOrderInService, OrderInService>();

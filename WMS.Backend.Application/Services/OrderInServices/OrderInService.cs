@@ -1,4 +1,7 @@
 ﻿using Serilog;
+using Serilog.Events;
+using SerilogTracing;
+using WMS.Backend.Application.Abstractions.Cache;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -6,11 +9,15 @@ using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderInServices
 {
-    internal class OrderInService(IOrderInRepository orderRepository, IEventProducer<Dto.OrderIn> eventProducer) : IOrderInService
+    internal class OrderInService(
+        IOrderInRepository orderRepository,
+        IEventProducer<Dto.OrderIn> eventProducer,
+        IAppCache cache) : IOrderInService
     {
-        private readonly ILogger _log = Log.ForContext<OrderInService>();   
+        private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
         private readonly IEventProducer<Dto.OrderIn> _eventProducer = eventProducer;
+        private readonly IAppCache _cache = cache;
 
         public async Task<Dto.OrderIn> CreateOrderAsync(Dto.OrderIn newOrderDto)
         {
@@ -19,6 +26,8 @@ namespace WMS.Backend.Application.Services.OrderInServices
             var order = await _orderRepository.CreateAsync(newOrder);
 
             var orderDto = OrderInMapping.ToDto(order);
+
+            await _cache.SetAsync(orderDto);
 
             await _eventProducer.CreatedEventProduce(orderDto);
 
@@ -32,6 +41,8 @@ namespace WMS.Backend.Application.Services.OrderInServices
             var order = OrderInMapping.FromDto(orderDto);
 
             await _orderRepository.UpdateAsync(id, order);
+
+            await _cache.SetAsync(orderDto);
 
             await _eventProducer.UpdatedEventProduce(orderDto);
 
@@ -60,16 +71,24 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
         public async Task<Dto.OrderIn?> GetOrderByIdAsync(Guid id)
         {
-            var order = await _orderRepository.GetByIdAsync(id);
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {OrderId}", nameof(GetOrderByIdAsync), id);
 
-            _log.Debug("{Source} {OrderId} {@Order}", nameof(GetOrderByIdAsync), id, order);
+            var orderDto = await _cache.GetAsync<Dto.OrderIn>(id);
+            if (orderDto is not null)
+                return orderDto;
+
+            var order = await _orderRepository.GetByIdAsync(id);
 
             if (order is null)
                 return null;
 
-            var orderDto = OrderInMapping.ToDto(order);
+            orderDto = OrderInMapping.ToDto(order);
+
+            await _cache.SetAsync(orderDto);
+
+            activity.AddProperty("{OrderDto}", orderDto, destructureObjects: true);
 
             return orderDto;
-        }
+        }   
     }
 }
