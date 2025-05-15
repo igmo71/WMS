@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WMS.Backend.Application.Abstractions.Services;
+using WMS.Backend.Application.Services;
 using WMS.Backend.Application.Services.OrderInServices;
 using WMS.Backend.Application.Services.ProductServices;
-using WMS.Backend.Common;
 
 namespace WMS.Backend.Application
 {
@@ -18,6 +18,8 @@ namespace WMS.Backend.Application
                 options.Configuration = configuration["Redis:Configuration"];
                 options.InstanceName = nameof(WMS.Backend);
             });
+
+            serviceCollection.AddScoped<IAppCache, AppCache>();
 
             serviceCollection.AddScoped<IOrderInService, OrderInService>();
             serviceCollection.AddScoped<IOrderInService, OrderInService>();

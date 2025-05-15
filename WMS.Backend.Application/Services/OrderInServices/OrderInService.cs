@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Serilog;
+﻿using Serilog;
 using Serilog.Events;
 using SerilogTracing;
-using System.Text.Json;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -13,12 +11,12 @@ namespace WMS.Backend.Application.Services.OrderInServices
     internal class OrderInService(
         IOrderInRepository orderRepository,
         IEventProducer<Dto.OrderIn> eventProducer,
-        IDistributedCache cache) : IOrderInService
+        IAppCache cache) : IOrderInService
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
         private readonly IEventProducer<Dto.OrderIn> _eventProducer = eventProducer;
-        private readonly IDistributedCache _cache = cache;
+        private readonly IAppCache _cache = cache;
 
         public async Task<Dto.OrderIn> CreateOrderAsync(Dto.OrderIn newOrderDto)
         {
@@ -28,7 +26,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             var orderDto = OrderInMapping.ToDto(order);
 
-            SetCache(orderDto);
+            await _cache.SetAsync(orderDto);
 
             await _eventProducer.CreatedEventProduce(orderDto);
 
@@ -43,7 +41,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             await _orderRepository.UpdateAsync(id, order);
 
-            SetCache(orderDto);
+            await _cache.SetAsync(orderDto);
 
             await _eventProducer.UpdatedEventProduce(orderDto);
 
@@ -74,7 +72,8 @@ namespace WMS.Backend.Application.Services.OrderInServices
         {
             using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {OrderId}", nameof(GetOrderByIdAsync), id);
 
-            if (TryGetFromCache(id, out Dto.OrderIn? orderDto))
+            var orderDto = await _cache.GetAsync<Dto.OrderIn>(id);
+            if (orderDto is not null)
                 return orderDto;
 
             var order = await _orderRepository.GetByIdAsync(id);
@@ -84,34 +83,13 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             orderDto = OrderInMapping.ToDto(order);
 
-            SetCache(orderDto);
+            await _cache.SetAsync(orderDto);
 
-            activity.AddProperty("From", "Database");
             activity.AddProperty("{OrderDto}", orderDto, destructureObjects: true);
 
             return orderDto;
         }
 
-        private bool TryGetFromCache(Guid id, out Dto.OrderIn? result)
-        {
-            var cachedBytes = cache.Get(id.ToString());
 
-            result = null;
-
-            if (cachedBytes is not null)
-                result = JsonSerializer.Deserialize<Dto.OrderIn>(cachedBytes);
-
-            return result is not null;
-        }
-
-        private void SetCache(Dto.OrderIn orderDto)
-        {
-            var cachedBytes = JsonSerializer.SerializeToUtf8Bytes(orderDto);
-
-            cache.Set(orderDto.Id.ToString(), cachedBytes, new DistributedCacheEntryOptions
-            {
-                SlidingExpiration = TimeSpan.FromSeconds(60)
-            });
-        }
     }
 }
