@@ -3,7 +3,7 @@ using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Abstractions.Services
 {
-    public interface IOrderInService
+    internal interface IOrderInService
     {
         Task<OrderIn> CreateOrderAsync(OrderIn order);
         Task UpdateOrderAsync(Guid id, OrderIn order);

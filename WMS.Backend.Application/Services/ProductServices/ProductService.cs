@@ -1,20 +1,24 @@
 ﻿using Serilog;
 using Serilog.Events;
 using SerilogTracing;
+using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Domain.Models.Catalogs;
 
 namespace WMS.Backend.Application.Services.ProductServices
 {
-    internal class ProductService(IProductRepository productRepository) : IProductService
+    internal class ProductService(IProductRepository productRepository, IEventProducer<Product> productEventProducer) : IProductService
     {
         private readonly ILogger _log = Log.ForContext<ProductService>();
         private readonly IProductRepository _productRepository = productRepository;
+        private readonly IEventProducer<Product> _productEventProducer = productEventProducer;
 
         public async Task<Product> CreateProductAsync(Product newProduct)
         {
             var product = await _productRepository.CreateAsync(newProduct);
+
+            await _productEventProducer.CreatedEventProduce(product);
 
             _log.Debug("{Source} {@Product}", nameof(CreateProductAsync), product);
 
@@ -25,6 +29,8 @@ namespace WMS.Backend.Application.Services.ProductServices
         {
             var result = await _productRepository.UpdateAsync(id, product);
 
+            await _productEventProducer.UpdatedEventProduce(product);
+
             _log.Debug("{Source} {ProductId} {@Product}", nameof(UpdateProductAsync), id, product);
 
             return result;
@@ -33,6 +39,8 @@ namespace WMS.Backend.Application.Services.ProductServices
         public async Task<bool> DeleteProductAsync(Guid id)
         {
             var result = await _productRepository.DeleteAsync(id);
+
+            await _productEventProducer.DeletedEventProduce(id);
 
             _log.Debug("{Source} {@ProductId}", nameof(DeleteProductAsync), id);
 
