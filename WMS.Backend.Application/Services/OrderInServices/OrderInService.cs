@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using Serilog.Events;
 using SerilogTracing;
+using WMS.Backend.Application.Abstractions.Cache;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -88,8 +89,6 @@ namespace WMS.Backend.Application.Services.OrderInServices
             activity.AddProperty("{OrderDto}", orderDto, destructureObjects: true);
 
             return orderDto;
-        }
-
-
+        }   
     }
 }

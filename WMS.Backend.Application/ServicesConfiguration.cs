@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WMS.Backend.Application.Abstractions.Cache;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services;
 using WMS.Backend.Application.Services.OrderInServices;
