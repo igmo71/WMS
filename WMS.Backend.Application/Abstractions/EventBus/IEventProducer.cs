@@ -1,4 +1,4 @@
-﻿using WMS.Backend.Domain.Models;
+﻿using WMS.Shared.Models;
 
 namespace WMS.Backend.Application.Abstractions.EventBus
 {

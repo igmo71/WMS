@@ -10,7 +10,6 @@ namespace WMS.Backend.MessageBus
         public static IServiceCollection AddAppMessageBus(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddSingleton(typeof(IEventProducer<>), typeof(KafkaEventProducer<>));
-            services.AddSingleton<IOrderInEventProducer, KafkaOrderInEventProducer>();
 
             return services;
         }

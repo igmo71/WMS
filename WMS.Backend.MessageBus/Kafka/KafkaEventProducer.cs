@@ -2,11 +2,11 @@
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using WMS.Backend.Application.Abstractions.EventBus;
-using WMS.Backend.Domain.Models;
+using Dto = WMS.Shared.Models;
 
 namespace WMS.Backend.MessageBus.Kafka
 {
-    internal class KafkaEventProducer<TEntity> : IEventProducer<TEntity> where TEntity : EntityBase
+    internal class KafkaEventProducer<TEntity> : IEventProducer<TEntity> where TEntity : Dto.EntityBase
     {
         private readonly KafkaConfig _kafkaConfig;
         private readonly IProducer<Guid, TEntity?> _producer;

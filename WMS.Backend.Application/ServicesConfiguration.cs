@@ -14,7 +14,7 @@ namespace WMS.Backend.Application
             var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>();
 
             serviceCollection.AddScoped<IOrderInService, OrderInService>();
-            serviceCollection.AddScoped<IOrderInWebService, OrderInWebService>();
+            serviceCollection.AddScoped<IOrderInService, OrderInService>();
             serviceCollection.AddScoped<IProductService, ProductService>();
 
             return serviceCollection;

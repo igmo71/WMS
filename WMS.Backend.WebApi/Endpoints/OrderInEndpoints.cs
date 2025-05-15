@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.OrderInServices;
-using WMS.Backend.Domain.Models.Documents;
 using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.WebApi.Endpoints;
@@ -12,7 +11,7 @@ public static class OrderInEndpoints
     public static void MapOrderInEndpoints(this IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/api/orders-in")
-            .WithTags(nameof(OrderIn))
+            .WithTags(nameof(Dto.OrderIn))
             .WithOpenApi()
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -28,7 +27,7 @@ public static class OrderInEndpoints
     }
 
     private static async Task<Created<Dto.OrderIn>> CreateOrder(
-        [FromServices] IOrderInWebService orderService,
+        [FromServices] IOrderInService orderService,
         [FromBody] Dto.OrderIn orderDto)
     {
         var result = await orderService.CreateOrderAsync(orderDto);
@@ -37,17 +36,17 @@ public static class OrderInEndpoints
     }
 
     private static async Task<Results<NoContent, NotFound>> UpdateOrder(
-        [FromServices] IOrderInWebService orderService,
+        [FromServices] IOrderInService orderService,
         [FromRoute] Guid id,
-        [FromBody] Dto.OrderIn order)
+        [FromBody] Dto.OrderIn orderDto)
     {
-        await orderService.UpdateOrderAsync(id, order);
+        await orderService.UpdateOrderAsync(id, orderDto);
 
         return TypedResults.NoContent();
     }
 
     private static async Task<Results<NoContent, NotFound>> DeleteOrder(
-        [FromServices] IOrderInWebService orderService,
+        [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {
         await orderService.DeleteOrderAsync(id);
@@ -56,7 +55,7 @@ public static class OrderInEndpoints
     }
 
     private static async Task<Results<Ok<List<Dto.OrderIn>>, NotFound>> GetOrderList(
-        [FromServices] IOrderInWebService orderService,
+        [FromServices] IOrderInService orderService,
         [FromQuery] string? orderBy = null,
         [FromQuery] int? skip = null,
         [FromQuery] int? take = null,
@@ -72,7 +71,7 @@ public static class OrderInEndpoints
     }
 
     private static async Task<Results<Ok<Dto.OrderIn>, NotFound>> GetOrderById(
-        [FromServices] IOrderInWebService orderService,
+        [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {
         var result = await orderService.GetOrderByIdAsync(id);
