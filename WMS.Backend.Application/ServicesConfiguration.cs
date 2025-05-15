@@ -11,7 +11,13 @@ namespace WMS.Backend.Application
     {
         public static IServiceCollection AddAppServices(this IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>();
+            //var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>();
+
+            serviceCollection.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration["Redis:Configuration"];
+                options.InstanceName = nameof(WMS.Backend);
+            });
 
             serviceCollection.AddScoped<IOrderInService, OrderInService>();
             serviceCollection.AddScoped<IOrderInService, OrderInService>();
