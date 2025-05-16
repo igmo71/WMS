@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
@@ -23,10 +24,15 @@ namespace WMS.Client.Core.Services
             };
 
             _consumer = new ConsumerBuilder<Ignore, string>(config).Build();
-
-            _consumer.Subscribe("OrderInCreated");
-            _consumer.Subscribe("OrderInDeleted");
-            _consumer.Subscribe("OrderInUpdated");
+            _consumer.Subscribe(new List<string>
+            {
+                "OrderInCreated",
+                "OrderInDeleted",
+                "OrderInUpdated",
+                "ProductCreated",
+                "ProductDeleted",
+                "ProductUpdated",
+            });
 
             _loopTask = Task.Run(Loop);
         }
@@ -54,6 +60,8 @@ namespace WMS.Client.Core.Services
                     }
 
                     MessageConsumed?.Invoke(null, new KafkaMessageConsumedEventArgs(result.Topic, result.Message.Value));
+                    //_consumer.Seek(result.TopicPartitionOffset);
+                    //_consumer.Commit();
                 }
             }
             finally

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using WMS.Client.Core.Adapters;
 using WMS.Shared.Models;
 
 namespace WMS.Client.Core.Interfaces
@@ -11,12 +12,10 @@ namespace WMS.Client.Core.Interfaces
         event EventHandler<EntityChangedEventArgs> EntityUpdated;
 
         internal Type Type { get; }
-        internal EntityBase GetById(Guid id);
         internal IEnumerable<EntityBase> GetList();
-        internal EntityBase Create(EntityBase entity);
-        internal void Delete(EntityBase entity);
-        internal void Update(EntityBase entity);
-
+        internal EntityAdapter GetById(Guid id);
+        internal Guid CreateOrUpdate(EntityAdapter adapter);
+        internal void Delete(Guid id);
     }
 
     internal class EntityChangedEventArgs : EventArgs

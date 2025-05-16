@@ -11,13 +11,13 @@
 		<StackPanel Orientation="Horizontal">
 			<Label VerticalAlignment="Center"
 				   Content="Number"/>
-			<TextBox Text="{Binding Model.Number}"/>
+			<TextBox Text="{Binding Adapter.Number}"/>
 			<Label VerticalAlignment="Center"
 				   Content="Date"/>
-			<TextBox Text="{Binding Model.DateTime}"/>
+			<TextBox Text="{Binding Adapter.DateTime}"/>
 		</StackPanel>
 		<DataGrid Grid.Row="1"
-				  ItemsSource="{Binding Products}"
+				  ItemsSource="{Binding Adapter.Products}"
 				  Margin="0,5,0,0"
 				  BorderThickness="1"
 				  BorderBrush="Gray"

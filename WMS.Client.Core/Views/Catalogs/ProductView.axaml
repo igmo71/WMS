@@ -9,6 +9,6 @@
 			 x:DataType="vm:ProductViewModel">
 	<Grid RowDefinitions="Auto">
 		<TextBox Grid.Row="1"
-				 Text="{Binding Model.Name}"/>
+				 Text="{Binding Adapter.Name}"/>
 	</Grid>
 </UserControl>

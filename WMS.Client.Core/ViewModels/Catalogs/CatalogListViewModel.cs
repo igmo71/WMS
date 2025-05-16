@@ -12,7 +12,7 @@ namespace WMS.Client.Core.ViewModels.Catalogs
     internal class CatalogListViewModel : ViewModelBase
     {
         private readonly string _title;
-        private readonly ICatalogDescriptor _descriptor;
+        private readonly IEntityDescriptor _descriptor;
         private readonly ObservableCollection<Catalog> _catalog = new ObservableCollection<Catalog>();
 
         internal override string Title => _title;
@@ -20,7 +20,7 @@ namespace WMS.Client.Core.ViewModels.Catalogs
 
         public RelayCommand OpenCommand { get; }
 
-        public CatalogListViewModel(string name, ICatalogDescriptor descriptor)
+        public CatalogListViewModel(string name, IEntityDescriptor descriptor)
         {
             _title = name;
             _descriptor = descriptor;
@@ -34,7 +34,7 @@ namespace WMS.Client.Core.ViewModels.Catalogs
             {
                 if (p is EntityBase header)
                 {
-                    ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id) as Catalog ?? throw new InvalidCastException());
+                    ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id));
                     AppHost.GetService<NavigationService>().AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
                 }
             });

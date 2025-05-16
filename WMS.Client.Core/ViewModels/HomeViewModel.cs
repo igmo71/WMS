@@ -18,19 +18,19 @@ namespace WMS.Client.Core.ViewModels
         {
             OrderInCommand = new RelayCommand((p) => 
             {
-                ViewModelDescriptor descriptor = EntityDescriptorFactory.GetDocument<OrderIn>().GetList();
+                ViewModelDescriptor descriptor = EntityDescriptorFactory.Get<OrderIn>().GetList();
                 AppHost.GetService<NavigationService>().AddPage(descriptor.UniqueKey, descriptor.Factory);
             });
 
             OrderOutCommand = new RelayCommand((p) => 
             {
-                ViewModelDescriptor descriptor = EntityDescriptorFactory.GetDocument<OrderOut>().GetList();
+                ViewModelDescriptor descriptor = EntityDescriptorFactory.Get<OrderOut>().GetList();
                 AppHost.GetService<NavigationService>().AddPage(descriptor.UniqueKey, descriptor.Factory);
             });
 
             ProductsCommand = new RelayCommand((p) => 
             {
-                ViewModelDescriptor descriptor = EntityDescriptorFactory.GetCatalog<Product>().GetList();
+                ViewModelDescriptor descriptor = EntityDescriptorFactory.Get<Product>().GetList();
                 AppHost.GetService<NavigationService>().AddPage(descriptor.UniqueKey, descriptor.Factory);
             });
         }

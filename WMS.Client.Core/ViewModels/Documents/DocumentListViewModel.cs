@@ -11,7 +11,7 @@ namespace WMS.Client.Core.ViewModels.Documents
     internal class DocumentListViewModel : ViewModelBase
     {
         private readonly string _title;
-        private readonly IDocumentDescriptor _descriptor;
+        private readonly IEntityDescriptor _descriptor;
         private readonly ObservableCollection<Document> _documents = new ObservableCollection<Document>();
 
         internal override string Title => _title;
@@ -19,7 +19,7 @@ namespace WMS.Client.Core.ViewModels.Documents
 
         public RelayCommand OpenCommand { get; }
 
-        public DocumentListViewModel(string name, IDocumentDescriptor descriptor)
+        public DocumentListViewModel(string name, IEntityDescriptor descriptor)
         {
             _title = name;
             _descriptor = descriptor;
@@ -31,7 +31,7 @@ namespace WMS.Client.Core.ViewModels.Documents
             {
                 if (p is Document header)
                 {
-                    ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id) as Document ?? throw new InvalidCastException());
+                    ViewModelDescriptor vmDescriptor = _descriptor.GetMain(_descriptor.Repository.GetById(header.Id));
                     AppHost.GetService<NavigationService>().AddPage(vmDescriptor.UniqueKey, vmDescriptor.Factory);
                 }
             });

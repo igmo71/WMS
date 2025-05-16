@@ -1,38 +1,18 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using WMS.Client.Core.Interfaces;
-using WMS.Client.Core.Repositories;
-using WMS.Shared.Models.Catalogs;
+﻿using WMS.Client.Core.Adapters.Documents;
 using WMS.Shared.Models.Documents;
 
 namespace WMS.Client.Core.ViewModels.Documents
 {
     internal class OrderOutViewModel : ViewModelBase
     {
-        private readonly OrderOut _model;
-        private readonly ObservableCollection<OrderOutProduct> _products = new ObservableCollection<OrderOutProduct>();
-        private readonly IEntityRepository productsRepository = EntityRepositoryFactory.Get<Product>();
+        private readonly OrderOutAdapter _adapter;
 
-        internal override string Title => $"{nameof(OrderOut)} {_model.Number} {_model.DateTime}";
-        internal OrderOut Model => _model;
-        internal ObservableCollection<OrderOutProduct> Products => _products;
+        internal override string Title => $"{nameof(OrderOut)} {_adapter.Number} {_adapter.DateTime}";
+        internal OrderOutAdapter Adapter => _adapter;
 
-        internal OrderOutViewModel(OrderOut model)
+        internal OrderOutViewModel(OrderOutAdapter adapter)
         {
-            _model = model;
-            UpdateProducts();
-        }
-
-        private void UpdateProducts()
-        {
-            _products.Clear();
-            _model.Products.ForEach((p) => _products.Add(new OrderOutProduct() { Product = productsRepository.GetById(p.ProductId) as Product ?? throw new ArgumentException(), Count = p.Count }));
-        }
-
-        internal class OrderOutProduct
-        {
-            internal Product Product { get; set; }
-            internal double Count { get; set; }
+            _adapter = adapter;
         }
     }
 }

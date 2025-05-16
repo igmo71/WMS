@@ -1,4 +1,5 @@
 ﻿using System;
+using WMS.Client.Core.Adapters.Catalogs;
 using WMS.Client.Core.Descriptors;
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
@@ -9,28 +10,20 @@ namespace WMS.Client.Core.ViewModels.Catalogs
 {
     internal class ProductViewModel : ViewModelBase
     {
-        private Product _model;
-        private ICatalogDescriptor _descriptor = EntityDescriptorFactory.GetCatalog<Product>();
+        private readonly ProductAdapter _adapter;
+        private readonly IEntityDescriptor _descriptor = EntityDescriptorFactory.Get<Product>();
 
-        internal override string Title => _model.Id != Guid.Empty ? $"Product: {_model.Name}" : $"Product: New";
-        internal Product Model { get => LockAndGet(ref _model); private set => SetAndNotify(ref _model, value); }
+        internal override string Title => _adapter.Id != Guid.Empty ? $"Product: {_adapter.Name}" : $"Product: New";
+        internal ProductAdapter Adapter => _adapter;
 
-        public ProductViewModel(Product model)
+        public ProductViewModel(ProductAdapter adapter)
         {
-            _model = model;
+            _adapter = adapter;
 
             Commands.Add(new RelayCommand(p =>
             {
-                if (Model.Id == Guid.Empty)
-                {
-                    Model = _descriptor.Repository.Create(_model) as Product ?? throw new InvalidCastException();
-                    AppHost.GetService<NavigationService>().UpdateUniqueKey(_descriptor.GetUniqueKey(Model), this);
-                }
-                else
-                {
-                    _descriptor.Repository.Update(_model);
-                    OnPropertyChanged(nameof(Model));
-                }
+                _adapter.Save();
+                AppHost.GetService<NavigationService>().UpdateUniqueKey(_descriptor.GetUniqueKey(_adapter), this);
 
                 OnPropertyChanged(nameof(Title));
             })

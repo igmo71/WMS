@@ -1,24 +1,29 @@
 ﻿using System;
+using WMS.Client.Core.Adapters;
+using WMS.Client.Core.Adapters.Catalogs;
 using WMS.Client.Core.Infrastructure;
 using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Repositories;
 using WMS.Client.Core.ViewModels.Catalogs;
+using WMS.Shared.Models;
 using WMS.Shared.Models.Catalogs;
 
 namespace WMS.Client.Core.Descriptors.Catalogs
 {
-    internal class ProductDescriptor : ICatalogDescriptor
+    internal class ProductDescriptor : IEntityDescriptor
     {
-        IEntityRepository ICatalogDescriptor.Repository => EntityRepositoryFactory.Get<Product>();
+        IEntityRepository IEntityDescriptor.Repository => EntityRepositoryFactory.Get<Product>();
 
-        Catalog ICatalogDescriptor.CreateNew() => new Product();
+        EntityAdapter IEntityDescriptor.CreateNew() => new ProductAdapter(new Product());
 
-        ViewModelDescriptor ICatalogDescriptor.GetList() => new ViewModelDescriptor($"{nameof(CatalogListViewModel)}_{nameof(Product)}",
+        EntityAdapter IEntityDescriptor.GetAdapter(EntityBase entity) => new ProductAdapter(entity);
+
+        ViewModelDescriptor IEntityDescriptor.GetList() => new ViewModelDescriptor($"{nameof(CatalogListViewModel)}_{nameof(Product)}",
             () => new CatalogListViewModel("Products", this));
 
-        ViewModelDescriptor ICatalogDescriptor.GetMain(Catalog catalog) => new ViewModelDescriptor($"{nameof(ProductViewModel)}_{catalog.Id}",
-            () => new ProductViewModel(catalog as Product ?? throw new InvalidCastException()));
+        ViewModelDescriptor IEntityDescriptor.GetMain(EntityAdapter adapter) => new ViewModelDescriptor($"{nameof(ProductViewModel)}_{adapter.Id}",
+            () => new ProductViewModel(adapter as ProductAdapter ?? throw new InvalidCastException()));
 
-        string ICatalogDescriptor.GetUniqueKey(Catalog catalog) => $"{nameof(ProductViewModel)}_{catalog.Id}";
+        string IEntityDescriptor.GetUniqueKey(EntityAdapter adapter) => $"{nameof(ProductViewModel)}_{adapter.Id}";
     }
 }
