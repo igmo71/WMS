@@ -7,6 +7,7 @@ using WMS.Backend.Infrastructure;
 using WMS.Backend.Infrastructure.Data;
 using WMS.Backend.MessageBus;
 using WMS.Backend.WebApi.Endpoints;
+using WMS.Backend.WebApi.Hubs;
 
 namespace WMS.Backend.WebApi
 {
@@ -28,6 +29,8 @@ namespace WMS.Backend.WebApi
                 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection(nameof(AppSettings)));
 
                 builder.Services.AddSerilog();
+
+                builder.Services.AddSignalR();
 
                 builder.Services.AddAuthorization();
 
@@ -87,6 +90,8 @@ namespace WMS.Backend.WebApi
                 app.UseAuthorization();
 
                 app.MapIdentityApi<AppUser>();
+
+                app.MapAppHubs();
 
                 app.MapAppEndpoints();
 
