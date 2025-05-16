@@ -1,0 +1,79 @@
+﻿@page "/orderin"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using WMS.Shared.Models.Documents
+
+@implements IAsyncDisposable
+
+@inject IConfiguration Configuration
+
+<h3>Index</h3>
+
+@if (orderInList.Count == 0)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Name</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var orderIn in orderInList)
+            {
+                <tr>
+                    <td>@orderIn.Id</td>
+                    <td>@orderIn.Name</td>
+                    <td>@orderIn.DateTime</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<OrderIn> orderInList = [];
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var webApiURL = Configuration["WebApiURL"];
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl($"{webApiURL}/hubs/OrderInHub")
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<OrderIn>("ReceiveOrderIn", ReceiveOrderIn);
+
+        await hubConnection.StartAsync();
+
+        await GetListOrderIn();
+    }
+
+    private async Task GetListOrderIn()
+    {
+        if (hubConnection is not null)
+        {
+            orderInList = await hubConnection.InvokeAsync<List<OrderIn>>("GetListOrderIn", new { });
+        }
+    }
+
+    private void ReceiveOrderIn(OrderIn orderIn)
+    {
+        orderInList.Add(orderIn);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

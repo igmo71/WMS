@@ -30,8 +30,6 @@ namespace WMS.Backend.WebApi
 
                 builder.Services.AddSerilog();
 
-                builder.Services.AddSignalR();
-
                 builder.Services.AddAuthorization();
 
                 builder.Services.AddIdentityApiEndpoints<AppUser>()
@@ -48,6 +46,23 @@ namespace WMS.Backend.WebApi
 
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
+
+                builder.Services.AddSignalR();
+
+                //var blazorAppUrl = builder.Configuration["BlazorAppUrl"] 
+                //    ?? throw new InvalidOperationException("BlazorAppUrl not found.");
+
+                var blazorAppUrl = builder.Configuration.GetSection("BlazorAppUrl").Get<string[]>();
+                builder.Services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        policy.WithOrigins(blazorAppUrl)
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials();
+                    });
+                });
 
                 builder.Services.AddAppMessageBus(builder.Configuration);
                 builder.Services.AddAppRepositories(builder.Configuration);
@@ -87,11 +102,14 @@ namespace WMS.Backend.WebApi
 
                 //app.UseHttpsRedirection();
 
+                app.UseCors();
+
                 app.UseAuthorization();
 
                 app.MapIdentityApi<AppUser>();
 
                 app.MapAppHubs();
+                //app.MapHub<OrderInHub>("/hubs/OrderInHub");
 
                 app.MapAppEndpoints();
 

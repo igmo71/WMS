@@ -4,7 +4,7 @@
     {
         public static void MapAppHubs(this IEndpointRouteBuilder routes)
         {
-            routes.MapHub<OrderInHub>("/OrderInHub");
+            routes.MapHub<OrderInHub>("/hubs/OrderInHub");
         }
     }
 }
