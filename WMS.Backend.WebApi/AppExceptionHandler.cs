@@ -16,6 +16,8 @@ namespace WMS.Backend.WebApi
                 _ => StatusCodes.Status500InternalServerError
             };
 
+            httpContext.Response.StatusCode = status;
+
             var problemDetails = new ProblemDetails
             {
                 Status = status,
@@ -24,6 +26,8 @@ namespace WMS.Backend.WebApi
                 Detail = exception.Message,
                 Instance = $"{httpContext.Request.Method} {httpContext.Request.Path}"
             };
+            //await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+            //return true;
 
             return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
             {

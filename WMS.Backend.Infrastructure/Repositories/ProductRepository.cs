@@ -39,21 +39,21 @@ namespace WMS.Backend.Infrastructure.Repositories
             return affected == 1;
         }
 
+        public async Task<Product?> GetAsync(Guid id)
+        {
+            var result = await _dbContext.Products
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            return result;
+        }
+
         public async Task<List<Product>> GetListAsync(ProductQuery productQuery)
         {
             var result = await _dbContext.Products
                 .AsNoTracking()
                 .HandleQuery(productQuery)
                 .ToListAsync();
-
-            return result;
-        }
-
-        public async Task<Product?> GetByIdAsync(Guid id)
-        {
-            var result = await _dbContext.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.Id == id);
 
             return result;
         }

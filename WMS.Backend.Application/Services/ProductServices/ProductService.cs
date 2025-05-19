@@ -2,7 +2,7 @@
 using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Cache;
-using WMS.Backend.Application.Abstractions.EventBus;
+using WMS.Backend.Application.Abstractions.Hubs;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using Dto = WMS.Shared.Models.Catalogs;
@@ -11,12 +11,12 @@ namespace WMS.Backend.Application.Services.ProductServices
 {
     internal class ProductService(
         IProductRepository productRepository,
-        IEventProducer<Dto.Product> eventProducer,
+        IAppHubService eventHub,
         IAppCache cache) : IProductService
     {
         private readonly ILogger _log = Log.ForContext<ProductService>();
         private readonly IProductRepository _productRepository = productRepository;
-        private readonly IEventProducer<Dto.Product> _eventProducer = eventProducer;
+        private readonly IAppHubService _eventHub = eventHub;
         private readonly IAppCache _cache = cache;
 
         public async Task<Dto.Product> CreateProductAsync(Dto.Product newProductDto)
@@ -29,7 +29,7 @@ namespace WMS.Backend.Application.Services.ProductServices
 
             await _cache.SetAsync(productDto);
 
-            await _eventProducer.CreatedEventProduce(productDto);
+            await _eventHub.CreatedAsync(productDto);
 
             _log.Debug("{Source} {@Product}", nameof(CreateProductAsync), product);
 
@@ -44,7 +44,7 @@ namespace WMS.Backend.Application.Services.ProductServices
 
             await _cache.SetAsync(productDto);
 
-            await _eventProducer.UpdatedEventProduce(productDto);
+            await _eventHub.UpdatedAsync(productDto);
 
             _log.Debug("{Source} {ProductId} {@Product}", nameof(UpdateProductAsync), id, product);
 
@@ -55,35 +55,22 @@ namespace WMS.Backend.Application.Services.ProductServices
         {
             var result = await _productRepository.DeleteAsync(id);
 
-            await _eventProducer.DeletedEventProduce(id);
+            await _eventHub.DeletedAsync(id);
 
-            _log.Debug("{Source} {@ProductId}", nameof(DeleteProductAsync), id);
+            _log.Debug("{Source} {ProductId}", nameof(DeleteProductAsync), id);
 
             return result;
         }
 
-        public async Task<List<Dto.Product>> GetProductListAsync(ProductQuery productQuery)
+        public async Task<Dto.Product?> GetProductAsync(Guid id)
         {
-            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {@ProductQuery}", nameof(GetProductListAsync), productQuery);
-
-            var products = await _productRepository.GetListAsync(productQuery);
-
-            var productDtoList = products.Select(e => ProductMapping.ToDto(e)).ToList();
-
-            activity.AddProperty("Products", products, destructureObjects: true);
-
-            return productDtoList;
-        }
-
-        public async Task<Dto.Product?> GetProductByIdAsync(Guid id)
-        {
-            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {ProductId}", nameof(GetProductByIdAsync), id);
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {ProductId}", nameof(GetProductAsync), id);
 
             var productDto = await _cache.GetAsync<Dto.Product>(id);
             if (productDto is not null)
                 return productDto;
 
-            var product = await _productRepository.GetByIdAsync(id);
+            var product = await _productRepository.GetAsync(id);
 
             if (product is null)
                 return null;
@@ -95,6 +82,19 @@ namespace WMS.Backend.Application.Services.ProductServices
             activity.AddProperty("ProductDto", productDto, destructureObjects: true);
 
             return productDto;
+        }
+
+        public async Task<List<Dto.Product>> GetListProductAsync(ProductQuery productQuery)
+        {
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {@ProductQuery}", nameof(GetListProductAsync), productQuery);
+
+            var products = await _productRepository.GetListAsync(productQuery);
+
+            var productDtoList = products.Select(e => ProductMapping.ToDto(e)).ToList();
+
+            activity.AddProperty("Products", products, destructureObjects: true);
+
+            return productDtoList;
         }
     }
 }

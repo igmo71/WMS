@@ -1,0 +1,138 @@
+﻿@page "/OrderIn"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Text.Json
+@using WMS.Shared.Models.Documents
+
+@implements IAsyncDisposable
+
+@inject IConfiguration Configuration
+@inject HttpClient HttpClient
+
+<h3>Index</h3>
+
+<div>
+    @messageTitle
+</div>
+<div>
+    @messageBody
+</div>
+
+@if (orderInList is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Name</th>
+                <th>Number</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var orderIn in orderInList)
+            {
+                <tr>
+                    <td>@orderIn.Id</td>
+                    <td>@orderIn.Name</td>
+                    <td>@orderIn.Number</td>
+                    <td>@orderIn.DateTime</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<OrderIn>? orderInList;
+    private HubConnection? hubConnection;
+    private string messageTitle = string.Empty;
+    private string messageBody = string.Empty;
+    private string? backendURL;
+
+    protected override async Task OnInitializedAsync()
+    {
+        backendURL = Configuration["BackendURL"];
+
+        await GetListOrderIn();
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl($"{backendURL}/hub/{nameof(OrderIn)}")
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<OrderIn>(nameof(OrderInCreated), OrderInCreated);
+        hubConnection.On<OrderIn>(nameof(OrderInUpdated), OrderInUpdated);
+        hubConnection.On<Guid>(nameof(OrderInDeleted), OrderInDeleted);
+
+        await hubConnection.StartAsync();
+
+    }
+
+    private async Task GetListOrderIn()
+    {
+        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>($"/api/{nameof(OrderIn)}");
+    }
+
+    private void OrderInCreated(OrderIn orderIn)
+    {
+        if (orderInList is null)
+            orderInList = [];
+
+        orderInList.Add(orderIn);
+
+        messageTitle = "OrderInCreated";
+        messageBody = JsonSerializer.Serialize(orderIn);
+
+        StateHasChanged();
+    }
+
+    private void OrderInUpdated(OrderIn orderIn)
+    {
+
+        var updatedIndex = orderInList?.FindIndex(e => e.Id == orderIn.Id);
+
+        if (updatedIndex is null || updatedIndex == -1 || orderInList is null)
+        {
+            messageBody = string.Empty;
+            return;
+        }
+
+        orderInList[(int)updatedIndex] = orderIn;
+
+        messageTitle = "OrderInUpdated";
+        messageBody = JsonSerializer.Serialize(orderIn);
+
+        StateHasChanged();
+    }
+
+    private void OrderInDeleted(Guid orderId)
+    {
+        var orderIn = orderInList?.FirstOrDefault(e => e.Id == orderId);
+
+        if (orderIn is null)
+        {
+            messageBody = string.Empty;
+            return;
+        }
+
+        orderInList?.Remove(orderIn);
+
+        messageTitle = "OrderInDeleted";
+        messageBody = JsonSerializer.Serialize(orderIn);
+
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

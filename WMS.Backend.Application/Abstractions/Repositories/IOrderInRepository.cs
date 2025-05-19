@@ -8,8 +8,7 @@ namespace WMS.Backend.Application.Abstractions.Repositories
         Task<OrderIn> CreateAsync(OrderIn order);
         Task UpdateAsync(Guid id, OrderIn order);
         Task DeleteAsync(Guid id);
-
+        Task<OrderIn?> GetAsync(Guid id);
         Task<List<OrderIn>> GetListAsync(OrderInGetListQuery orderQuery);
-        Task<OrderIn?> GetByIdAsync(Guid id);
     }
 }
