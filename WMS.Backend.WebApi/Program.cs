@@ -6,8 +6,8 @@ using WMS.Backend.Domain.Models;
 using WMS.Backend.Infrastructure;
 using WMS.Backend.Infrastructure.Data;
 using WMS.Backend.MessageBus;
+using WMS.Backend.SignalRHub;
 using WMS.Backend.WebApi.Endpoints;
-using WMS.Backend.WebApi.Hubs;
 
 namespace WMS.Backend.WebApi
 {
@@ -46,13 +46,14 @@ namespace WMS.Backend.WebApi
 
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
-
-                builder.Services.AddSignalR();
+                                
+                builder.Services.AddAppSignalR();
 
                 //var blazorAppUrl = builder.Configuration["BlazorAppUrl"] 
                 //    ?? throw new InvalidOperationException("BlazorAppUrl not found.");
 
-                var blazorAppUrl = builder.Configuration.GetSection("BlazorAppUrl").Get<string[]>();
+                var blazorAppUrl = builder.Configuration.GetSection("BlazorAppUrl").Get<string[]>()
+                    ?? throw new InvalidOperationException("BlazorAppUrl not found");
                 builder.Services.AddCors(options =>
                 {
                     options.AddDefaultPolicy(policy =>
@@ -113,7 +114,7 @@ namespace WMS.Backend.WebApi
 
                 app.MapIdentityApi<AppUser>();
 
-                app.MapAppHubs();
+                app.MapAppHub();
                 //app.MapHub<OrderInHub>("/hubs/OrderInHub");
 
                 app.MapAppEndpoints();

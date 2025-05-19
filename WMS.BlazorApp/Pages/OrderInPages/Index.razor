@@ -1,25 +1,35 @@
 ﻿@page "/OrderIn"
 
 @using Microsoft.AspNetCore.SignalR.Client
+@using System.Text.Json
 @using WMS.Shared.Models.Documents
 
 @implements IAsyncDisposable
 
 @inject IConfiguration Configuration
+@inject HttpClient HttpClient
 
 <h3>Index</h3>
 
-@if (orderInList.Count == 0)
+<div>
+    @messageTitle
+</div>
+<div>
+    @messageBody
+</div>
+
+@if (orderInList is null)
 {
     <p>Loading...</p>
 }
 else
 {
-    <table>
+    <table class="table">
         <thead>
             <tr>
                 <th>Order ID</th>
                 <th>Name</th>
+                <th>Number</th>
                 <th>Date</th>
             </tr>
         </thead>
@@ -29,6 +39,7 @@ else
                 <tr>
                     <td>@orderIn.Id</td>
                     <td>@orderIn.Name</td>
+                    <td>@orderIn.Number</td>
                     <td>@orderIn.DateTime</td>
                 </tr>
             }
@@ -37,35 +48,80 @@ else
 }
 
 @code {
-    private List<OrderIn> orderInList = [];
+    private List<OrderIn>? orderInList;
     private HubConnection? hubConnection;
+    private string messageTitle = string.Empty;
+    private string messageBody = string.Empty;
+    private string? backendURL;
 
     protected override async Task OnInitializedAsync()
     {
-        var backendURL = Configuration["BackendURL"];
+        backendURL = Configuration["BackendURL"];
+
+        await GetListOrderIn();
+
         hubConnection = new HubConnectionBuilder()
             .WithUrl($"{backendURL}/hub/{nameof(OrderIn)}")
             .WithAutomaticReconnect()
             .Build();
 
         hubConnection.On<OrderIn>(nameof(OrderInCreated), OrderInCreated);
+        hubConnection.On<OrderIn>(nameof(OrderInUpdated), OrderInUpdated);
+        hubConnection.On<Guid>(nameof(OrderInDeleted), OrderInDeleted);
 
         await hubConnection.StartAsync();
 
-        await GetListOrderIn();
     }
 
     private async Task GetListOrderIn()
     {
-        if (hubConnection is not null)
-        {
-            orderInList = await hubConnection.InvokeAsync<List<OrderIn>>("GetListOrderIn", new { });
-        }
+        var uri = $"{backendURL}/api/{nameof(OrderIn)}";
+
+        if (uri is null)
+            return;
+
+        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>(uri);
     }
 
     private void OrderInCreated(OrderIn orderIn)
     {
+        messageTitle = "OrderInCreated";
+
+        if (orderInList is null)
+            orderInList = [];
+
         orderInList.Add(orderIn);
+
+        messageBody = JsonSerializer.Serialize(orderIn);
+
+        StateHasChanged();
+    }
+
+    private void OrderInUpdated(OrderIn orderIn)
+    {
+
+        messageTitle = "OrderInUpdated";
+
+        messageBody = JsonSerializer.Serialize(orderIn);
+
+        StateHasChanged();
+    }
+
+    private void OrderInDeleted(Guid orderInId)
+    {
+        messageTitle = "OrderInDeleted";
+
+        var removedOrder = orderInList?.FirstOrDefault(e => e.Id == orderInId);
+
+        if (removedOrder is null)
+        {
+            messageBody = string.Empty;
+            return;
+        }
+
+        messageBody = orderInId.ToString();
+
+        orderInList?.Remove(removedOrder);
 
         StateHasChanged();
     }
