@@ -53,7 +53,7 @@ namespace WMS.Backend.WebApi
                     {
                         policy
                             //.WithOrigins(clientUrl)
-                            .AllowAnyOrigin()
+                            .AllowAnyOrigin() // TODO: Development only
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();
