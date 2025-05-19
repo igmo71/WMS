@@ -2,7 +2,6 @@
 using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Cache;
-//using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Hubs;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -12,8 +11,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
 {
     internal class OrderInService(
         IOrderInRepository orderRepository,
-        //IEventProducer<Dto.OrderIn> eventProducer,
-        IAppHubService evevtHub,
+        IAppHubService eventHub,
         IAppCache cache) : IOrderInService
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
@@ -31,7 +29,6 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             await _cache.SetAsync(orderDto);
 
-            //await _eventProducer.CreatedEventProduce(orderDto);
             await _eventHub.CreatedAsync(orderDto);
 
             _log.Debug("{Source} {@Order}", nameof(CreateOrderInAsync), order);
@@ -47,7 +44,6 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             await _cache.SetAsync(orderDto);
 
-            //await _eventProducer.UpdatedEventProduce(orderDto);
             await _eventHub.UpdatedAsync(orderDto);
 
             _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderInAsync), id, order);
@@ -57,7 +53,6 @@ namespace WMS.Backend.Application.Services.OrderInServices
         {
             await _orderRepository.DeleteAsync(id);
 
-            //await _eventProducer.DeletedEventProduce(id);
             await _eventHub.DeletedAsync(id);
 
             _log.Debug("{Source} {OrderId}", nameof(DeleteOrderInAsync), id);
