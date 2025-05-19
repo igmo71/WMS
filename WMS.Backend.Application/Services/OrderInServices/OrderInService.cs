@@ -18,8 +18,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
-        //private readonly IEventProducer<Dto.OrderIn> _eventProducer = eventProducer;
-        private readonly IAppHubService _eventHub = evevtHub;
+        private readonly IAppHubService _eventHub = eventHub;
         private readonly IAppCache _cache = cache;
 
         public async Task<Dto.OrderIn> CreateOrderInAsync(Dto.OrderIn newOrderDto)
