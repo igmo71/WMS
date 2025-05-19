@@ -107,11 +107,11 @@ else
         StateHasChanged();
     }
 
-    private void OrderInDeleted(Guid orderInId)
+    private void OrderInDeleted(Guid orderId)
     {
         messageTitle = "OrderInDeleted";
 
-        var removedOrder = orderInList?.FirstOrDefault(e => e.Id == orderInId);
+        var removedOrder = orderInList?.FirstOrDefault(e => e.Id == orderId);
 
         if (removedOrder is null)
         {
@@ -119,7 +119,7 @@ else
             return;
         }
 
-        messageBody = orderInId.ToString();
+        messageBody = orderId.ToString();
 
         orderInList?.Remove(removedOrder);
 
