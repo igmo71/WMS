@@ -58,22 +58,22 @@ namespace WMS.Backend.Infrastructure.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task<OrderIn?> GetAsync(Guid id)
+        {
+            var result = await _dbContext.OrdersIn
+                .AsNoTracking()
+                .Include(e => e.Products)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            return result;
+        }
+
         public async Task<List<OrderIn>> GetListAsync(OrderInGetListQuery orderQuery)
         {
             var result = await _dbContext.OrdersIn
                 .AsNoTracking()
                 .HandleQuery(orderQuery)
                 .ToListAsync();
-
-            return result;
-        }
-
-        public async Task<OrderIn?> GetByIdAsync(Guid id)
-        {
-            var result = await _dbContext.OrdersIn
-                .AsNoTracking()
-                .Include(e => e.Products)
-                .FirstOrDefaultAsync(e => e.Id == id);
 
             return result;
         }

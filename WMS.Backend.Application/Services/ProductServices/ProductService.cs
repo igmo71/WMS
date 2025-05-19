@@ -62,28 +62,15 @@ namespace WMS.Backend.Application.Services.ProductServices
             return result;
         }
 
-        public async Task<List<Dto.Product>> GetProductListAsync(ProductQuery productQuery)
+        public async Task<Dto.Product?> GetProductAsync(Guid id)
         {
-            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {@ProductQuery}", nameof(GetProductListAsync), productQuery);
-
-            var products = await _productRepository.GetListAsync(productQuery);
-
-            var productDtoList = products.Select(e => ProductMapping.ToDto(e)).ToList();
-
-            activity.AddProperty("Products", products, destructureObjects: true);
-
-            return productDtoList;
-        }
-
-        public async Task<Dto.Product?> GetProductByIdAsync(Guid id)
-        {
-            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {ProductId}", nameof(GetProductByIdAsync), id);
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {ProductId}", nameof(GetProductAsync), id);
 
             var productDto = await _cache.GetAsync<Dto.Product>(id);
             if (productDto is not null)
                 return productDto;
 
-            var product = await _productRepository.GetByIdAsync(id);
+            var product = await _productRepository.GetAsync(id);
 
             if (product is null)
                 return null;
@@ -95,6 +82,19 @@ namespace WMS.Backend.Application.Services.ProductServices
             activity.AddProperty("ProductDto", productDto, destructureObjects: true);
 
             return productDto;
+        }
+
+        public async Task<List<Dto.Product>> GetListProductAsync(ProductQuery productQuery)
+        {
+            using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {@ProductQuery}", nameof(GetListProductAsync), productQuery);
+
+            var products = await _productRepository.GetListAsync(productQuery);
+
+            var productDtoList = products.Select(e => ProductMapping.ToDto(e)).ToList();
+
+            activity.AddProperty("Products", products, destructureObjects: true);
+
+            return productDtoList;
         }
     }
 }

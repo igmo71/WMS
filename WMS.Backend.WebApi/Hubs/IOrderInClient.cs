@@ -4,6 +4,8 @@ namespace WMS.Backend.WebApi.Hubs
 {
     public interface IOrderInClient
     {
-        Task ReceiveOrderIn(Dto.OrderIn orderIn);
+        Task OrderInCreated(Dto.OrderIn orderIn);
+        Task OrderInUpdated(Dto.OrderIn orderIn);
+        Task OrderInDeleted(Guid orderInId);
     }
 }

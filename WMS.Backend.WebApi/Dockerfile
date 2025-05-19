@@ -1,4 +1,4 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+﻿# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
@@ -24,13 +24,26 @@ COPY . .
 WORKDIR "/src/WMS.Backend.WebApi"
 RUN dotnet build "./WMS.Backend.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Сборка Blazor WebAssembly
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS blazor-build
+WORKDIR /src
+COPY ["WMS.BlazorApp/WMS.BlazorApp.csproj", "WMS.BlazorApp/"]
+COPY ["WMS.Shared/WMS.Shared.csproj", "WMS.Shared/"]
+RUN dotnet restore "WMS.BlazorApp/WMS.BlazorApp.csproj"
+COPY . .
+WORKDIR "/src/WMS.BlazorApp"
+RUN dotnet publish "WMS.BlazorApp.csproj" -c Release -o /app/blazor
+
+# ... стадия publish для WebApi
+
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./WMS.Backend.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Финальный образ
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# Копируем ВСЁ содержимое wwwroot Blazor в wwwroot WebApi
+COPY --from=blazor-build /app/blazor/wwwroot/. ./wwwroot/
 ENTRYPOINT ["dotnet", "WMS.Backend.WebApi.dll"]

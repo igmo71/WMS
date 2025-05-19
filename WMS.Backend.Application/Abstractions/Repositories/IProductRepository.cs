@@ -10,6 +10,6 @@ namespace WMS.Backend.Application.Abstractions.Repositories
         Task<bool> DeleteAsync(Guid id);
 
         Task<List<Product>> GetListAsync(ProductQuery productQuery);
-        Task<Product?> GetByIdAsync(Guid id);
+        Task<Product?> GetAsync(Guid id);
     }
 }

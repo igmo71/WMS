@@ -106,6 +106,11 @@ namespace WMS.Backend.WebApi
 
                 app.UseAuthorization();
 
+                app.UseDefaultFiles();
+                app.UseStaticFiles();
+
+                app.MapFallbackToFile("index.html"); // Äëÿ SPA
+
                 app.MapIdentityApi<AppUser>();
 
                 app.MapAppHubs();

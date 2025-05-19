@@ -1,4 +1,4 @@
-﻿@page "/orderin"
+﻿@page "/OrderIn"
 
 @using Microsoft.AspNetCore.SignalR.Client
 @using WMS.Shared.Models.Documents
@@ -42,13 +42,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var webApiURL = Configuration["WebApiURL"];
+        var backendURL = Configuration["BackendURL"];
         hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{webApiURL}/hubs/OrderInHub")
+            .WithUrl($"{backendURL}/hub/{nameof(OrderIn)}")
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<OrderIn>("ReceiveOrderIn", ReceiveOrderIn);
+        hubConnection.On<OrderIn>(nameof(OrderInCreated), OrderInCreated);
 
         await hubConnection.StartAsync();
 
@@ -63,10 +63,11 @@ else
         }
     }
 
-    private void ReceiveOrderIn(OrderIn orderIn)
+    private void OrderInCreated(OrderIn orderIn)
     {
         orderInList.Add(orderIn);
-        InvokeAsync(StateHasChanged);
+
+        StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()

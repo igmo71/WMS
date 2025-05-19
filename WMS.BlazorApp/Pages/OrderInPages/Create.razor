@@ -1,4 +1,4 @@
-﻿@page "/orderin/create"
+﻿@page "/OrderIn/create"
 
 @using Microsoft.AspNetCore.SignalR.Client
 @using WMS.Shared.Models.Documents
@@ -28,9 +28,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var webApiURL = Configuration["WebApiURL"];
+        var backendURL = Configuration["BackendURL"];
         hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{webApiURL}/hubs/OrderInHub")
+            .WithUrl($"{backendURL}/hub/{nameof(OrderIn)}")
             .WithAutomaticReconnect()
             .Build();
 

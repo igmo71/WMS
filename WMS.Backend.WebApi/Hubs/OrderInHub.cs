@@ -9,40 +9,37 @@ namespace WMS.Backend.WebApi.Hubs
     {
         private readonly IOrderInService _orderInService = orderService;
 
-        public async Task SendOrderIn(Dto.OrderIn orderIn)
-        {
-            await Clients.Others.ReceiveOrderIn(orderIn);
-        }
-
         public async Task<Guid> CreateOrderIn(Dto.OrderIn newOrderIn)
         {
-            var orderIn = await _orderInService.CreateOrderAsync(newOrderIn);
-            await Clients.Others.ReceiveOrderIn(orderIn);
+            var orderIn = await _orderInService.CreateOrderInAsync(newOrderIn);
+            await Clients.Others.OrderInCreated(orderIn);
             return orderIn.Id;
         }
 
         public async Task<bool> UpdateOrderIn(Dto.OrderIn orderIn)
         {
-            await _orderInService.UpdateOrderAsync(orderIn.Id, orderIn);
+            await _orderInService.UpdateOrderInAsync(orderIn.Id, orderIn);
+            await Clients.Others.OrderInUpdated(orderIn);
             return true;
         }
 
         public async Task<bool> DeleteOrderIn(Guid id)
         {
-            await _orderInService.DeleteOrderAsync(id);
+            await _orderInService.DeleteOrderInAsync(id);
+            await Clients.Others.OrderInDeleted(id);
             return true;
-        }
-
-        public async Task<List<Dto.OrderIn>> GetListOrderIn(OrderInGetListQuery orderQuery)
-        {
-            var orderInList = await _orderInService.GetOrderListAsync(orderQuery);
-            return orderInList;
         }
 
         public async Task<Dto.OrderIn?> GetOrderIn(Guid id)
         {
-            var orderIn = await _orderInService.GetOrderByIdAsync(id);
+            var orderIn = await _orderInService.GetOrderAsync(id);
             return orderIn;
+        }
+
+        public async Task<List<Dto.OrderIn>> GetListOrderIn(OrderInGetListQuery orderQuery)
+        {
+            var orderInList = await _orderInService.GetListOrderInAsync(orderQuery);
+            return orderInList;
         }
     }
 }

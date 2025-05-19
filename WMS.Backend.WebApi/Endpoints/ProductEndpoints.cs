@@ -10,7 +10,7 @@ namespace WMS.Backend.WebApi.Endpoints
     {
         public static void MapProductEndpoints(this IEndpointRouteBuilder routeBuilder)
         {
-            var routeGroup = routeBuilder.MapGroup("/api/products")
+            var routeGroup = routeBuilder.MapGroup("/api/Product")
                 .WithTags(nameof(Dto.Product))
                 .WithOpenApi()
                 .ProducesValidationProblem(StatusCodes.Status400BadRequest)
@@ -25,9 +25,9 @@ namespace WMS.Backend.WebApi.Endpoints
 
             routeGroup.MapDelete("/{id}", DeleteProduct).WithName("DeleteProduct");
 
-            routeGroup.MapGet("/", GetProductList).WithName("GetProductList");
+            routeGroup.MapGet("/{id}", GetProduct).WithName("GetProduct");
 
-            routeGroup.MapGet("/{id}", GetProductById).WithName("GetProductById");
+            routeGroup.MapGet("/", GetListProduct).WithName("GetListProduct");
         }
 
         private static async Task<Created<Dto.Product>> CreateProduct(
@@ -36,7 +36,7 @@ namespace WMS.Backend.WebApi.Endpoints
         {
             var result = await productService.CreateProductAsync(product);
 
-            return TypedResults.Created($"/api/products/{result.Id}", result);
+            return TypedResults.Created($"/api/Product/{result.Id}", result);
         }
 
         private static async Task<Results<Ok, NotFound>> UpdateProduct(
@@ -58,7 +58,16 @@ namespace WMS.Backend.WebApi.Endpoints
             return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
         }
 
-        private static async Task<Results<Ok<List<Dto.Product>>, NotFound>> GetProductList(
+        private static async Task<Results<Ok<Dto.Product>, NotFound>> GetProduct(
+        [FromServices] IProductService productService,
+        [FromRoute] Guid id)
+        {
+            var result = await productService.GetProductAsync(id);
+
+            return result is Dto.Product model ? TypedResults.Ok(model) : TypedResults.NotFound();
+        }
+
+        private static async Task<Results<Ok<List<Dto.Product>>, NotFound>> GetListProduct(
             [FromServices] IProductService productService,
             [FromQuery] string? orderBy,
             [FromQuery] int? skip = null,
@@ -67,18 +76,9 @@ namespace WMS.Backend.WebApi.Endpoints
         {
             var productQuery = new ProductQuery(orderBy, skip, take, nameSubstring);
 
-            var result = await productService.GetProductListAsync(productQuery);
+            var result = await productService.GetListProductAsync(productQuery);
 
             return result is List<Dto.Product> model ? TypedResults.Ok(model) : TypedResults.NotFound();
-        }
-
-        private static async Task<Results<Ok<Dto.Product>, NotFound>> GetProductById(
-        [FromServices] IProductService productService,
-        [FromRoute] Guid id)
-        {
-            var result = await productService.GetProductByIdAsync(id);
-
-            return result is Dto.Product model ? TypedResults.Ok(model) : TypedResults.NotFound();
         }
     }
 }
