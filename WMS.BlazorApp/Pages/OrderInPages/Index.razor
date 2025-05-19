@@ -75,23 +75,17 @@ else
 
     private async Task GetListOrderIn()
     {
-        var uri = $"{backendURL}/api/{nameof(OrderIn)}";
-
-        if (uri is null)
-            return;
-
-        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>(uri);
+        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>($"/api/{nameof(OrderIn)}");
     }
 
     private void OrderInCreated(OrderIn orderIn)
     {
-        messageTitle = "OrderInCreated";
-
         if (orderInList is null)
             orderInList = [];
 
         orderInList.Add(orderIn);
 
+        messageTitle = "OrderInCreated";
         messageBody = JsonSerializer.Serialize(orderIn);
 
         StateHasChanged();
@@ -100,8 +94,17 @@ else
     private void OrderInUpdated(OrderIn orderIn)
     {
 
-        messageTitle = "OrderInUpdated";
+        var updatedIndex = orderInList?.FindIndex(e => e.Id == orderIn.Id);
 
+        if (updatedIndex is null || updatedIndex == -1 || orderInList is null)
+        {
+            messageBody = string.Empty;
+            return;
+        }
+
+        orderInList[(int)updatedIndex] = orderIn;
+
+        messageTitle = "OrderInUpdated";
         messageBody = JsonSerializer.Serialize(orderIn);
 
         StateHasChanged();
@@ -109,8 +112,6 @@ else
 
     private void OrderInDeleted(Guid orderId)
     {
-        messageTitle = "OrderInDeleted";
-
         var orderIn = orderInList?.FirstOrDefault(e => e.Id == orderId);
 
         if (orderIn is null)
@@ -119,9 +120,10 @@ else
             return;
         }
 
-        messageBody = messageBody = JsonSerializer.Serialize(orderIn);
-
         orderInList?.Remove(orderIn);
+
+        messageTitle = "OrderInDeleted";
+        messageBody = JsonSerializer.Serialize(orderIn);
 
         StateHasChanged();
     }
