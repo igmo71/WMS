@@ -2,7 +2,8 @@
 using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Cache;
-using WMS.Backend.Application.Abstractions.EventBus;
+//using WMS.Backend.Application.Abstractions.EventBus;
+using WMS.Backend.Application.Abstractions.Hubs;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
 using Dto = WMS.Shared.Models.Catalogs;
@@ -11,12 +12,14 @@ namespace WMS.Backend.Application.Services.ProductServices
 {
     internal class ProductService(
         IProductRepository productRepository,
-        IEventProducer<Dto.Product> eventProducer,
+        //IEventProducer<Dto.Product> eventProducer,
+        IAppHubService eventHub,
         IAppCache cache) : IProductService
     {
         private readonly ILogger _log = Log.ForContext<ProductService>();
         private readonly IProductRepository _productRepository = productRepository;
-        private readonly IEventProducer<Dto.Product> _eventProducer = eventProducer;
+        //private readonly IEventProducer<Dto.Product> _eventProducer = eventProducer;
+        private readonly IAppHubService _eventHub = eventHub;
         private readonly IAppCache _cache = cache;
 
         public async Task<Dto.Product> CreateProductAsync(Dto.Product newProductDto)
@@ -29,7 +32,8 @@ namespace WMS.Backend.Application.Services.ProductServices
 
             await _cache.SetAsync(productDto);
 
-            await _eventProducer.CreatedEventProduce(productDto);
+            //await _eventProducer.CreatedEventProduce(productDto);
+            await _eventHub.CreatedAsync(productDto);
 
             _log.Debug("{Source} {@Product}", nameof(CreateProductAsync), product);
 
@@ -44,7 +48,8 @@ namespace WMS.Backend.Application.Services.ProductServices
 
             await _cache.SetAsync(productDto);
 
-            await _eventProducer.UpdatedEventProduce(productDto);
+            //await _eventProducer.UpdatedEventProduce(productDto);
+            await _eventHub.UpdatedAsync(productDto);
 
             _log.Debug("{Source} {ProductId} {@Product}", nameof(UpdateProductAsync), id, product);
 
@@ -55,7 +60,8 @@ namespace WMS.Backend.Application.Services.ProductServices
         {
             var result = await _productRepository.DeleteAsync(id);
 
-            await _eventProducer.DeletedEventProduce(id);
+            //await _eventProducer.DeletedEventProduce(id);
+            await _eventHub.DeletedAsync(id);
 
             _log.Debug("{Source} {@ProductId}", nameof(DeleteProductAsync), id);
 

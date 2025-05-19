@@ -13,13 +13,13 @@ namespace WMS.Backend.Application.Services.OrderInServices
     internal class OrderInService(
         IOrderInRepository orderRepository,
         //IEventProducer<Dto.OrderIn> eventProducer,
-        IAppHubService orderInHub,
+        IAppHubService evevtHub,
         IAppCache cache) : IOrderInService
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
         //private readonly IEventProducer<Dto.OrderIn> _eventProducer = eventProducer;
-        private readonly IAppHubService _orderInHub = orderInHub;
+        private readonly IAppHubService _eventHub = evevtHub;
         private readonly IAppCache _cache = cache;
 
         public async Task<Dto.OrderIn> CreateOrderInAsync(Dto.OrderIn newOrderDto)
@@ -33,7 +33,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
             await _cache.SetAsync(orderDto);
 
             //await _eventProducer.CreatedEventProduce(orderDto);
-            await _orderInHub.CreatedAsync(orderDto);
+            await _eventHub.CreatedAsync(orderDto);
 
             _log.Debug("{Source} {@Order}", nameof(CreateOrderInAsync), order);
 
@@ -49,7 +49,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
             await _cache.SetAsync(orderDto);
 
             //await _eventProducer.UpdatedEventProduce(orderDto);
-            await _orderInHub.UpdatedAsync(orderDto);
+            await _eventHub.UpdatedAsync(orderDto);
 
             _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderInAsync), id, order);
         }
@@ -59,7 +59,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
             await _orderRepository.DeleteAsync(id);
 
             //await _eventProducer.DeletedEventProduce(id);
-            await _orderInHub.DeletedAsync(id);
+            await _eventHub.DeletedAsync(id);
 
             _log.Debug("{Source} {OrderId}", nameof(DeleteOrderInAsync), id);
         }
