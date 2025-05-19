@@ -47,9 +47,9 @@ namespace WMS.Client.Core.ViewModels.Catalogs
             { Name = "Create" });
         }
 
-        private void OnEntityUpdated(object? sender, EntityChangedEventArgs e) => GetProducts();
+        private void OnEntityUpdated(object? sender, EntityUpdatedEventArgs e) => GetProducts();
 
-        private void OnEntityCreated(object? sender, EntityChangedEventArgs e) => GetProducts();
+        private void OnEntityCreated(object? sender, EntityCreatedEventArgs e) => GetProducts();
 
         private void GetProducts()
         {

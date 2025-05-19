@@ -11,7 +11,6 @@ namespace WMS.Client.Core.Infrastructure
 
         public static void Initialize()
         {
-            _services.AddService(typeof(KafkaConsumerService), new KafkaConsumerService());
             _services.AddService(typeof(HTTPClientService), new HTTPClientService());
             _services.AddService(typeof(IUIService), new AvaloniaUIService());
             _services.AddService(typeof(NavigationService), new NavigationService());

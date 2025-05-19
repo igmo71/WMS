@@ -37,7 +37,7 @@ namespace WMS.Client.Core.ViewModels.Documents
             });
         }
 
-        private void OnEntityUpdated(object? sender, EntityChangedEventArgs e)
+        private void OnEntityUpdated(object? sender, EntityUpdatedEventArgs e)
         {
             if (_descriptor.Repository.Type == e.Entity.GetType())
                 GetDocuments();

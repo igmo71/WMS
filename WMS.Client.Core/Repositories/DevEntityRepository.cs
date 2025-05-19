@@ -8,9 +8,9 @@ namespace WMS.Client.Core.Repositories
 {
     internal class DevEntityRepository<TEntity> : IEntityRepository where TEntity : EntityBase
     {
-        public event EventHandler<EntityChangedEventArgs> EntityCreated;
-        public event EventHandler<EntityChangedEventArgs> EntityDeleted;
-        public event EventHandler<EntityChangedEventArgs> EntityUpdated;
+        public event EventHandler<EntityCreatedEventArgs> EntityCreated;
+        public event EventHandler<EntityDeletedEventArgs> EntityDeleted;
+        public event EventHandler<EntityUpdatedEventArgs> EntityUpdated;
 
         Type IEntityRepository.Type => typeof(TEntity);
 

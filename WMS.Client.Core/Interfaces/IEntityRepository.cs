@@ -7,9 +7,9 @@ namespace WMS.Client.Core.Interfaces
 {
     internal interface IEntityRepository
     {
-        event EventHandler<EntityChangedEventArgs> EntityCreated;
-        event EventHandler<EntityChangedEventArgs> EntityDeleted;
-        event EventHandler<EntityChangedEventArgs> EntityUpdated;
+        event EventHandler<EntityCreatedEventArgs> EntityCreated;
+        event EventHandler<EntityDeletedEventArgs> EntityDeleted;
+        event EventHandler<EntityUpdatedEventArgs> EntityUpdated;
 
         internal Type Type { get; }
         internal IEnumerable<EntityBase> GetList();
@@ -18,11 +18,31 @@ namespace WMS.Client.Core.Interfaces
         internal void Delete(Guid id);
     }
 
-    internal class EntityChangedEventArgs : EventArgs
+    internal class EntityCreatedEventArgs : EventArgs
     {
         public EntityBase Entity { get; }
 
-        public EntityChangedEventArgs(EntityBase entity)
+        public EntityCreatedEventArgs(EntityBase entity)
+        {
+            Entity = entity;
+        }
+    }
+
+    internal class EntityDeletedEventArgs : EventArgs
+    {
+        public Guid Id { get; }
+
+        public EntityDeletedEventArgs(Guid id)
+        {
+            Id = id;
+        }
+    }
+
+    internal class EntityUpdatedEventArgs : EventArgs
+    {
+        public EntityBase Entity { get; }
+
+        public EntityUpdatedEventArgs(EntityBase entity)
         {
             Entity = entity;
         }

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using WMS.Client.Core.Adapters.Catalogs;
 using WMS.Client.Core.Infrastructure;
+using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Repositories;
 using WMS.Shared.Models;
 using WMS.Shared.Models.Catalogs;
@@ -26,7 +27,7 @@ namespace WMS.Client.Core.Adapters.Documents
             EntityRepositoryFactory.Get<OrderIn>().EntityUpdated += EntityUpdated;
         }
 
-        private void EntityUpdated(object? sender, Interfaces.EntityChangedEventArgs e)
+        private void EntityUpdated(object? sender, EntityUpdatedEventArgs e)
         {
             if (e.Entity is OrderIn orderIn && orderIn.Id == _id)
                 UpdateAdapter(orderIn);

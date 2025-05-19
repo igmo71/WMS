@@ -16,7 +16,7 @@ namespace WMS.Client.Core.Adapters.Catalogs
             EntityRepositoryFactory.Get<Product>().EntityUpdated += EntityUpdated;
         }
 
-        private void EntityUpdated(object? sender, EntityChangedEventArgs e)
+        private void EntityUpdated(object? sender, EntityUpdatedEventArgs e)
         {
             if (e.Entity is Product product && product.Id == Id)
                 UpdateAdapter(product);
