@@ -33,11 +33,7 @@ namespace WMS.Backend.WebApi
                 builder.Services.AddAuthorization();
 
                 builder.Services.AddIdentityApiEndpoints<AppUser>()
-                .AddEntityFrameworkStores<AppDbContext>();
-
-                // TODO: CorrelationId Не используется сейчас
-                //builder.Services.AddSingleton<ICorrelationContext, CorrelationContext>();
-                //builder.Services.AddTransient<CorrelationIdMiddleware>();
+                .AddEntityFrameworkStores<AppDbContext>();                
 
                 builder.Services.AddProblemDetails();
                 builder.Services.AddExceptionHandler<AppExceptionHandler>();
@@ -49,16 +45,15 @@ namespace WMS.Backend.WebApi
                                 
                 builder.Services.AddAppSignalR();
 
-                //var blazorAppUrl = builder.Configuration["BlazorAppUrl"] 
-                //    ?? throw new InvalidOperationException("BlazorAppUrl not found.");
-
-                var blazorAppUrl = builder.Configuration.GetSection("BlazorAppUrl").Get<string[]>()
-                    ?? throw new InvalidOperationException("BlazorAppUrl not found");
+                var clientUrl = builder.Configuration.GetSection("ClientUrl").Get<string[]>()
+                    ?? throw new InvalidOperationException("ClientUrl not found");
                 builder.Services.AddCors(options =>
                 {
                     options.AddDefaultPolicy(policy =>
                     {
-                        policy.WithOrigins(blazorAppUrl)
+                        policy
+                            //.WithOrigins(clientUrl)
+                            .AllowAnyOrigin()
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();
@@ -69,8 +64,11 @@ namespace WMS.Backend.WebApi
                 builder.Services.AddAppRepositories(builder.Configuration);
                 builder.Services.AddAppServices(builder.Configuration);
 
-                // Настройка JSON-сериализации
-                // TODO: Пока воздержимся
+                // TODO: CorrelationId Не используется сейчас
+                //builder.Services.AddSingleton<ICorrelationContext, CorrelationContext>();
+                //builder.Services.AddTransient<CorrelationIdMiddleware>();
+
+                // Настройка JSON-сериализации // TODO: Пока воздержимся
                 //builder.Services.Configure<JsonOptions>(options =>
                 //{
                 //    options.SerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
@@ -96,10 +94,10 @@ namespace WMS.Backend.WebApi
                     //});
                 }
 
-                app.UseSerilogRequestLogging();
-
                 // TODO: CorrelationId Не используется сейчас
                 //app.UseMiddleware<CorrelationIdMiddleware>();
+
+                app.UseSerilogRequestLogging();
 
                 //app.UseHttpsRedirection();
 
@@ -115,7 +113,6 @@ namespace WMS.Backend.WebApi
                 app.MapIdentityApi<AppUser>();
 
                 app.MapAppHub();
-                //app.MapHub<OrderInHub>("/hubs/OrderInHub");
 
                 app.MapAppEndpoints();
 
