@@ -111,17 +111,17 @@ else
     {
         messageTitle = "OrderInDeleted";
 
-        var removedOrder = orderInList?.FirstOrDefault(e => e.Id == orderId);
+        var orderIn = orderInList?.FirstOrDefault(e => e.Id == orderId);
 
-        if (removedOrder is null)
+        if (orderIn is null)
         {
             messageBody = string.Empty;
             return;
         }
 
-        messageBody = orderId.ToString();
+        messageBody = messageBody = JsonSerializer.Serialize(orderIn);
 
-        orderInList?.Remove(removedOrder);
+        orderInList?.Remove(orderIn);
 
         StateHasChanged();
     }
