@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using WMS.Client.Core.Adapters.Catalogs;
 using WMS.Client.Core.Infrastructure;

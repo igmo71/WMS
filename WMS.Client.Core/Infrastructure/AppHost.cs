@@ -14,6 +14,7 @@ namespace WMS.Client.Core.Infrastructure
             _services.AddService(typeof(HTTPClientService), new HTTPClientService());
             _services.AddService(typeof(IUIService), new AvaloniaUIService());
             _services.AddService(typeof(NavigationService), new NavigationService());
+            _services.AddService(typeof(SignalRClientService), new SignalRClientService());
         }
 
         public static T GetService<T>() where T : class

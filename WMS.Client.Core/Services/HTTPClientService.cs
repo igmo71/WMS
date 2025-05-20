@@ -15,7 +15,7 @@ namespace WMS.Client.Core.Services
             handler.SslOptions.RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true;
 
             _httpClient = new HttpClient(handler);
-            _httpClient.BaseAddress = new Uri("https://igmo-pc:8221");
+            _httpClient.BaseAddress = new Uri("http://igmo-pc:8220");
         }
 
         public void Dispose() => _httpClient.Dispose();
