@@ -54,13 +54,13 @@ public static class OrderInEndpoints
         return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Ok<Dto.OrderIn>, NotFound>> GetOrderIn(
+    private static async Task<Results<Ok<Dto.OrderIn>, NotFound<Guid>>> GetOrderIn(
         [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {
         var result = await orderService.GetOrderAsync(id);
 
-        return result is Dto.OrderIn dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
+        return result is Dto.OrderIn dto ? TypedResults.Ok(dto) : TypedResults.NotFound(id);
     }
 
     private static async Task<Results<Ok<List<Dto.OrderIn>>, NotFound>> GetListOrderIn(
