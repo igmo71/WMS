@@ -15,6 +15,7 @@ namespace WMS.Client.Core.Infrastructure
             _services.AddService(typeof(IUIService), new AvaloniaUIService());
             _services.AddService(typeof(NavigationService), new NavigationService());
             _services.AddService(typeof(SignalRClientService), new SignalRClientService());
+            _services.AddService(typeof(BarcodeScannerService), new BarcodeScannerService());
         }
 
         public static T GetService<T>() where T : class
