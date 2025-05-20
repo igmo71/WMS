@@ -8,14 +8,19 @@ namespace WMS.Client.Core.ViewModels
 {
     internal class HomeViewModel : ViewModelBase
     {
+        private string _barcode = string.Empty;
+
         internal override string Title => "Home";
         internal override bool Persistent => true;
+        internal string Barcode { get => LockAndGet(ref _barcode); set => SetAndNotify(ref _barcode, value); }
         internal RelayCommand OrderInCommand { get; }
         internal RelayCommand OrderOutCommand { get; }
         internal RelayCommand ProductsCommand { get; }
 
         public HomeViewModel()
         {
+            AppHost.GetService<BarcodeScannerService>().BarcodeScanned += (sender, e) => Barcode = e.Barcode; 
+
             OrderInCommand = new RelayCommand((p) => 
             {
                 ViewModelDescriptor descriptor = EntityDescriptorFactory.Get<OrderIn>().GetList();

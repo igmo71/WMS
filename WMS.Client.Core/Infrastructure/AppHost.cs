@@ -12,10 +12,10 @@ namespace WMS.Client.Core.Infrastructure
         public static void Initialize()
         {
             _services.AddService(typeof(HTTPClientService), new HTTPClientService());
-            _services.AddService(typeof(IUIService), new AvaloniaUIService());
-            _services.AddService(typeof(NavigationService), new NavigationService());
             _services.AddService(typeof(SignalRClientService), new SignalRClientService());
+            _services.AddService(typeof(IUIService), new AvaloniaUIService());
             _services.AddService(typeof(BarcodeScannerService), new BarcodeScannerService());
+            _services.AddService(typeof(NavigationService), new NavigationService());
         }
 
         public static T GetService<T>() where T : class
