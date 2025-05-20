@@ -8,7 +8,7 @@ namespace WMS.Client.Core.Services
     internal class NavigationService
     {
         private readonly object _lock = new object();
-        private readonly Dictionary<string, ViewModelBase> _pages = new Dictionary<string, ViewModelBase>();
+        private readonly List<KeyValuePair<string, ViewModelBase>> _pages = new();
         private ViewModelBase _current;
 
         internal ViewModelBase[] Pages
@@ -32,8 +32,6 @@ namespace WMS.Client.Core.Services
         internal event EventHandler<CurrentChangedEventArgs> CurrentChanged;
         internal event EventHandler PagesChanged;
 
-        internal NavigationService() => AddPage(nameof(HomeViewModel), () => new HomeViewModel());
-
         internal ViewModelBase AddPage(string uniqueKey, Func<ViewModelBase> factory, bool setCurrent = true)
         {
             ViewModelBase vm;
@@ -41,11 +39,13 @@ namespace WMS.Client.Core.Services
 
             lock (_lock)
             {
-                vm = _pages.GetValueOrDefault(uniqueKey);
+                vm = _pages.FirstOrDefault(kvp => kvp.Key == uniqueKey).Value;
                 if (vm == null)
                 {
                     vm = factory.Invoke();
-                    _pages.Add(uniqueKey, vm);
+                    vm.OnCreate();
+
+                    _pages.Add(new KeyValuePair<string, ViewModelBase>(uniqueKey, vm));
                     invokeEvent = true;
                 }
             }
@@ -67,7 +67,12 @@ namespace WMS.Client.Core.Services
             {
                 if (_pages.Where(kvp => kvp.Value == vm).Any())
                 {
+                    if (_current is not null)
+                        _current.OnDeactivate();
+
                     _current = vm;
+                    _current.OnActivate();
+
                     invokeEvent = true;
                 }
             }
@@ -82,14 +87,20 @@ namespace WMS.Client.Core.Services
                 return;
 
             bool invokeEvent = false;
+            ViewModelBase newCurrent = null;
 
             lock (_lock)
             {
-                string key = _pages.FirstOrDefault(kvp => kvp.Value == vm).Key;
-                if (key != null)
+                int index = _pages.FindIndex(kvp => kvp.Value == vm);
+                if (index >= 0)
                 {
+                    _pages.RemoveAt(index);
+                    vm.OnClose();
+
+                    if (vm == _current)
+                        SetCurrent(index > _pages.Count - 1 ? _pages.Last().Value : _pages[index].Value);
+
                     invokeEvent = true;
-                    _pages.Remove(key);
                 }
             }
 
@@ -101,11 +112,11 @@ namespace WMS.Client.Core.Services
         {
             lock (_lock)
             {
-                string oldKey = _pages.FirstOrDefault(kvp => kvp.Value == vm).Key;
-                if (oldKey != null)
+                int index = _pages.FindIndex(kvp => kvp.Value == vm);
+                if (index > 0)
                 {
-                    _pages.Remove(oldKey);
-                    _pages.Add(newKey, vm);
+                    _pages.RemoveAt(index);
+                    _pages.Insert(index, new KeyValuePair<string, ViewModelBase>(newKey, vm));
                 }
             }
         }

@@ -17,10 +17,8 @@ namespace WMS.Client.Core.ViewModels
         internal RelayCommand OrderOutCommand { get; }
         internal RelayCommand ProductsCommand { get; }
 
-        public HomeViewModel()
+        internal HomeViewModel()
         {
-            AppHost.GetService<BarcodeScannerService>().BarcodeScanned += (sender, e) => Barcode = e.Barcode; 
-
             OrderInCommand = new RelayCommand((p) => 
             {
                 ViewModelDescriptor descriptor = EntityDescriptorFactory.Get<OrderIn>().GetList();
@@ -39,5 +37,7 @@ namespace WMS.Client.Core.ViewModels
                 AppHost.GetService<NavigationService>().AddPage(descriptor.UniqueKey, descriptor.Factory);
             });
         }
+
+        protected override void ProcessBarcode(string barcode) => Barcode = barcode;
     }
 }

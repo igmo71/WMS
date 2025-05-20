@@ -13,5 +13,36 @@ namespace WMS.Client.Core.ViewModels
         internal ObservableCollection<RelayCommand> Commands { get; } = new();
 
         protected ViewModelBase() => CloseCommand = new RelayCommand((p) => AppHost.GetService<NavigationService>().ClosePage(this), (p) => !Persistent);
+
+        internal virtual void OnCreate()
+        {
+            AppHost.GetService<BarcodeScannerService>().BarcodeScanned += BarcodeScanned;
+        }
+
+        internal virtual void OnClose()
+        {
+            AppHost.GetService<BarcodeScannerService>().BarcodeScanned -= BarcodeScanned;
+        }
+
+        internal virtual void OnActivate()
+        {
+
+        }
+
+        internal virtual void OnDeactivate()
+        {
+
+        }
+
+        private void BarcodeScanned(object? sender, BarcodeScannedEventArgs e)
+        {
+            if (AppHost.GetService<NavigationService>().Current == this)
+                ProcessBarcode(e.Barcode);
+        }
+
+        protected virtual void ProcessBarcode(string barcode)
+        {
+
+        }
     }
 }
