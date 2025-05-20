@@ -23,7 +23,6 @@ namespace WMS.Backend.Application
             serviceCollection.AddScoped<IAppCache, AppCache>();
 
             serviceCollection.AddScoped<IOrderInService, OrderInService>();
-            serviceCollection.AddScoped<IOrderInService, OrderInService>();
             serviceCollection.AddScoped<IProductService, ProductService>();
 
             return serviceCollection;

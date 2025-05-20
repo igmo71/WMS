@@ -18,7 +18,7 @@ namespace WMS.Backend.SignalRHub
 
         public static void MapAppHub(this IEndpointRouteBuilder routes)
         {
-            routes.MapHub<AppHub>("/hub/OrderIn");
+            routes.MapHub<AppHub>("/hub");
         }
     }
 }

@@ -56,12 +56,22 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        backendURL = Configuration["BackendURL"];
-
         await GetListOrderIn();
 
+        await ConnectSignalRHub();
+    }
+
+    private async Task GetListOrderIn()
+    {
+        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>($"{Configuration["Backend:Api"]}{nameof(OrderIn)}");
+    }
+
+    private async Task ConnectSignalRHub()
+    {
+        var signalRHubUrl = $"{Configuration["Backend:BaseAddress"]}{Configuration["Backend:SignalRHub"]}";
+
         hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{backendURL}/hub/{nameof(OrderIn)}")
+            .WithUrl(signalRHubUrl)
             .WithAutomaticReconnect()
             .Build();
 
@@ -70,12 +80,6 @@ else
         hubConnection.On<Guid>(nameof(OrderInDeleted), OrderInDeleted);
 
         await hubConnection.StartAsync();
-
-    }
-
-    private async Task GetListOrderIn()
-    {
-        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>($"/api/{nameof(OrderIn)}");
     }
 
     private void OrderInCreated(OrderIn orderIn)
