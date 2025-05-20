@@ -63,7 +63,8 @@ else
 
     private async Task GetListOrderIn()
     {
-        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>($"{Configuration["Backend:Api"]}{nameof(OrderIn)}");
+        var apiUrl = $"{Configuration["Backend:Api"]}{nameof(OrderIn)}";
+        orderInList = await HttpClient.GetFromJsonAsync<List<OrderIn>>(apiUrl);
     }
 
     private async Task ConnectSignalRHub()
