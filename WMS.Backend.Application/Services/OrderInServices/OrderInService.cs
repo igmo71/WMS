@@ -2,6 +2,7 @@
 using Serilog.Events;
 using SerilogTracing;
 using WMS.Backend.Application.Abstractions.Cache;
+using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Hubs;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Abstractions.Services;
@@ -11,12 +12,14 @@ namespace WMS.Backend.Application.Services.OrderInServices
 {
     internal class OrderInService(
         IOrderInRepository orderRepository,
-        IAppHubService eventHub,
+        //IAppHubService eventHub,
+        IOrderInEventProducer eventProducer,
         IAppCache cache) : IOrderInService
     {
         private readonly ILogger _log = Log.ForContext<OrderInService>();
         private readonly IOrderInRepository _orderRepository = orderRepository;
-        private readonly IAppHubService _eventHub = eventHub;
+        //private readonly IAppHubService _eventHub = eventHub;
+        private readonly IOrderInEventProducer _eventProducer = eventProducer;
         private readonly IAppCache _cache = cache;
 
         public async Task<Dto.OrderIn> CreateOrderInAsync(Dto.OrderIn newOrderDto)
@@ -29,11 +32,17 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             await _cache.SetAsync(orderDto);
 
-            await _eventHub.CreatedAsync(orderDto);
+            //await _eventHub.CreatedAsync(orderDto);
+            await _eventProducer.CreatedEventProduce(order);
 
             _log.Debug("{Source} {@Order}", nameof(CreateOrderInAsync), order);
 
             return orderDto;
+        }
+
+        private void OrderInEventProcessor_OrderInCreated(object? sender, Domain.Models.Documents.OrderIn e)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task UpdateOrderInAsync(Guid id, Dto.OrderIn orderDto)
@@ -44,7 +53,8 @@ namespace WMS.Backend.Application.Services.OrderInServices
 
             await _cache.SetAsync(orderDto);
 
-            await _eventHub.UpdatedAsync(orderDto);
+            //await _eventHub.UpdatedAsync(orderDto);
+            await _eventProducer.UpdatedEventProduce(order);
 
             _log.Debug("{Source} {OrderId} {@Order}", nameof(UpdateOrderInAsync), id, order);
         }
@@ -53,7 +63,8 @@ namespace WMS.Backend.Application.Services.OrderInServices
         {
             await _orderRepository.DeleteAsync(id);
 
-            await _eventHub.DeletedAsync(id);
+            //await _eventHub.DeletedAsync<Dto.OrderIn>(id);
+            await _eventProducer.DeletedEventProduce(id);
 
             _log.Debug("{Source} {OrderId}", nameof(DeleteOrderInAsync), id);
         }

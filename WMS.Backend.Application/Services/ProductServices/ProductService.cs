@@ -55,7 +55,7 @@ namespace WMS.Backend.Application.Services.ProductServices
         {
             var result = await _productRepository.DeleteAsync(id);
 
-            await _eventHub.DeletedAsync(id);
+            await _eventHub.DeletedAsync<Dto.Product>(id);
 
             _log.Debug("{Source} {ProductId}", nameof(DeleteProductAsync), id);
 

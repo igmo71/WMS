@@ -11,7 +11,7 @@ namespace WMS.Backend.SignalRHub
         {
             services.AddSignalR();
 
-            services.AddScoped<IAppHubService, AppHubService>();
+            services.AddSingleton<IAppHubService, AppHubService>();
 
             return services;
         }

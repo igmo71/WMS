@@ -6,7 +6,7 @@ using Dto = WMS.Shared.Models;
 
 namespace WMS.Backend.MessageBus.Kafka
 {
-    internal class KafkaEventProducer<TEntity> : IEventProducer<TEntity> where TEntity : Dto.EntityBase
+    internal class KafkaEventProducer<TEntity> : IDtoEventProducer<TEntity> where TEntity : Dto.EntityBase
     {
         private readonly KafkaConfig _kafkaConfig;
         private readonly IProducer<Guid, TEntity?> _producer;

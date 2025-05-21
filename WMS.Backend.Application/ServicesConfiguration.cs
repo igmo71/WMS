@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WMS.Backend.Application.Abstractions.Cache;
+using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services;
 using WMS.Backend.Application.Services.OrderInServices;
@@ -10,22 +11,28 @@ namespace WMS.Backend.Application
 {
     public static class ServicesConfiguration
     {
-        public static IServiceCollection AddAppServices(this IServiceCollection serviceCollection, IConfiguration configuration)
+        public static IServiceCollection AddAppServices(this IServiceCollection services, IConfiguration configuration)
         {
             //var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>();
 
-            serviceCollection.AddStackExchangeRedisCache(options =>
+            services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = configuration["Redis:Configuration"];
                 options.InstanceName = nameof(WMS.Backend);
             });
 
-            serviceCollection.AddScoped<IAppCache, AppCache>();
+            services.AddScoped<IAppCache, AppCache>();
 
-            serviceCollection.AddScoped<IOrderInService, OrderInService>();
-            serviceCollection.AddScoped<IProductService, ProductService>();
+            services.AddSingleton<OrderInEventChannel>();
+            services.AddSingleton<IOrderInEventProducer, OrderInEventProducer>();
+            services.AddHostedService<OrderInEventBus>();
 
-            return serviceCollection;
+            services.AddScoped<IOrderInEventSubscriber, OrderInLogSubscriber>();
+
+            services.AddScoped<IOrderInService, OrderInService>();
+            services.AddScoped<IProductService, ProductService>();
+
+            return services;
         }
     }
 }

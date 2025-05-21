@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using WMS.Backend.Application.Abstractions.Hubs;
-using WMS.Shared.Models;
-using Dto = WMS.Shared.Models.Documents;
+using WMS.Backend.Common;
+using Dto = WMS.Shared.Models;
 
 namespace WMS.Backend.SignalRHub
 {
@@ -9,19 +9,19 @@ namespace WMS.Backend.SignalRHub
     {
         private readonly IHubContext<AppHub> _hubContext = hubContext;
 
-        public async Task CreatedAsync<TEntity>(TEntity entity) where TEntity : EntityBase
+        public async Task CreatedAsync<TEntity>(TEntity entity) where TEntity : Dto.EntityBase
         {
-            await _hubContext.Clients.All.SendAsync($"{typeof(Dto.OrderIn).Name}Created", entity);
+            await _hubContext.Clients.All.SendAsync($"{typeof(TEntity).Name}{AppSettings.Events.Created}", entity);
         }
 
-        public async Task UpdatedAsync<TEntity>(TEntity entity) where TEntity : EntityBase
+        public async Task UpdatedAsync<TEntity>(TEntity entity) where TEntity : Dto.EntityBase
         {
-            await _hubContext.Clients.All.SendAsync($"{typeof(Dto.OrderIn).Name}Updated", entity);
+            await _hubContext.Clients.All.SendAsync($"{typeof(TEntity).Name}{AppSettings.Events.Updated}", entity);
         }
 
-        public async Task DeletedAsync(Guid entityId)
+        public async Task DeletedAsync<TEntity>(Guid entityId) where TEntity : Dto.EntityBase
         {
-            await _hubContext.Clients.All.SendAsync($"{typeof(Dto.OrderIn).Name}Deleted", entityId);
+            await _hubContext.Clients.All.SendAsync($"{typeof(TEntity).Name}{AppSettings.Events.Deleted}", entityId);
         }
     }
 }
