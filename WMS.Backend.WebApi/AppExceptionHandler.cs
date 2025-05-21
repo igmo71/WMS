@@ -26,9 +26,9 @@ namespace WMS.Backend.WebApi
                 Detail = exception.Message,
                 Instance = $"{httpContext.Request.Method} {httpContext.Request.Path}"
             };
+
             //await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
             //return true;
-
             return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
             {
                 Exception = exception,
