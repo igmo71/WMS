@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using System.Threading.Channels;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Hubs;
 using WMS.Backend.Common;
@@ -9,40 +10,45 @@ using WMS.Backend.Domain.Models.Documents;
 namespace WMS.Backend.Application.Services.OrderInServices
 {
     internal class OrderInEventBus(
-        OrderInEventChannel channel,
         IAppHubService eventHub,
-         IServiceScopeFactory scopeFactory) : BackgroundService 
+        IServiceScopeFactory scopeFactory) : BackgroundService
     {
         private readonly ILogger _log = Log.ForContext<OrderInEventBus>();
-        private readonly OrderInEventChannel _channel = channel;
+        private readonly Channel<IAppEvent> _channel = Channel.CreateUnbounded<IAppEvent>();
         private readonly IAppHubService _eventHub = eventHub;
+        private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
+        // Producer methods
+        public async Task CreatedEventProduce(OrderIn entity)
+            => await _channel.Writer.WriteAsync(new CreatedEvent<OrderIn>(entity));
+        public async Task UpdatedEventProduce(OrderIn entity)
+            => await _channel.Writer.WriteAsync(new UpdatedEvent<OrderIn>(entity));
+        public async Task DeletedEventProduce(Guid id)
+            => await _channel.Writer.WriteAsync(new DeletedEvent(id));
+
+        // Consumer (background processing)
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _log.Information("OrderInEventBus started");
             await foreach (IAppEvent appEvent in _channel.Reader.ReadAllAsync(stoppingToken))
             {
-                using var scope = scopeFactory.CreateScope();
+                _log.Information("Event received: {EventType}", appEvent.GetType().Name);
+                using var scope = _scopeFactory.CreateScope();
                 var subscribers = scope.ServiceProvider.GetServices<IOrderInEventSubscriber>();
                 try
                 {
                     switch (appEvent)
                     {
                         case CreatedEvent<OrderIn> createdEvent:
-                            var createdTasks = subscribers.Select(s => s.OnCreatedAsync(createdEvent.Value));
-                            await Task.WhenAll(createdTasks);
-                            var createdDto = OrderInMapping.ToDto(createdEvent.Value);
-                            await _eventHub.CreatedAsync(createdDto);
+                            await Task.WhenAll(subscribers.Select(s => s.OnCreatedAsync(createdEvent.Value)));
+                            await _eventHub.CreatedAsync(OrderInMapping.ToDto(createdEvent.Value));
                             break;
-
                         case UpdatedEvent<OrderIn> updatedEvent:
-                            var updatedTasks = subscribers.Select(s => s.OnUpdatedAsync(updatedEvent.Value));
-                            await Task.WhenAll(updatedTasks);
-                            var updatedDto = OrderInMapping.ToDto(updatedEvent.Value);
-                            await _eventHub.UpdatedAsync(updatedDto);
+                            await Task.WhenAll(subscribers.Select(s => s.OnUpdatedAsync(updatedEvent.Value)));
+                            await _eventHub.UpdatedAsync(OrderInMapping.ToDto(updatedEvent.Value));
                             break;
                         case DeletedEvent deletedEvent:
-                            var deletedTasks = subscribers.Select(s => s.OnDeletedAsync(deletedEvent.Id));
-                            await Task.WhenAll(deletedTasks);
+                            await Task.WhenAll(subscribers.Select(s => s.OnDeletedAsync(deletedEvent.Id)));
                             await _eventHub.DeletedAsync<Shared.Models.Documents.OrderIn>(deletedEvent.Id);
                             break;
                     }
@@ -52,6 +58,6 @@ namespace WMS.Backend.Application.Services.OrderInServices
                     _log.Error(ex, "Error processing event: {EventType}", appEvent.GetType().Name);
                 }
             }
-        }        
+        }
     }
 }
