@@ -11,19 +11,26 @@ namespace WMS.Client.Core.Services
 
         public event EventHandler<BarcodeScannedEventArgs>? BarcodeScanned;
 
-        internal void Add(string text)
+        internal void AddText(string text)
         {
-            if (_stopwatch.ElapsedMilliseconds >= 100)
+            if (_stopwatch.ElapsedMilliseconds >= 50)
                 _barcode = string.Empty;
 
             _barcode += text;
-            if (_barcode.EndsWith(Environment.NewLine))
+            _stopwatch.Restart();
+        }
+
+        internal void AddReturn()
+        {
+            if (_stopwatch.ElapsedMilliseconds >= 50)
+                _barcode = string.Empty;
+
+            if (_barcode != string.Empty)
             {
-                Task.Run(() => BarcodeScanned?.Invoke(this, new BarcodeScannedEventArgs(_barcode)));
+                BarcodeScannedEventArgs args = new BarcodeScannedEventArgs(_barcode);
+                Task.Run(() => BarcodeScanned?.Invoke(this, args));
                 _barcode = string.Empty;
             }
-
-            _stopwatch.Restart();
         }
     }
 
