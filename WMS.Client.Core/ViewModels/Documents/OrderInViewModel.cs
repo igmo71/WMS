@@ -23,10 +23,11 @@ namespace WMS.Client.Core.ViewModels.Documents
             {
                 _adapter.Save();
                 AppHost.GetService<NavigationService>().UpdateUniqueKey(_descriptor.GetUniqueKey(_adapter), this);
-
                 OnPropertyChanged(nameof(Title));
             })
             { Name = "Save" });
         }
+
+        protected override void ProcessBarcode(string barcode) => _adapter.AddProduct(barcode);
     }
 }

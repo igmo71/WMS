@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using WMS.Client.Core.Adapters.Catalogs;
 using WMS.Client.Core.Infrastructure;
@@ -65,6 +64,25 @@ namespace WMS.Client.Core.Adapters.Documents
                         Count = p.Count
                     });
                 });
+            });
+        }
+
+        internal void AddProduct(string barcode)
+        {
+            ProductAdapter? product = EntityRepositoryFactory.Get<Product>().GetById(new Guid(barcode)) as ProductAdapter;
+            if (product == null)
+                return;
+
+            InvokeUI(() =>
+            {
+                OrderInProduct row = _products.FirstOrDefault(r => r.Product == product);
+                if (row == null)
+                {
+                    row = new OrderInProduct() { Product = product, Count = 0 };
+                    _products.Add(row);
+                }
+
+                row.Count++;
             });
         }
 
