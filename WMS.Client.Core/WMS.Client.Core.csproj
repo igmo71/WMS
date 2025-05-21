@@ -21,7 +21,6 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="Confluent.Kafka" Version="2.9.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.5" />
   </ItemGroup>
 
