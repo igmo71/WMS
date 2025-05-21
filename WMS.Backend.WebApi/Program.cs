@@ -33,7 +33,7 @@ namespace WMS.Backend.WebApi
                 builder.Services.AddAuthorization();
 
                 builder.Services.AddIdentityApiEndpoints<AppUser>()
-                .AddEntityFrameworkStores<AppDbContext>();                
+                .AddEntityFrameworkStores<AppDbContext>();
 
                 builder.Services.AddProblemDetails();
                 builder.Services.AddExceptionHandler<AppExceptionHandler>();
@@ -42,7 +42,7 @@ namespace WMS.Backend.WebApi
 
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
-                                
+
                 builder.Services.AddAppSignalR();
 
                 var clientUrl = builder.Configuration.GetSection("ClientUrl").Get<string[]>()

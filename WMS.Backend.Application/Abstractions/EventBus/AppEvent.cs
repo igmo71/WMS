@@ -1,4 +1,4 @@
-﻿namespace WMS.Backend.Common
+﻿namespace WMS.Backend.Application.Abstractions.EventBus
 {
     public record CreatedEvent<T>(T Value) : IAppEvent;
 

@@ -35,7 +35,7 @@ namespace WMS.Backend.Common
             public const string Deleted = "Deleted";
         }
 
-            // appsettings.json
-            public bool UseArchiving { get; set; }
+        // appsettings.json
+        public bool UseArchiving { get; set; }
     }
 }

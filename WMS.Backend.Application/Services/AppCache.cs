@@ -15,7 +15,7 @@ namespace WMS.Backend.Application.Services
         {
             var cachedBytes = await _cache.GetAsync(id.ToString());
 
-            T?  result = default;
+            T? result = default;
 
             if (cachedBytes is not null)
             {

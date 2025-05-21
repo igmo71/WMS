@@ -12,7 +12,7 @@ namespace WMS.BlazorApp
             builder.RootComponents.Add<HeadOutlet>("head::after");
 
             //builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-            var baseAddress = builder.Configuration["Backend:BaseAddress"] 
+            var baseAddress = builder.Configuration["Backend:BaseAddress"]
                 ?? throw new InvalidOperationException("Backend BaseAddress not found");
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(baseAddress) });
 

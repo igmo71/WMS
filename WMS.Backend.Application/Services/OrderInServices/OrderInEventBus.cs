@@ -4,7 +4,6 @@ using Serilog;
 using System.Threading.Channels;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Hubs;
-using WMS.Backend.Common;
 using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderInServices

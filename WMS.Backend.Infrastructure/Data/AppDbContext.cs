@@ -76,7 +76,7 @@ namespace WMS.Backend.Infrastructure.Data
             //    .HasForeignKey(e => e.OrderId).HasPrincipalKey(e => e.Id);
 
             //modelBuilder.Entity<OrderOutProduct>().HasKey(e => new { e.OrderId, e.ProductId });
-            
+
             #endregion
         }
     }

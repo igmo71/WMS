@@ -21,11 +21,11 @@ namespace WMS.Backend.Application
                 options.InstanceName = nameof(WMS.Backend);
             });
 
-            services.AddScoped<IAppCache, AppCache>();           
+            services.AddScoped<IAppCache, AppCache>();
 
             // OrderIn
-            services.AddScoped<IOrderInService, OrderInService>();               
-            services.AddSingleton<OrderInEventBus>(); 
+            services.AddScoped<IOrderInService, OrderInService>();
+            services.AddSingleton<OrderInEventBus>();
             services.AddHostedService(sp => sp.GetRequiredService<OrderInEventBus>());
             services.AddScoped<IOrderInEventSubscriber, OrderInLogSubscriber>();
 

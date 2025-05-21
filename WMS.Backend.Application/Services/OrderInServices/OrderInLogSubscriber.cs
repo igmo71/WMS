@@ -12,7 +12,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
         {
             _log.Debug("{Source} {@Order}", nameof(OnCreatedAsync), entity);
 
-            return Task.CompletedTask; 
+            return Task.CompletedTask;
         }
 
         public Task OnUpdatedAsync(OrderIn entity)
