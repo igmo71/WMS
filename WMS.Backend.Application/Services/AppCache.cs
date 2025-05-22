@@ -2,38 +2,43 @@
 using Serilog;
 using System.Text.Json;
 using WMS.Backend.Application.Abstractions.Cache;
-using WMS.Shared.Models;
+using Dto = WMS.Shared.Models;
 
 namespace WMS.Backend.Application.Services
 {
-    internal class AppCache(IDistributedCache cache) : IAppCache
+    internal class AppCache<T>(IDistributedCache cache) : IAppCache<T> where T : Dto.EntityBase
     {
-        private readonly ILogger _log = Log.ForContext<AppCache>();
+        private readonly ILogger _log = Log.ForContext<AppCache<T>>();
         private readonly IDistributedCache _cache = cache;
 
-        public async Task<T?> GetAsync<T>(Guid id)
+        public async Task<T?> GetAsync(Guid id)
         {
             var cachedBytes = await _cache.GetAsync(id.ToString());
 
-            T?  result = default;
+            if (cachedBytes is null)
+                return null;
 
-            if (cachedBytes is not null)
-            {
-                result = JsonSerializer.Deserialize<T>(cachedBytes);
-                _log.Debug("{Source} From Cache {Id}", nameof(GetAsync), id);
-            }
+            var result = JsonSerializer.Deserialize<T>(cachedBytes);
+
+            _log.Debug("{Source} From Cache {Id}", nameof(GetAsync), id);
 
             return result;
         }
 
-        public async Task SetAsync<T>(T orderDto) where T : EntityBase
+        public async Task SetAsync(T entity)
         {
-            var cachedBytes = JsonSerializer.SerializeToUtf8Bytes(orderDto);
+            var cachedBytes = JsonSerializer.SerializeToUtf8Bytes(entity);
 
-            await _cache.SetAsync(orderDto.Id.ToString(), cachedBytes, new DistributedCacheEntryOptions
-            {
-                SlidingExpiration = TimeSpan.FromSeconds(60)
-            });
+            await _cache.SetAsync(entity.Id.ToString(), cachedBytes,
+                new DistributedCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromSeconds(60)
+                });
+        }
+
+        public async Task RemoveAsync(Guid id)
+        {
+            await _cache.RemoveAsync(id.ToString());
         }
     }
 }

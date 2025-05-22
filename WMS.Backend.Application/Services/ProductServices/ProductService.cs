@@ -11,13 +11,13 @@ namespace WMS.Backend.Application.Services.ProductServices
 {
     internal class ProductService(
         IProductRepository productRepository,
-        IAppHubService eventHub,
-        IAppCache cache) : IProductService
+        IAppHubService<Dto.Product> eventHub,
+        IAppCache<Dto.Product> cache) : IProductService
     {
         private readonly ILogger _log = Log.ForContext<ProductService>();
         private readonly IProductRepository _productRepository = productRepository;
-        private readonly IAppHubService _eventHub = eventHub;
-        private readonly IAppCache _cache = cache;
+        private readonly IAppHubService<Dto.Product> _eventHub = eventHub;
+        private readonly IAppCache<Dto.Product> _cache = cache;
 
         public async Task<Dto.Product> CreateProductAsync(Dto.Product newProductDto)
         {
@@ -55,6 +55,8 @@ namespace WMS.Backend.Application.Services.ProductServices
         {
             var result = await _productRepository.DeleteAsync(id);
 
+            await _cache.RemoveAsync(id);
+
             await _eventHub.DeletedAsync(id);
 
             _log.Debug("{Source} {ProductId}", nameof(DeleteProductAsync), id);
@@ -66,7 +68,7 @@ namespace WMS.Backend.Application.Services.ProductServices
         {
             using var activity = _log.StartActivity(LogEventLevel.Debug, "{Source} {ProductId}", nameof(GetProductAsync), id);
 
-            var productDto = await _cache.GetAsync<Dto.Product>(id);
+            var productDto = await _cache.GetAsync(id);
             if (productDto is not null)
                 return productDto;
 

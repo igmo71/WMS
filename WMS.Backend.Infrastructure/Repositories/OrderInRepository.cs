@@ -30,7 +30,8 @@ namespace WMS.Backend.Infrastructure.Repositories
                     ?? throw new NotFoundException(nameof(OrderIn), id);
 
             if (_appSettings.UseArchiving)
-                await _dbContext.OrdersInArchive.AddAsync(new OrderInArchive(existingOrder, ArchiveOperation.Update));
+                await _dbContext.OrdersInArchive.AddAsync(
+                    new OrderInArchive(existingOrder, AppSettings.ArchiveOperation.Update));
 
             _dbContext.Entry(existingOrder).CurrentValues.SetValues(updatedOrder);
 
@@ -51,7 +52,8 @@ namespace WMS.Backend.Infrastructure.Repositories
                     ?? throw new NotFoundException(nameof(OrderIn), id);
 
             if (_appSettings.UseArchiving)
-                await _dbContext.OrdersInArchive.AddAsync(new OrderInArchive(existingOrder, ArchiveOperation.Delete));
+                await _dbContext.OrdersInArchive.AddAsync(
+                    new OrderInArchive(existingOrder, AppSettings.ArchiveOperation.Delete));
 
             _dbContext.OrdersIn.Remove(existingOrder);
 

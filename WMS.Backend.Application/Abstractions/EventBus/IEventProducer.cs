@@ -1,11 +1,9 @@
-﻿using WMS.Shared.Models;
-
-namespace WMS.Backend.Application.Abstractions.EventBus
+﻿namespace WMS.Backend.Application.Abstractions.EventBus
 {
-    public interface IEventProducer<TEntity> where TEntity : EntityBase
+    public interface IEventProducer<T>
     {
-        Task CreatedEventProduce(TEntity entity);
-        Task UpdatedEventProduce(TEntity entity);
+        Task CreatedEventProduce(T entity);
+        Task UpdatedEventProduce(T entity);
         Task DeletedEventProduce(Guid id);
     }
 }

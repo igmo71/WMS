@@ -28,6 +28,19 @@ namespace WMS.Backend.Common
             Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
         };
 
+        public enum ArchiveOperation
+        {
+            Update,
+            Delete
+        }
+
+        public static class Events
+        {
+            public const string Created = "Created";
+            public const string Updated = "Updated";
+            public const string Deleted = "Deleted";
+        }
+
         // appsettings.json
         public bool UseArchiving { get; set; }
     }

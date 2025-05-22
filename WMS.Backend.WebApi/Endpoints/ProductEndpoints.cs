@@ -34,7 +34,7 @@ public static class ProductEndpoints
     {
         var problemDetails = DtoValidator.Validate(product, httpContext);
 
-        if (problemDetails != null) 
+        if (problemDetails != null)
             return TypedResults.Problem(problemDetails);
 
         var result = await productService.CreateProductAsync(product);
@@ -82,5 +82,5 @@ public static class ProductEndpoints
         var result = await productService.GetListProductAsync(productQuery);
 
         return result is List<Dto.Product> dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
-    }    
+    }
 }

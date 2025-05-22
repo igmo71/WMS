@@ -4,14 +4,5 @@
     {
         internal const string Section = "Kafka";
         public string? BootstrapServers { get; set; }
-
-        // Topics
-        internal const string Created = "Created";
-        internal const string Updated = "Updated";
-        internal const string Deleted = "Deleted";
-
-        internal const string OrderInCreated = "OrderInCreated";
-        internal const string OrderInUpdated = "OrderInUpdated";
-        internal const string OrderInDeleted = "OrderInDeleted";
     }
 }

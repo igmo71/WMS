@@ -7,7 +7,7 @@ namespace WMS.Backend.Domain.Models.Documents
         public OrderInArchive()
         { }
 
-        public OrderInArchive(OrderIn order, ArchiveOperation operation)
+        public OrderInArchive(OrderIn order, AppSettings.ArchiveOperation operation)
             : base(order, operation)
         { }
     }

@@ -24,26 +24,13 @@ COPY . .
 WORKDIR "/src/WMS.Backend.WebApi"
 RUN dotnet build "./WMS.Backend.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Сборка Blazor WebAssembly
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS blazor-build
-WORKDIR /src
-COPY ["WMS.BlazorApp/WMS.BlazorApp.csproj", "WMS.BlazorApp/"]
-COPY ["WMS.Shared/WMS.Shared.csproj", "WMS.Shared/"]
-RUN dotnet restore "WMS.BlazorApp/WMS.BlazorApp.csproj"
-COPY . .
-WORKDIR "/src/WMS.BlazorApp"
-RUN dotnet publish "WMS.BlazorApp.csproj" -c Release -o /app/blazor
-
-# ... стадия publish для WebApi
-
+# This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./WMS.Backend.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Финальный образ
+# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-# Копируем ВСЁ содержимое wwwroot Blazor в wwwroot WebApi
-COPY --from=blazor-build /app/blazor/wwwroot/. ./wwwroot/
 ENTRYPOINT ["dotnet", "WMS.Backend.WebApi.dll"]
