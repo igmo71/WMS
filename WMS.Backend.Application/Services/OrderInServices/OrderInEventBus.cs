@@ -5,16 +5,18 @@ using System.Threading.Channels;
 using WMS.Backend.Application.Abstractions.EventBus;
 using WMS.Backend.Application.Abstractions.Hubs;
 using WMS.Backend.Domain.Models.Documents;
+using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.Application.Services.OrderInServices
 {
     internal class OrderInEventBus(
-        IAppHubService eventHub,
-        IServiceScopeFactory scopeFactory) : BackgroundService
+        IAppHubService<Dto.OrderIn> eventHub, 
+        IServiceScopeFactory scopeFactory) 
+        : BackgroundService, IEventProducer<OrderIn>
     {
         private readonly ILogger _log = Log.ForContext<OrderInEventBus>();
         private readonly Channel<IAppEvent> _channel = Channel.CreateUnbounded<IAppEvent>();
-        private readonly IAppHubService _eventHub = eventHub;
+        private readonly IAppHubService<Dto.OrderIn> _eventHub = eventHub;
         private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
         // Producer methods
@@ -48,7 +50,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
                             break;
                         case DeletedEvent deletedEvent:
                             await Task.WhenAll(subscribers.Select(s => s.OnDeletedAsync(deletedEvent.Id)));
-                            await _eventHub.DeletedAsync<Shared.Models.Documents.OrderIn>(deletedEvent.Id);
+                            await _eventHub.DeletedAsync(deletedEvent.Id);
                             break;
                     }
                 }

@@ -2,10 +2,10 @@
 
 namespace WMS.Backend.Application.Abstractions.Hubs
 {
-    public interface IAppHubService
+    public interface IAppHubService<T>
     {
-        Task CreatedAsync<TEntity>(TEntity entity) where TEntity : Dto.EntityBase;
-        Task UpdatedAsync<TEntity>(TEntity entity) where TEntity : Dto.EntityBase;
-        Task DeletedAsync<TEntity>(Guid entityId) where TEntity : Dto.EntityBase;
+        Task CreatedAsync(T entity);
+        Task UpdatedAsync(T entity);
+        Task DeletedAsync(Guid entityId);
     }
 }

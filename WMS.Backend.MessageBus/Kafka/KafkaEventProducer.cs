@@ -2,15 +2,16 @@
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using WMS.Backend.Application.Abstractions.EventBus;
+using WMS.Backend.Common;
 using Dto = WMS.Shared.Models;
 
 namespace WMS.Backend.MessageBus.Kafka
 {
-    internal class KafkaEventProducer<TEntity> : IDtoEventProducer<TEntity> where TEntity : Dto.EntityBase
+    internal class KafkaEventProducer<T> : IEventProducer<T> where T : Dto.EntityBase
     {
         private readonly KafkaConfig _kafkaConfig;
-        private readonly IProducer<Guid, TEntity?> _producer;
-        private readonly ILogger _log = Log.ForContext<KafkaEventProducer<TEntity>>();
+        private readonly IProducer<Guid, T?> _producer;
+        private readonly ILogger _log = Log.ForContext<KafkaEventProducer<T>>();
 
         public KafkaEventProducer(IConfiguration configuration)
         {
@@ -24,34 +25,34 @@ namespace WMS.Backend.MessageBus.Kafka
                 //Debug = "all"
             };
 
-            _producer = new ProducerBuilder<Guid, TEntity?>(producerConfig)
+            _producer = new ProducerBuilder<Guid, T?>(producerConfig)
                 .SetKeySerializer(new JsonSerializer<Guid>())
-                .SetValueSerializer(new JsonSerializer<TEntity?>())
+                .SetValueSerializer(new JsonSerializer<T?>())
                 .Build();
         }
 
-        public async Task CreatedEventProduce(TEntity entity)
+        public async Task CreatedEventProduce(T entity)
         {
-            var topic = $"{typeof(TEntity).Name}{KafkaConfig.Created}";
-            var message = new Message<Guid, TEntity?>() { Key = entity.Id, Value = entity };
+            var topic = $"{typeof(T).Name}{AppSettings.Events.Created}";
+            var message = new Message<Guid, T?>() { Key = entity.Id, Value = entity };
             await EventProduce(topic, message);
         }
 
-        public async Task UpdatedEventProduce(TEntity entity)
+        public async Task UpdatedEventProduce(T entity)
         {
-            var topic = $"{typeof(TEntity).Name}{KafkaConfig.Updated}";
-            var message = new Message<Guid, TEntity?>() { Key = entity.Id, Value = entity };
+            var topic = $"{typeof(T).Name}{AppSettings.Events.Updated}";
+            var message = new Message<Guid, T?>() { Key = entity.Id, Value = entity };
             await EventProduce(topic, message);
         }
 
         public async Task DeletedEventProduce(Guid id)
         {
-            var topic = $"{typeof(TEntity).Name}{KafkaConfig.Deleted}";
-            var message = new Message<Guid, TEntity?>() { Key = id, Value = null };
+            var topic = $"{typeof(T).Name}{AppSettings.Events.Deleted}";
+            var message = new Message<Guid, T?>() { Key = id, Value = null };
             await EventProduce(topic, message);
         }
 
-        private async Task EventProduce(string topic, Message<Guid, TEntity?> message)
+        private async Task EventProduce(string topic, Message<Guid, T?> message)
         {
             var cts = new CancellationTokenSource(1000);
             try

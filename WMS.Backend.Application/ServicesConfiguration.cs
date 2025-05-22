@@ -18,15 +18,16 @@ namespace WMS.Backend.Application
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = configuration["Redis:Configuration"];
-                options.InstanceName = nameof(WMS.Backend);
+                options.InstanceName = nameof(WMS.Backend.Application);
             });
 
-            services.AddScoped<IAppCache, AppCache>();
+            services.AddScoped(typeof(IAppCache<>), typeof(AppCache<>));
 
             // OrderIn
-            services.AddScoped<IOrderInService, OrderInService>();
             services.AddSingleton<OrderInEventBus>();
             services.AddHostedService(sp => sp.GetRequiredService<OrderInEventBus>());
+            services.AddSingleton(typeof(IEventProducer<>), sp => sp.GetRequiredService<OrderInEventBus>());
+            services.AddScoped<IOrderInService, OrderInService>();
             services.AddScoped<IOrderInEventSubscriber, OrderInLogSubscriber>();
 
             //Product
