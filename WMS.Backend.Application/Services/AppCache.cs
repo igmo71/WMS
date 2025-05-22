@@ -29,10 +29,11 @@ namespace WMS.Backend.Application.Services
         {
             var cachedBytes = JsonSerializer.SerializeToUtf8Bytes(entity);
 
-            await _cache.SetAsync(entity.Id.ToString(), cachedBytes, new DistributedCacheEntryOptions
-            {
-                SlidingExpiration = TimeSpan.FromSeconds(60)
-            });
+            await _cache.SetAsync(entity.Id.ToString(), cachedBytes,
+                new DistributedCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromSeconds(60)
+                });
         }
 
         public async Task RemoveAsync(Guid id)

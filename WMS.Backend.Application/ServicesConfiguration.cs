@@ -6,6 +6,7 @@ using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services;
 using WMS.Backend.Application.Services.OrderInServices;
 using WMS.Backend.Application.Services.ProductServices;
+using WMS.Backend.Domain.Models.Documents;
 
 namespace WMS.Backend.Application
 {
@@ -26,7 +27,6 @@ namespace WMS.Backend.Application
             // OrderIn
             services.AddSingleton<OrderInEventBus>();
             services.AddHostedService(sp => sp.GetRequiredService<OrderInEventBus>());
-            services.AddSingleton(typeof(IEventProducer<>), sp => sp.GetRequiredService<OrderInEventBus>());
             services.AddScoped<IOrderInService, OrderInService>();
             services.AddScoped<IOrderInEventSubscriber, OrderInLogSubscriber>();
 

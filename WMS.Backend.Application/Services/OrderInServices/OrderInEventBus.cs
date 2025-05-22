@@ -34,8 +34,10 @@ namespace WMS.Backend.Application.Services.OrderInServices
             await foreach (IAppEvent appEvent in _channel.Reader.ReadAllAsync(stoppingToken))
             {
                 _log.Information("Event received: {EventType}", appEvent.GetType().Name);
+
                 using var scope = _scopeFactory.CreateScope();
                 var subscribers = scope.ServiceProvider.GetServices<IOrderInEventSubscriber>();
+
                 try
                 {
                     switch (appEvent)

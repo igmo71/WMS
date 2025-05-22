@@ -98,16 +98,11 @@ namespace WMS.Backend.WebApi
 
                 app.UseSerilogRequestLogging();
 
-                //app.UseHttpsRedirection();
+                app.UseHttpsRedirection();
 
                 app.UseCors();
 
                 app.UseAuthorization();
-
-                app.UseDefaultFiles();
-                app.UseStaticFiles();
-
-                app.MapFallbackToFile("index.html"); // Äëÿ SPA
 
                 app.MapIdentityApi<AppUser>();
 
