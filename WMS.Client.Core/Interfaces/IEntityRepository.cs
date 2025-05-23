@@ -1,29 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
+using WMS.Client.Core.Adapters;
 using WMS.Shared.Models;
 
 namespace WMS.Client.Core.Interfaces
 {
     internal interface IEntityRepository
     {
-        event EventHandler<EntityChangedEventArgs> EntityCreated;
-        event EventHandler<EntityChangedEventArgs> EntityDeleted;
-        event EventHandler<EntityChangedEventArgs> EntityUpdated;
+        event EventHandler<EntityCreatedEventArgs> EntityCreated;
+        event EventHandler<EntityDeletedEventArgs> EntityDeleted;
+        event EventHandler<EntityUpdatedEventArgs> EntityUpdated;
 
         internal Type Type { get; }
-        internal EntityBase GetById(Guid id);
         internal IEnumerable<EntityBase> GetList();
-        internal void Create(EntityBase entity);
-        internal void Delete(EntityBase entity);
-        internal void Update(EntityBase entity);
-
+        internal EntityAdapter GetById(Guid id);
+        internal Guid CreateOrUpdate(EntityAdapter adapter);
+        internal void Delete(Guid id);
     }
 
-    internal class EntityChangedEventArgs : EventArgs
+    internal class EntityCreatedEventArgs : EventArgs
     {
         public EntityBase Entity { get; }
 
-        public EntityChangedEventArgs(EntityBase entity)
+        public EntityCreatedEventArgs(EntityBase entity)
+        {
+            Entity = entity;
+        }
+    }
+
+    internal class EntityDeletedEventArgs : EventArgs
+    {
+        public Guid Id { get; }
+
+        public EntityDeletedEventArgs(Guid id)
+        {
+            Id = id;
+        }
+    }
+
+    internal class EntityUpdatedEventArgs : EventArgs
+    {
+        public EntityBase Entity { get; }
+
+        public EntityUpdatedEventArgs(EntityBase entity)
         {
             Entity = entity;
         }

@@ -3,6 +3,7 @@ using Android.Content.PM;
 using Avalonia;
 using Avalonia.Android;
 using WMS.Client.Core;
+using WMS.Client.Core.Infrastructure;
 
 namespace WMS.Client.Android
 {
@@ -16,6 +17,7 @@ namespace WMS.Client.Android
     {
         protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
         {
+            AppHost.Initialize();
             return base.CustomizeAppBuilder(builder)
                 .WithInterFont();
         }

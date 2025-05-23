@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using WMS.Client.Core.Interfaces;
 using WMS.Client.Core.Services;
 
 namespace WMS.Client.Core.Infrastructure
@@ -13,7 +14,7 @@ namespace WMS.Client.Core.Infrastructure
 
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged([CallerMemberName] string property = null) => UIServiceProvider.Instance?.InvokeUIThread(() => PropertyChanged?.Invoke(() => this, new PropertyChangedEventArgs(property)));
+        protected virtual void OnPropertyChanged([CallerMemberName] string property = null) => AppHost.GetService<IUIService>().InvokeUIThread(() => PropertyChanged?.Invoke(() => this, new PropertyChangedEventArgs(property)));
 
         protected T LockAndGet<T>(ref T? value, [CallerMemberName] string property = null)
         {

@@ -1,12 +1,12 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:s="using:WMS.Client.Core.Services"
+             xmlns:i="using:WMS.Client.Core.Infrastructure"
              x:Class="WMS.Client.Core.App"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
-		<s:ViewLocator/>
+		<i:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>

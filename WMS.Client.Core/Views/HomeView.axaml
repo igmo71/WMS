@@ -24,5 +24,6 @@
 				FontSize="30"
 				Width="200"
 				Command="{Binding ProductsCommand}"/>
+		<Label Content="{Binding Barcode}"/>
 	</StackPanel>
 </UserControl>
