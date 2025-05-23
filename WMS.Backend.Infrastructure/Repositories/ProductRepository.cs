@@ -21,6 +21,15 @@ namespace WMS.Backend.Infrastructure.Repositories
 
         public async Task<bool> UpdateAsync(Guid id, Product product)
         {
+            _dbContext.Entry(product).State = EntityState.Modified;
+
+            var affected = await _dbContext.SaveChangesAsync();
+
+            return affected == 1;
+        }
+
+        public async Task<bool> ExecuteUpdateAsync(Guid id, Product product)
+        {
             var affected = await _dbContext.Products
                 .Where(model => model.Id == id)
                 .ExecuteUpdateAsync(setters => setters
