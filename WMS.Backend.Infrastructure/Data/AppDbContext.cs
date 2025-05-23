@@ -79,5 +79,30 @@ namespace WMS.Backend.Infrastructure.Data
 
             #endregion
         }
+
+        public override int SaveChanges()
+        {
+            UpdateDataVersion();
+            return base.SaveChanges(); 
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            UpdateDataVersion();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void UpdateDataVersion()
+        {
+            var nowTicks = DateTime.UtcNow.Ticks;
+
+            var entries = ChangeTracker.Entries<IHasDataVersion>()
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+            foreach (var entry in entries)
+            {
+                entry.Entity.DataVersion = nowTicks;
+            }
+        }
     }
 }
