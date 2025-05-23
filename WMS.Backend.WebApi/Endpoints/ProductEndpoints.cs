@@ -1,81 +1,86 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using WMS.Backend.Application.Abstractions.Services;
 using WMS.Backend.Application.Services.ProductServices;
-using WMS.Backend.Domain.Models.Catalogs;
+using Dto = WMS.Shared.Models.Catalogs;
 
-namespace WMS.Backend.WebApi.Endpoints
+namespace WMS.Backend.WebApi.Endpoints;
+
+public static class ProductEndpoints
 {
-    public static class ProductEndpoints
+    public static void MapProductEndpoints(this IEndpointRouteBuilder routeBuilder)
     {
-        public static void MapProductEndpoints(this IEndpointRouteBuilder routeBuilder)
-        {
-            var routeGroup = routeBuilder.MapGroup("/api/products")
-                .WithTags(nameof(Product))
-                .WithOpenApi()
-                .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-                .ProducesProblem(StatusCodes.Status500InternalServerError);
+        var group = routeBuilder.MapGroup("/api/Product")
+            .WithTags(nameof(Dto.Product))
+            .WithOpenApi()
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            //.RequireAuthorization()
+            ;
 
-            routeGroup.MapPost("/", CreateProduct).WithName("CreateProduct");
+        group.MapPost("/", CreateProduct).WithName("CreateProduct");
+        group.MapPut("/{id}", UpdateProduct).WithName("UpdateProduct");
+        group.MapDelete("/{id}", DeleteProduct).WithName("DeleteProduct");
+        group.MapGet("/{id}", GetProduct).WithName("GetProduct");
+        group.MapGet("/", GetListProduct).WithName("GetListProduct");
+    }
 
-            routeGroup.MapPut("/{id}", UpdateProduct).WithName("UpdateProduct");
+    private static async Task<Results<Created<Dto.Product>, BadRequest<List<ValidationResult>>, ProblemHttpResult>> CreateProduct(
+        HttpContext httpContext,
+        [FromServices] IProductService productService,
+        [FromBody] Dto.Product product)
+    {
+        var problemDetails = DtoValidator.Validate(product, httpContext);
 
-            routeGroup.MapDelete("/{id}", DeleteProduct).WithName("DeleteProduct");
+        if (problemDetails != null)
+            return TypedResults.Problem(problemDetails);
 
-            routeGroup.MapGet("/", GetProductList).WithName("GetProductList");
+        var result = await productService.CreateProductAsync(product);
 
-            routeGroup.MapGet("/{id}", GetProductById).WithName("GetProductById");
-        }
+        return TypedResults.Created($"/api/Product/{result.Id}", result);
+    }
 
-        private static async Task<Results<Created<Product>, ProblemHttpResult>> CreateProduct(
-            [FromServices] IProductService productService,
-            [FromBody] Product product)
-        {
-            var result = await productService.CreateProductAsync(product);
+    private static async Task<Results<NoContent, NotFound<Dto.Product>>> UpdateProduct(
+        [FromServices] IProductService productService,
+        [FromRoute] Guid id,
+        [FromBody] Dto.Product product)
+    {
+        var isSuccess = await productService.UpdateProductAsync(id, product);
 
-            return TypedResults.Created($"/api/products/{result.Id}", result);
-        }
+        return isSuccess ? TypedResults.NoContent() : TypedResults.NotFound(product);
+    }
 
-        private static async Task<Results<Ok, NotFound>> UpdateProduct(
-            [FromServices] IProductService productService,
-            [FromRoute] Guid id,
-            [FromBody] Product product)
-        {
-            var isSuccess = await productService.UpdateProductAsync(id, product);
-
-            return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
-        }
-
-        private static async Task<Results<Ok, NotFound>> DeleteProduct(
-            [FromServices] IProductService productService,
-            [FromRoute] Guid id)
-        {
-            var isSuccess = await productService.DeleteProductAsync(id);
-
-            return isSuccess ? TypedResults.Ok() : TypedResults.NotFound();
-        }
-
-        private static async Task<Results<Ok<List<Product>>, NotFound, ProblemHttpResult>> GetProductList(
-            [FromServices] IProductService productService,
-            [FromQuery] string? orderBy,
-            [FromQuery] int? skip = null,
-            [FromQuery] int? take = null,
-            [FromQuery] string? nameSubstring = null)
-        {
-            var productQuery = new ProductQuery(orderBy, skip, take, nameSubstring);
-
-            var result = await productService.GetProductListAsync(productQuery);
-
-            return result is List<Product> model ? TypedResults.Ok(model) : TypedResults.NotFound();
-        }
-
-        private static async Task<Results<Ok<Product>, NotFound, ProblemHttpResult>> GetProductById(
+    private static async Task<Results<NoContent, NotFound<Guid>>> DeleteProduct(
         [FromServices] IProductService productService,
         [FromRoute] Guid id)
-        {
-            var result = await productService.GetProductByIdAsync(id);
+    {
+        var isSuccess = await productService.DeleteProductAsync(id);
 
-            return result is Product model ? TypedResults.Ok(model) : TypedResults.NotFound();
-        }
+        return isSuccess ? TypedResults.NoContent() : TypedResults.NotFound(id);
+    }
+
+    private static async Task<Results<Ok<Dto.Product>, NotFound<Guid>>> GetProduct(
+    [FromServices] IProductService productService,
+    [FromRoute] Guid id)
+    {
+        var result = await productService.GetProductAsync(id);
+
+        return result is Dto.Product dto ? TypedResults.Ok(dto) : TypedResults.NotFound(id);
+    }
+
+    private static async Task<Results<Ok<List<Dto.Product>>, NotFound>> GetListProduct(
+        [FromServices] IProductService productService,
+        [FromQuery] string? orderBy,
+        [FromQuery] int? skip = null,
+        [FromQuery] int? take = null,
+        [FromQuery] string? nameSubstring = null)
+    {
+        var productQuery = new ProductQuery(orderBy, skip, take, nameSubstring);
+
+        var result = await productService.GetListProductAsync(productQuery);
+
+        return result is List<Dto.Product> dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
     }
 }

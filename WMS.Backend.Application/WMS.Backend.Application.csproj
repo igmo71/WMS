@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.3" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
     <PackageReference Include="SerilogTracing.Expressions" Version="2.3.1" />
     <PackageReference Include="SerilogTracing.Instrumentation.AspNetCore" Version="2.3.1" />
     <PackageReference Include="SerilogTracing.Instrumentation.SqlClient" Version="2.3.1" />

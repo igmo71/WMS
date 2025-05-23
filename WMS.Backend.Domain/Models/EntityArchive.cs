@@ -6,18 +6,18 @@ namespace WMS.Backend.Domain.Models
     public abstract class EntityArchive<T> : EntityBase where T : EntityBase
     {
         public DateTime DateTime { get; set; }
-        public ArchiveOperation Operation { get; set; }
+        public AppSettings.ArchiveOperation Operation { get; set; }
         public Guid ArchiveId { get; set; }
         public string? Archive { get; set; }
 
         protected EntityArchive() { }
 
-        protected EntityArchive(T archive, ArchiveOperation operation)
+        protected EntityArchive(T archive, AppSettings.ArchiveOperation operation)
         {
             DateTime = DateTime.Now;
             Operation = operation;
             ArchiveId = archive.Id;
-            Archive = JsonSerializer.Serialize(archive, AppConfig.JsonSerializerOptions);
+            Archive = JsonSerializer.Serialize(archive, AppSettings.JsonSerializerOptions);
         }
     }
 }

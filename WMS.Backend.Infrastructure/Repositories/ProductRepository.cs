@@ -21,6 +21,15 @@ namespace WMS.Backend.Infrastructure.Repositories
 
         public async Task<bool> UpdateAsync(Guid id, Product product)
         {
+            _dbContext.Entry(product).State = EntityState.Modified;
+
+            var affected = await _dbContext.SaveChangesAsync();
+
+            return affected == 1;
+        }
+
+        public async Task<bool> ExecuteUpdateAsync(Guid id, Product product)
+        {
             var affected = await _dbContext.Products
                 .Where(model => model.Id == id)
                 .ExecuteUpdateAsync(setters => setters
@@ -39,21 +48,21 @@ namespace WMS.Backend.Infrastructure.Repositories
             return affected == 1;
         }
 
+        public async Task<Product?> GetAsync(Guid id)
+        {
+            var result = await _dbContext.Products
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            return result;
+        }
+
         public async Task<List<Product>> GetListAsync(ProductQuery productQuery)
         {
             var result = await _dbContext.Products
                 .AsNoTracking()
                 .HandleQuery(productQuery)
                 .ToListAsync();
-
-            return result;
-        }
-
-        public async Task<Product?> GetByIdAsync(Guid id)
-        {
-            var result = await _dbContext.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.Id == id);
 
             return result;
         }

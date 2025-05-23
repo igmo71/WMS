@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WMS.Backend.Application.Abstractions.Repositories;
-using WMS.Backend.Application.Services.OrderServices;
+using WMS.Backend.Application.Services.OrderInServices;
 using WMS.Backend.Common;
 using WMS.Backend.Domain.Models.Documents;
 using WMS.Backend.Infrastructure.Data;
@@ -27,11 +27,11 @@ namespace WMS.Backend.Infrastructure.Repositories
             var existingOrder = await _dbContext.OrdersIn
                 .Include(e => e.Products)
                 .FirstOrDefaultAsync(e => e.Id == id)
-                    ?? throw new ApplicationException($"Order Not Found by {id}");
+                    ?? throw new NotFoundException(nameof(OrderIn), id);
 
             if (_appSettings.UseArchiving)
-                await _dbContext.OrdersInArchive
-                    .AddAsync(new OrderInArchive(existingOrder, ArchiveOperation.Update));
+                await _dbContext.OrdersInArchive.AddAsync(
+                    new OrderInArchive(existingOrder, AppSettings.ArchiveOperation.Update));
 
             _dbContext.Entry(existingOrder).CurrentValues.SetValues(updatedOrder);
 
@@ -48,18 +48,26 @@ namespace WMS.Backend.Infrastructure.Repositories
         {
             var existingOrder = await _dbContext.OrdersIn
                 .Include(e => e.Products)
-                .FirstOrDefaultAsync(e => e.Id == id);
-
-            if (existingOrder == null)
-                return;
+                .FirstOrDefaultAsync(e => e.Id == id)
+                    ?? throw new NotFoundException(nameof(OrderIn), id);
 
             if (_appSettings.UseArchiving)
-                await _dbContext.OrdersInArchive
-                    .AddAsync(new OrderInArchive(existingOrder, ArchiveOperation.Delete));
+                await _dbContext.OrdersInArchive.AddAsync(
+                    new OrderInArchive(existingOrder, AppSettings.ArchiveOperation.Delete));
 
             _dbContext.OrdersIn.Remove(existingOrder);
 
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<OrderIn?> GetAsync(Guid id)
+        {
+            var result = await _dbContext.OrdersIn
+                .AsNoTracking()
+                .Include(e => e.Products)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            return result;
         }
 
         public async Task<List<OrderIn>> GetListAsync(OrderInGetListQuery orderQuery)
@@ -68,16 +76,6 @@ namespace WMS.Backend.Infrastructure.Repositories
                 .AsNoTracking()
                 .HandleQuery(orderQuery)
                 .ToListAsync();
-
-            return result;
-        }
-
-        public async Task<OrderIn?> GetByIdAsync(Guid id)
-        {
-            var result = await _dbContext.OrdersIn
-                .AsNoTracking()
-                .Include(e => e.Products)
-                .FirstOrDefaultAsync(e => e.Id == id);
 
             return result;
         }

@@ -10,7 +10,7 @@ namespace WMS.Backend.WebApi.Middleware
 
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
-            var correlationId = context.Request.Headers.TryGetValue(AppConfig.CORRELATION_HEADER, out var headerValue)
+            var correlationId = context.Request.Headers.TryGetValue(AppSettings.CORRELATION_HEADER, out var headerValue)
                 ? headerValue.ToString()
                 : Guid.NewGuid().ToString();
 
@@ -18,9 +18,9 @@ namespace WMS.Backend.WebApi.Middleware
 
             context.Response.OnStarting(() =>
             {
-                if (!context.Response.Headers.ContainsKey(AppConfig.CORRELATION_HEADER))
+                if (!context.Response.Headers.ContainsKey(AppSettings.CORRELATION_HEADER))
                 {
-                    context.Response.Headers[AppConfig.CORRELATION_HEADER] = correlationId;
+                    context.Response.Headers[AppSettings.CORRELATION_HEADER] = correlationId;
                 }
                 return Task.CompletedTask;
             });

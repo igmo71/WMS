@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using WMS.Backend.Application.Abstractions.Services;
-using WMS.Backend.Application.Services.OrderServices;
-using WMS.Backend.Domain.Models.Documents;
+using WMS.Backend.Application.Services.OrderInServices;
 using Dto = WMS.Shared.Models.Documents;
 
 namespace WMS.Backend.WebApi.Endpoints;
@@ -11,49 +10,61 @@ public static class OrderInEndpoints
 {
     public static void MapOrderInEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/orders-in")
-            .WithTags(nameof(OrderIn))
+        var group = routes.MapGroup("/api/OrderIn")
+            .WithTags(nameof(Dto.OrderIn))
             .WithOpenApi()
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            //.RequireAuthorization()
+            ;
 
-        group.MapPost("/", CreateOrder).WithName("CreateOrderIn");
-        group.MapPut("/{id}", UpdateOrder).WithName("UpdateOrderIn");
-        group.MapDelete("/{id}", DeleteOrder).WithName("DeleteOrderIn");
-        group.MapGet("/", GetOrderList).WithName("GetOrderInList");
-        group.MapGet("/{id}", GetOrderById).WithName("GetOrderInById");
+        group.MapPost("/", CreateOrderIn).WithName("CreateOrderIn");
+        group.MapPut("/{id}", UpdateOrderIn).WithName("UpdateOrderIn");
+        group.MapDelete("/{id}", DeleteOrderIn).WithName("DeleteOrderIn");
+        group.MapGet("/{id}", GetOrderIn).WithName("GetOrderIn");
+        group.MapGet("/", GetListOrderIn).WithName("GetListOrderIn");
     }
 
-    private static async Task<Created<Dto.OrderIn>> CreateOrder(
-        [FromServices] IOrderInWebService orderService,
+    private static async Task<Created<Dto.OrderIn>> CreateOrderIn(
+        [FromServices] IOrderInService orderService,
         [FromBody] Dto.OrderIn orderDto)
     {
-        var result = await orderService.CreateOrderAsync(orderDto);
+        var result = await orderService.CreateOrderInAsync(orderDto);
 
-        return TypedResults.Created($"/api/orders-in/{result.Id}", result);
+        return TypedResults.Created($"/api/OrderIn/{result.Id}", result);
     }
 
-    private static async Task<Results<NoContent, NotFound>> UpdateOrder(
-        [FromServices] IOrderInWebService orderService,
+    private static async Task<Results<NoContent, NotFound>> UpdateOrderIn(
+        [FromServices] IOrderInService orderService,
         [FromRoute] Guid id,
-        [FromBody] Dto.OrderIn order)
+        [FromBody] Dto.OrderIn orderDto)
     {
-        await orderService.UpdateOrderAsync(id, order);
+        await orderService.UpdateOrderInAsync(id, orderDto);
 
         return TypedResults.NoContent();
     }
 
-    private static async Task<Results<NoContent, NotFound>> DeleteOrder(
-        [FromServices] IOrderInWebService orderService,
+    private static async Task<Results<NoContent, NotFound>> DeleteOrderIn(
+        [FromServices] IOrderInService orderService,
         [FromRoute] Guid id)
     {
-        await orderService.DeleteOrderAsync(id);
+        await orderService.DeleteOrderInAsync(id);
 
         return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Ok<List<Dto.OrderIn>>, NotFound>> GetOrderList(
-        [FromServices] IOrderInWebService orderService,
+    private static async Task<Results<Ok<Dto.OrderIn>, NotFound<Guid>>> GetOrderIn(
+        [FromServices] IOrderInService orderService,
+        [FromRoute] Guid id)
+    {
+        var result = await orderService.GetOrderAsync(id);
+
+        return result is Dto.OrderIn dto ? TypedResults.Ok(dto) : TypedResults.NotFound(id);
+    }
+
+    private static async Task<Results<Ok<List<Dto.OrderIn>>, NotFound>> GetListOrderIn(
+        [FromServices] IOrderInService orderService,
         [FromQuery] string? orderBy = null,
         [FromQuery] int? skip = null,
         [FromQuery] int? take = null,
@@ -63,17 +74,8 @@ public static class OrderInEndpoints
     {
         var orderQuery = new OrderInGetListQuery(orderBy, skip, take, dateBegin, dateEnd, numberSubstring);
 
-        var result = await orderService.GetOrderListAsync(orderQuery);
+        var result = await orderService.GetListOrderInAsync(orderQuery);
 
         return result is List<Dto.OrderIn> dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
-    }
-
-    private static async Task<Results<Ok<Dto.OrderIn>, NotFound>> GetOrderById(
-        [FromServices] IOrderInWebService orderService,
-        [FromRoute] Guid id)
-    {
-        var result = await orderService.GetOrderByIdAsync(id);
-
-        return result is Dto.OrderIn dto ? TypedResults.Ok(dto) : TypedResults.NotFound();
     }
 }
