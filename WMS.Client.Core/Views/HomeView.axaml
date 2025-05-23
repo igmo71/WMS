@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
+			 xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WMS.Client.Core.Views.HomeView"
+			 x:DataType="vm:HomeViewModel">
+	<Design.DataContext>
+		<vm:HomeViewModel />
+	</Design.DataContext>
+	<StackPanel HorizontalAlignment="Center"
+				Margin="0,20">
+		<Button Content="Order In"
+				FontSize="30"
+				Width="200"
+				Command="{Binding OrderInCommand}"/>
+		<Button Content="Order Out"
+				FontSize="30"
+				Width="200"
+				Command="{Binding OrderOutCommand}"/>
+		<Button Content="Products"
+				FontSize="30"
+				Width="200"
+				Command="{Binding ProductsCommand}"/>
+	</StackPanel>
+</UserControl>

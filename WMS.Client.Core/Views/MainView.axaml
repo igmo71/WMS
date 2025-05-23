@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:WMS.Client.Core.ViewModels"
+             xmlns:bh="clr-namespace:WMS.Client.Core.Behaviours"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WMS.Client.Core.Views.MainView"
+             x:DataType="vm:MainViewModel"
+			 Name="Container"
+			 SizeChanged="SizeChanged">
+	<Design.DataContext>
+		<vm:MainViewModel />
+	</Design.DataContext>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<Grid Grid.Row="0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="auto"/>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="auto"/>
+			</Grid.ColumnDefinitions>
+			<Label Name="CurrentName"
+				   Grid.Column="0"
+				   Content="{Binding CurrentPage.Name}"
+				   VerticalAlignment="Center"
+				   Margin="5"
+				   FontSize="15"/>
+			<StackPanel Grid.Column="1"
+						Orientation="Horizontal">
+				<TabStrip Name="PagesTabs" 
+						  ItemsSource="{Binding Pages}"
+						  SelectedItem="{Binding CurrentPage}">
+					<TabStrip.ItemTemplate>
+						<DataTemplate>
+							<StackPanel Orientation="Horizontal">
+								<Label Content="{Binding Name}"
+									   VerticalContentAlignment="Center"
+									   FontSize="20"/>
+								<Button Content="x"
+										Padding="1"
+										Command="{Binding CloseCommand}"/>
+							</StackPanel>
+						</DataTemplate>
+					</TabStrip.ItemTemplate>
+				</TabStrip>
+			</StackPanel>
+			<Button Name="PagesButton"
+					Grid.Column="2"
+					Content="Pages"
+					HorizontalAlignment="Right"
+					Margin="10">
+				<Button.Flyout>
+					<MenuFlyout ItemsSource="{Binding Pages}">
+						<MenuFlyout.ItemContainerTheme>
+							<ControlTheme TargetType="MenuItem" 
+										  BasedOn="{StaticResource {x:Type MenuItem}}">
+								<Setter Property="Command" Value="{Binding DataContext.SetCurrentCommand, ElementName=Container}"/>
+								<Setter Property="CommandParameter" Value="{Binding}"/>
+							</ControlTheme>
+						</MenuFlyout.ItemContainerTheme>
+						<MenuFlyout.ItemTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal">
+									<Label Content="{Binding Name}"
+										   VerticalContentAlignment="Center"
+										   FontSize="15"/>
+									<Button Content="x"
+											Padding="1"
+											Command="{Binding CloseCommand}"/>
+								</StackPanel>
+							</DataTemplate>
+						</MenuFlyout.ItemTemplate>
+					</MenuFlyout>
+				</Button.Flyout>
+			</Button>
+		</Grid>
+		<TransitioningContentControl Grid.Row="1"
+									 HorizontalAlignment="Stretch"
+									 Content="{Binding CurrentPage}"/>
+	</Grid>
+</UserControl>

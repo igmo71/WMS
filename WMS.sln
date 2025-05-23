@@ -20,6 +20,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.BlazorApp", "WMS.Blazor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Backend.SignalRHub", "WMS.Backend.SignalRHub\WMS.Backend.SignalRHub.csproj", "{1A52453A-3517-44F2-B22B-A5D1CA484907}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Core", "WMS.Client.Core\WMS.Client.Core.csproj", "{CFF12522-ECD5-455E-B7CB-551A108FC764}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Android", "WMS.Client.Android\WMS.Client.Android.csproj", "{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Desktop", "WMS.Client.Desktop\WMS.Client.Desktop.csproj", "{7370AE29-1767-49A5-99AC-919CFA113A1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMS.Client.Browser", "WMS.Client.Browser\WMS.Client.Browser.csproj", "{259E4CA0-1A38-473F-A5F9-CF539ECABD36}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +50,24 @@ Global
 		{4D447026-9794-4C88-A29C-E241BED040CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D447026-9794-4C88-A29C-E241BED040CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D447026-9794-4C88-A29C-E241BED040CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFF12522-ECD5-455E-B7CB-551A108FC764}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFF12522-ECD5-455E-B7CB-551A108FC764}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFF12522-ECD5-455E-B7CB-551A108FC764}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFF12522-ECD5-455E-B7CB-551A108FC764}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BC723FB-C02D-4C7C-B0AC-7EBB789C3145}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{7370AE29-1767-49A5-99AC-919CFA113A1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7370AE29-1767-49A5-99AC-919CFA113A1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7370AE29-1767-49A5-99AC-919CFA113A1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7370AE29-1767-49A5-99AC-919CFA113A1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{259E4CA0-1A38-473F-A5F9-CF539ECABD36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{259E4CA0-1A38-473F-A5F9-CF539ECABD36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{259E4CA0-1A38-473F-A5F9-CF539ECABD36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{259E4CA0-1A38-473F-A5F9-CF539ECABD36}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF660DE3-26EA-4A81-AD5C-ABC3453EE24C}.Release|Any CPU.ActiveCfg = Release|Any CPU
