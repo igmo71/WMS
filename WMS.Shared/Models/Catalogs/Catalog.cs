@@ -2,7 +2,7 @@
 
 namespace WMS.Shared.Models.Catalogs
 {
-    public abstract class Catalog : EntityBase
+    public abstract class Catalog : VersionedEntity
     {
         [MinLength(3)]
         [MaxLength(100)]

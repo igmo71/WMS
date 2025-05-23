@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using WMS.Backend.Application.Abstractions.Repositories;
 using WMS.Backend.Application.Services.OrderInServices;
 using WMS.Backend.Common;
+using WMS.Backend.Domain.Models;
 using WMS.Backend.Domain.Models.Documents;
 using WMS.Backend.Infrastructure.Data;
 
@@ -31,7 +32,7 @@ namespace WMS.Backend.Infrastructure.Repositories
 
             if (_appSettings.UseArchiving)
                 await _dbContext.OrdersInArchive.AddAsync(
-                    new OrderInArchive(existingOrder, AppSettings.ArchiveOperation.Update));
+                    new OrderInArchive(existingOrder, EntityArchiveOperation.Update));
 
             _dbContext.Entry(existingOrder).CurrentValues.SetValues(updatedOrder);
 
@@ -53,7 +54,7 @@ namespace WMS.Backend.Infrastructure.Repositories
 
             if (_appSettings.UseArchiving)
                 await _dbContext.OrdersInArchive.AddAsync(
-                    new OrderInArchive(existingOrder, AppSettings.ArchiveOperation.Delete));
+                    new OrderInArchive(existingOrder, EntityArchiveOperation.Delete));
 
             _dbContext.OrdersIn.Remove(existingOrder);
 

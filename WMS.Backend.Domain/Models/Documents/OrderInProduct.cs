@@ -17,6 +17,6 @@ namespace WMS.Backend.Domain.Models.Documents
         public Product? Product { get; set; }
 
 
-        public double Count { get; set; }
+        public double Quantity { get; set; }
     }
 }
