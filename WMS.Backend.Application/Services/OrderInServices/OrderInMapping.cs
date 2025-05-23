@@ -9,6 +9,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
         {
             return new OrderIn
             {
+                DataVersion = dto.DataVersion,
                 DateTime = dto.DateTime,
                 Id = dto.Id,
                 Name = dto.Name,
@@ -28,6 +29,7 @@ namespace WMS.Backend.Application.Services.OrderInServices
         {
             return new Dto.OrderIn
             {
+                DataVersion = order.DataVersion,
                 DateTime = order.DateTime,
                 Id = order.Id,
                 Name = order.Name,
