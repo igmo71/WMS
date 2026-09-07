@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Wms.Application.Inventory.Movements;
 using Wms.Application.Persistence;
-using Wms.Application.StorageLocations;
 using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
@@ -280,6 +279,14 @@ public class ReceivingOrderCommandService(
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
+        var locationResult = await ReceivingOrderLocationPolicy.RequireReceivingLocationAsync(
+            dbContext,
+            order,
+            order.ReceivingLocationId,
+            ct);
+        if (!locationResult.IsSuccess)
+            return locationResult;
+
         var now = DateTimeOffset.UtcNow;
         var transitionResult = order.SetReceived(now, userId);
         if (!transitionResult.IsSuccess)
@@ -521,34 +528,17 @@ public class ReceivingOrderCommandService(
         Guid receivingLocationId,
         CancellationToken ct)
     {
-        var location = await dbContext.StorageLocations
-            .Include(x => x.Zone)
-            .Include(x => x.ActiveLock)
-            .SingleOrDefaultAsync(x => x.Id == receivingLocationId, ct);
-
-        if (location is null
-            || location.WarehouseId != order.WarehouseId
-            || location.IsFolder
-            || location.DeletionMark
-            || location.Zone?.DeletionMark == true
-            || location.Zone?.Type != ZoneType.Receiving)
+        var validationResult = await ReceivingOrderLocationPolicy.RequireReceivingLocationAsync(
+            dbContext,
+            order,
+            receivingLocationId,
+            ct);
+        if (!validationResult.IsSuccess)
         {
-            return OperationError.Invalid("Позиция приёмки должна принадлежать зоне приёмки на складе ордера.");
+            return validationResult;
         }
 
-        var availabilityResult = StorageLocationAvailability.ValidateUnlocked(location);
-        if (!availabilityResult.IsSuccess)
-        {
-            return availabilityResult;
-        }
-
-        var locationResult = order.SetReceivingLocation(receivingLocationId);
-        if (!locationResult.IsSuccess)
-        {
-            return locationResult;
-        }
-
-        return OperationResult.Success();
+        return order.SetReceivingLocation(receivingLocationId);
     }
 
     private static Task<ReceivingOrder?> LoadOrderAsync(

@@ -141,13 +141,33 @@ public class StorageLocation
             return OperationError.Invalid("Параметры складской позиции обязательны.");
         }
 
+        var eligibilityChanged = IsFolder != details.IsFolder;
         ApplyDetails(details);
+        if (eligibilityChanged)
+        {
+            AdvanceOperationalRevision();
+        }
+
         return OperationResult.Success();
     }
 
-    public void Deactivate() => DeletionMark = true;
+    public void Deactivate()
+    {
+        if (!DeletionMark)
+        {
+            DeletionMark = true;
+            AdvanceOperationalRevision();
+        }
+    }
 
-    public void Activate() => DeletionMark = false;
+    public void Activate()
+    {
+        if (DeletionMark)
+        {
+            DeletionMark = false;
+            AdvanceOperationalRevision();
+        }
+    }
 
     public void AdvanceOperationalRevision() => OperationalRevision++;
 

@@ -23,36 +23,32 @@ by dependency, not by a promised release date.
 
 ## Next delivery
 
-Deliver the operational-topology integrity batch from the accepted
-architecture review:
+Restore Mobile receipt replay before mutable business prechecks:
 
-- require active warehouse, zone, and location topology during final inventory
-  posting while retaining feature-owned final route-role checks;
-- make eligibility-changing location writes advance their operational
-  revision;
-- make zone activity/type and warehouse activity changes advance affected
-  child location revisions in the same classified save;
-- pilot the narrow operational-location policy in one workflow before applying
-  it to matching call sites.
+- consult the persisted receipt and verify request-id compatibility before
+  resolving mutable order, location, draft, or SKU state;
+- keep authentication and deterministic transport parsing outside the receipt
+  boundary;
+- make inventory-count open-existing versus create semantics explicit instead
+  of shortcutting around the receipt.
 
-Keep topology validation and concurrency protection in one focused scope. Do
-not combine it with later Mobile or 1C boundary refactoring.
+Cover receiving start and putaway, inventory-count start, and SKU scan paths
+identified by the accepted review. Keep this separate from endpoint or client
+file decomposition.
 
 ## Accepted architecture follow-up
 
 After the next delivery, create a focused scope for each ordered batch:
 
-1. ensure Mobile receipt replay precedes mutable business resolution and
-   preconditions;
-2. remove the implicit receiving-location save before Web completion, and
+1. remove the implicit receiving-location save before Web completion, and
    migrate the legacy receiving API to the common operation while treating it
    as live until consumers are positively ruled out;
-3. introduce application-owned 1C source/execution ports and synchronization
+2. introduce application-owned 1C source/execution ports and synchronization
    operations, remove concrete OneS orchestration from hosts, and make
    synchronization checkpoints versus `Stage...` save ownership explicit;
-4. feature-split Mobile API client/contracts and pilot one concrete page
+3. feature-split Mobile API client/contracts and pilot one concrete page
    process object before repeating any maintainability shape;
-5. apply the accepted template/comment/pass-through/telemetry cleanup as an
+4. apply the accepted template/comment/pass-through/telemetry cleanup as an
    isolated batch.
 
 Keep Mobile shipping rollback Web-only unless pilot evidence creates a Mobile

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Wms.Application.Persistence;
 using Wms.Application.StorageLocations;
 using Wms.Common;
 using Wms.Data;
@@ -82,8 +83,7 @@ public class StorageLocationCommandService(IDbContextFactory<ApplicationDbContex
             return updateResult;
         }
 
-        await dbContext.SaveChangesAsync(ct);
-        return OperationResult.Success();
+        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
     }
 
     public async Task<OperationResult<IReadOnlyList<StorageLocation>>> GenerateChildrenAsync(
@@ -153,17 +153,28 @@ public class StorageLocationCommandService(IDbContextFactory<ApplicationDbContex
         }
 
         location.Deactivate();
-        await dbContext.SaveChangesAsync(ct);
-        return OperationResult.Success();
+        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
     }
 
     public async Task<OperationResult> UnMarkDeleteAsync(Guid id, CancellationToken ct = default)
     {
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        StorageLocation? location = await dbContext.StorageLocations.FirstOrDefaultAsync(x => x.Id == id, ct);
+        StorageLocation? location = await dbContext.StorageLocations
+            .Include(x => x.Warehouse)
+            .Include(x => x.Zone)
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
         if (location is null)
         {
             return OperationError.NotFound($"Складская позиция '{id}' не найдена.");
+        }
+
+        if (location.Warehouse is null
+            || location.Warehouse.DeletionMark
+            || location.Zone is null
+            || location.Zone.DeletionMark)
+        {
+            return OperationError.Invalid(
+                "Складскую позицию можно активировать только в активной зоне активного склада.");
         }
 
         if (location.ParentId is Guid parentId
@@ -173,8 +184,7 @@ public class StorageLocationCommandService(IDbContextFactory<ApplicationDbContex
         }
 
         location.Activate();
-        await dbContext.SaveChangesAsync(ct);
-        return OperationResult.Success();
+        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
     }
 
     private static async Task<OperationResult<StorageLocation?>> ValidateContextAsync(
@@ -184,9 +194,16 @@ public class StorageLocationCommandService(IDbContextFactory<ApplicationDbContex
         Guid? parentId,
         CancellationToken ct)
     {
-        if (!await dbContext.Zones.AnyAsync(x => x.Id == zoneId && x.WarehouseId == warehouseId && !x.DeletionMark, ct))
+        if (!await dbContext.Zones.AnyAsync(
+            x => x.Id == zoneId
+                && x.WarehouseId == warehouseId
+                && !x.DeletionMark
+                && x.Warehouse != null
+                && !x.Warehouse.DeletionMark,
+            ct))
         {
-            return OperationError.Invalid("Зона должна быть активна и принадлежать выбранному складу.");
+            return OperationError.Invalid(
+                "Зона и выбранный склад должны быть активны, а зона должна принадлежать этому складу.");
         }
 
         if (parentId is null)

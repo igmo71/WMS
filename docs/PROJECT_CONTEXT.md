@@ -137,15 +137,21 @@ current importer assumes one SKU per 1C nomenclature item.
 `InventoryTurnover` is the immutable before/delta/after record for each affected
 location.
 
-Posting validates locations and locks, prevents a negative source balance,
-changes balances, and creates turnovers in the caller's save operation. Draft
-picking and putaway movements do not affect inventory until their workflow
-posts them. Drafts are excluded from the posted-movement list. Reservations and
-aggregated available-to-promise quantities are not modeled.
+Posting requires active warehouses, zones, and non-folder locations in the
+movement warehouse and validates location locks before changing balances or
+creating turnovers in the caller's save operation. Each workflow additionally
+rechecks its own final zone-role route; the generic posting algorithm does not
+infer a business route from recorder type. Draft picking and putaway movements
+do not affect inventory until their workflow posts them. Drafts are excluded
+from the posted-movement list. Reservations and aggregated
+available-to-promise quantities are not modeled.
 
-Posting and lock changes advance `StorageLocation.OperationalRevision`, so a
-concurrent movement and lock change cannot both commit from the same location
-state. Transfers additionally use targeted optimistic concurrency through
+Posting, lock changes, and eligibility-changing location configuration advance
+`StorageLocation.OperationalRevision`. Zone activity/type changes and warehouse
+activity transitions advance every affected child location revision in the
+same classified save. A concurrent movement and topology or lock change
+therefore cannot both commit from the same location state. Transfers
+additionally use targeted optimistic concurrency through
 `InventoryTransfer.RowVersion`, balance row versions, and named database
 constraints. Only recognized inventory concurrency failures become business
 conflicts; unrelated persistence failures remain exceptions.

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Wms.Application.Inventory.Movements;
 using Wms.Application.Persistence;
-using Wms.Application.StorageLocations;
 using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
@@ -259,6 +258,26 @@ public class ShippingOrderCommandService(
                 && x.RecorderId == existingOrder.Id)
             .ToListAsync(ct);
 
+        OperationResult shippingLocationResult = await ShippingOrderLocationPolicy.RequireShippingLocationAsync(
+            dbContext,
+            existingOrder,
+            existingOrder.ShippingLocationId,
+            ct);
+        if (!shippingLocationResult.IsSuccess)
+        {
+            return shippingLocationResult;
+        }
+
+        OperationResult routesResult = await ShippingOrderLocationPolicy.ValidatePickingRoutesAsync(
+            dbContext,
+            existingOrder,
+            draftPickingMovements,
+            ct);
+        if (!routesResult.IsSuccess)
+        {
+            return routesResult;
+        }
+
         OperationResult transitionResult = existingOrder.SetReadyForShipment(
             draftPickingMovements,
             DateTimeOffset.UtcNow,
@@ -341,9 +360,10 @@ public class ShippingOrderCommandService(
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
-        OperationResult locationResult = await ValidateShippingLocationAsync(
+        OperationResult locationResult = await ShippingOrderLocationPolicy.RequireShippingLocationAsync(
             dbContext,
             existingOrder,
+            existingOrder.ShippingLocationId,
             ct);
         if (!locationResult.IsSuccess)
         {
@@ -439,66 +459,20 @@ public class ShippingOrderCommandService(
                 "Работа с расходным ордером заблокирована из-за расхождений с 1С.")
         };
 
-    private static async Task<OperationResult> ValidateShippingLocationAsync(
-        ApplicationDbContext dbContext,
-        ShippingOrder order,
-        CancellationToken ct)
-    {
-        if (order.ShippingLocationId is not Guid shippingLocationId)
-        {
-            return OperationError.Invalid("Для отгрузки не указана позиция отгрузки.");
-        }
-
-        StorageLocation? location = await dbContext.StorageLocations
-            .Include(x => x.Zone)
-            .Include(x => x.ActiveLock)
-            .SingleOrDefaultAsync(x => x.Id == shippingLocationId, ct);
-
-        if (location is null
-            || location.WarehouseId != order.WarehouseId
-            || location.IsFolder
-            || location.DeletionMark
-            || location.Zone?.DeletionMark == true
-            || location.Zone?.Type != ZoneType.Shipping)
-        {
-            return OperationError.Invalid(
-                "Для отгрузки требуется активная позиция зоны отгрузки склада ордера.");
-        }
-
-        OperationResult availabilityResult = StorageLocationAvailability.ValidateUnlocked(location);
-        if (!availabilityResult.IsSuccess)
-        {
-            return availabilityResult;
-        }
-
-        return OperationResult.Success();
-    }
-
     private static async Task<OperationResult> StageSetShippingLocationAsync(
         ApplicationDbContext dbContext,
         ShippingOrder order,
         Guid shippingLocationId,
         CancellationToken ct)
     {
-        StorageLocation? location = await dbContext.StorageLocations
-            .Include(x => x.Zone)
-            .Include(x => x.ActiveLock)
-            .SingleOrDefaultAsync(x => x.Id == shippingLocationId, ct);
-
-        if (location is null
-            || location.WarehouseId != order.WarehouseId
-            || location.IsFolder
-            || location.DeletionMark
-            || location.Zone?.DeletionMark == true
-            || location.Zone?.Type != ZoneType.Shipping)
+        var locationResult = await ShippingOrderLocationPolicy.RequireShippingLocationAsync(
+            dbContext,
+            order,
+            shippingLocationId,
+            ct);
+        if (!locationResult.IsSuccess)
         {
-            return OperationError.Invalid("Позиция отгрузки должна принадлежать зоне отгрузки на складе ордера.");
-        }
-
-        var availabilityResult = StorageLocationAvailability.ValidateUnlocked(location);
-        if (!availabilityResult.IsSuccess)
-        {
-            return availabilityResult;
+            return locationResult;
         }
 
         return order.SetShippingLocation(shippingLocationId);
@@ -551,6 +525,16 @@ public class ShippingOrderCommandService(
         }
 
         List<InventoryMovement> compensationMovements = rollbackResult.Value!;
+        OperationResult routesResult = await ShippingOrderLocationPolicy.ValidateRollbackRoutesAsync(
+            dbContext,
+            order,
+            compensationMovements,
+            ct);
+        if (!routesResult.IsSuccess)
+        {
+            return routesResult;
+        }
+
         dbContext.InventoryMovements.RemoveRange(draftMovements);
 
         if (compensationMovements.Count > 0)

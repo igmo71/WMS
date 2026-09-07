@@ -41,15 +41,11 @@ public sealed class InventoryCountCommandService(
             .SingleOrDefaultAsync(x => x.Id == storageLocationId, ct);
         if (location is null)
             return OperationError.NotFound($"Складская позиция '{storageLocationId}' не найдена.");
-        if (location.WarehouseId != warehouseId
-            || location.Warehouse is null
-            || location.Warehouse.DeletionMark
-            || location.Zone is null
-            || location.Zone.DeletionMark
-            || location.Zone.Type != ZoneType.Storage
-            || location.IsFolder
-            || location.DeletionMark)
-            return OperationError.Invalid("Инвентаризацию можно начать только для активной ячейки зоны хранения выбранного склада.");
+        var locationResult = InventoryCountLocationPolicy.RequireActiveStorageLocation(
+            location,
+            warehouseId);
+        if (!locationResult.IsSuccess)
+            return locationResult.Error!;
         if (location.ActiveLock is not null)
             return OperationError.Conflict($"Ячейка {GetAddress(location)} уже заблокирована: {location.ActiveLock.Reason}");
 
@@ -324,6 +320,12 @@ public sealed class InventoryCountCommandService(
             return countResult.Error!;
 
         var inventoryCount = countResult.Value!;
+        var locationResult = InventoryCountLocationPolicy.RequireActiveStorageLocation(
+            inventoryCount.StorageLocation!,
+            inventoryCount.WarehouseId);
+        if (!locationResult.IsSuccess)
+            return locationResult;
+
         var expectedResult = await ValidateExpectedBalancesAsync(dbContext, inventoryCount, ct);
         if (!expectedResult.IsSuccess)
             return expectedResult;
@@ -363,6 +365,10 @@ public sealed class InventoryCountCommandService(
             .Include(x => x.Items)
             .Include(x => x.StorageLocation)
                 .ThenInclude(x => x!.ActiveLock)
+            .Include(x => x.StorageLocation)
+                .ThenInclude(x => x!.Warehouse)
+            .Include(x => x.StorageLocation)
+                .ThenInclude(x => x!.Zone)
             .SingleOrDefaultAsync(x => x.Id == inventoryCountId, ct);
         if (inventoryCount is null)
             return OperationError.NotFound($"Инвентаризация '{inventoryCountId}' не найдена.");

@@ -29,9 +29,7 @@ public class Catalog_Склады_Service(
 
         var warehouse = MapToWarehouse(fetchedItem);
 
-        await warehouseService.CreateOrUpdateAsync(warehouse, ct);
-
-        return OperationResult.Success();
+        return await warehouseService.CreateOrUpdateAsync(warehouse, ct);
     }
 
     public async Task<OperationResult> ImportListAsync(CancellationToken ct = default)
@@ -52,7 +50,11 @@ public class Catalog_Склады_Service(
         {
             var warehouse = MapToWarehouse(fetchedItem);
 
-            await warehouseService.CreateOrUpdateAsync(warehouse, ct);
+            var persistenceResult = await warehouseService.CreateOrUpdateAsync(warehouse, ct);
+            if (!persistenceResult.IsSuccess)
+            {
+                return persistenceResult;
+            }
         }
 
         return OperationResult.Success();

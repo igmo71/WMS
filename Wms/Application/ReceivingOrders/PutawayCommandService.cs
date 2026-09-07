@@ -283,11 +283,11 @@ public class PutawayCommandService(
             return completionResult;
         }
 
-        var destinationsValidation = await ValidateCompletionDestinationsAsync(
+        var routesValidation = await ReceivingOrderLocationPolicy.ValidatePutawayRoutesAsync(
             dbContext, order, draftMovements, ct);
-        if (!destinationsValidation.IsSuccess)
+        if (!routesValidation.IsSuccess)
         {
-            return destinationsValidation;
+            return routesValidation;
         }
 
         foreach (var movement in draftMovements)
@@ -395,28 +395,4 @@ public class PutawayCommandService(
         return OperationResult.Success();
     }
 
-    private static async Task<OperationResult> ValidateCompletionDestinationsAsync(
-        ApplicationDbContext dbContext,
-        ReceivingOrder order,
-        IReadOnlyCollection<InventoryMovement> draftMovements,
-        CancellationToken ct)
-    {
-        var destinationIds = draftMovements
-            .Select(x => x.DestinationStorageLocationId!.Value)
-            .Distinct()
-            .ToArray();
-
-        var validDestinationCount = await dbContext.StorageLocations
-            .CountAsync(x => destinationIds.Contains(x.Id)
-                && x.WarehouseId == order.WarehouseId
-                && !x.IsFolder
-                && !x.DeletionMark
-                && !x.Zone!.DeletionMark
-                && x.Zone.Type == ZoneType.Storage, ct);
-
-        return validDestinationCount == destinationIds.Length
-            ? OperationResult.Success()
-            : OperationError.Invalid(
-                "Каждая позиция размещения должна оставаться активной позицией хранения на складе ордера.");
-    }
 }

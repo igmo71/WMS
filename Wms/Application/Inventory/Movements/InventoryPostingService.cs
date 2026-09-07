@@ -217,6 +217,7 @@ public class InventoryPostingService(ILogger<InventoryPostingService> logger)
         var storageLocationIds = GetStorageLocationIds(movements);
         var locations = await dbContext.StorageLocations
             .Include(x => x.ActiveLock)
+            .Include(x => x.Warehouse)
             .Include(x => x.Zone)
             .Where(x => storageLocationIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, ct);
@@ -233,10 +234,20 @@ public class InventoryPostingService(ILogger<InventoryPostingService> logger)
             {
                 if (!locations.TryGetValue(locationId, out var location)
                     || location.IsFolder
+                    || location.DeletionMark
                     || location.WarehouseId != movement.WarehouseId)
                 {
                     return OperationError.Invalid(
-                        "Для движений необходимы складские позиции, не являющиеся папками и принадлежащие своему складу.");
+                        "Для движений необходимы активные складские позиции, не являющиеся папками и принадлежащие своему складу.");
+                }
+
+                if (location.Warehouse is null
+                    || location.Warehouse.DeletionMark
+                    || location.Zone is null
+                    || location.Zone.DeletionMark)
+                {
+                    return OperationError.Invalid(
+                        "Проведение движения возможно только в активной складской топологии.");
                 }
 
                 if (location.ActiveLock is not null

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Wms.Application.Persistence;
 using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
@@ -7,18 +8,39 @@ namespace Wms.Application.Warehouses;
 
 public class WarehouseService(IDbContextFactory<ApplicationDbContext> dbContextFactory)
 {
-    public async Task CreateOrUpdateAsync(Warehouse item, CancellationToken ct = default)
+    public async Task<OperationResult> CreateOrUpdateAsync(
+        Warehouse item,
+        CancellationToken ct = default)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var exists = await dbContext.Warehouses.AnyAsync(x => x.Id == item.Id, ct);
+        var existing = await dbContext.Warehouses
+            .FirstOrDefaultAsync(x => x.Id == item.Id, ct);
 
-        if (exists)
-            dbContext.Warehouses.Update(item);
-        else
+        if (existing is null)
+        {
             dbContext.Warehouses.Add(item);
+        }
+        else
+        {
+            var activityChanged = existing.DeletionMark != item.DeletionMark;
+            existing.Name = item.Name;
+            existing.DeletionMark = item.DeletionMark;
 
-        await dbContext.SaveChangesAsync(ct);
+            if (activityChanged)
+            {
+                var locations = await dbContext.StorageLocations
+                    .Where(x => x.WarehouseId == existing.Id)
+                    .ToListAsync(ct);
+
+                foreach (var location in locations)
+                {
+                    location.AdvanceOperationalRevision();
+                }
+            }
+        }
+
+        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
     }
 
     public async Task<Warehouse?> GetAsync(Guid id, CancellationToken ct = default)
