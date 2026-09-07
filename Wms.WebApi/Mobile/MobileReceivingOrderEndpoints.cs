@@ -91,12 +91,18 @@ internal static class MobileReceivingOrderEndpoints
         var synchronizationResult = await synchronizationService.CheckAsync(
             result.Value!.Order.Id,
             ct);
-        return synchronizationResult.IsSuccess
-            ? TypedResults.Ok(MapDetails(result.Value!, synchronizationResult.Value))
-            : TypedResults.Ok(MapDetails(
+        if (!synchronizationResult.IsSuccess)
+        {
+            return TypedResults.Ok(MapDetails(
                 result.Value!,
                 verificationError: synchronizationResult.Error?.Message
                     ?? "Не удалось сверить приходный ордер с 1С."));
+        }
+
+        var currentResult = await queryService.GetDetailsAsync(result.Value.Order.Id, ct);
+        return currentResult.IsSuccess
+            ? TypedResults.Ok(MapDetails(currentResult.Value!, synchronizationResult.Value))
+            : MobileEndpointResults.CommandProblem(currentResult.Error!);
     }
 
     private static async Task<IResult> GetDetailsAsync(
@@ -117,12 +123,18 @@ internal static class MobileReceivingOrderEndpoints
         }
 
         var synchronizationResult = await synchronizationService.CheckAsync(orderId, ct);
-        return synchronizationResult.IsSuccess
-            ? TypedResults.Ok(MapDetails(result.Value!, synchronizationResult.Value))
-            : TypedResults.Ok(MapDetails(
+        if (!synchronizationResult.IsSuccess)
+        {
+            return TypedResults.Ok(MapDetails(
                 result.Value!,
                 verificationError: synchronizationResult.Error?.Message
                     ?? "Не удалось сверить приходный ордер с 1С."));
+        }
+
+        var currentResult = await queryService.GetDetailsAsync(orderId, ct);
+        return currentResult.IsSuccess
+            ? TypedResults.Ok(MapDetails(currentResult.Value!, synchronizationResult.Value))
+            : MobileEndpointResults.CommandProblem(currentResult.Error!);
     }
 
     private static async Task<IResult> StartReceivingAsync(

@@ -31,8 +31,8 @@ public class InventoryTransferCommandService(
             return transferResult.Error!;
         }
 
-        await dbContext.SaveChangesAsync(ct);
-        return transferResult.Value!;
+        var saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
+        return saveResult.IsSuccess ? transferResult.Value! : saveResult.Error!;
     }
 
     internal async Task<OperationResult<InventoryTransfer>> StageCreateAsync(
