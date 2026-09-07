@@ -23,10 +23,12 @@ by dependency, not by a promised release date.
 
 ## Next delivery
 
-Review the completed behavior-preserving cleanup batch before moving to pilot
-prerequisites. Confirm that only the reviewed template artifacts, stale
-comment, and transfer save pass-through were removed; the already-correct
-receiving telemetry category was intentionally unchanged.
+Define the verification boundary for 1C webhook and import callers before
+implementing it. Inventory the exposed 1C endpoints and current hosting
+configuration, establish which credentials or request-signing mechanisms the
+deployed 1C installation can actually provide, and specify credential rotation,
+failure behavior, and trusted-network assumptions. Do not select or implement
+an authentication mechanism from an unverified assumption about 1C support.
 
 ## Accepted architecture follow-up
 

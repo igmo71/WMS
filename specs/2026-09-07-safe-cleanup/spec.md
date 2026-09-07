@@ -1,6 +1,6 @@
 # Confirmed safe cleanup
 
-Status: active.
+Status: frozen reference. Accepted 2026-09-07.
 
 Implementation is ready for review. The recorded receiving telemetry mismatch
 was no longer present: both receiving outbound activities already use

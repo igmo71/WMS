@@ -19,12 +19,13 @@ establish an otherwise undocumented rule.
 
 ## Current selection
 
-**Active:** [`2026-09-07-safe-cleanup/spec.md`](2026-09-07-safe-cleanup/spec.md).
+**Active:** none.
 
 ## Recent governing references
 
 | Created | Status | Problem | Path |
 | --- | --- | --- | --- |
+| 2026-09-07 | Frozen reference | Confirmed safe cleanup | [`2026-09-07-safe-cleanup/spec.md`](2026-09-07-safe-cleanup/spec.md) |
 | 2026-09-07 | Frozen reference | Mobile maintainability pilot | [`2026-09-07-mobile-maintainability-pilot/spec.md`](2026-09-07-mobile-maintainability-pilot/spec.md) |
 | 2026-09-07 | Frozen reference | Application and 1C boundary | [`2026-09-07-application-onec-boundary/spec.md`](2026-09-07-application-onec-boundary/spec.md) |
 | 2026-09-07 | Frozen reference | Receiving command consistency | [`2026-09-07-receiving-command-consistency/spec.md`](2026-09-07-receiving-command-consistency/spec.md) |
