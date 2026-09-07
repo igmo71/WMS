@@ -76,18 +76,6 @@ public class InventoryCountQueryService(IDbContextFactory<ApplicationDbContext> 
             .ToListAsync(ct);
     }
 
-    public async Task<InventoryCount?> GetDraftByStorageLocationAsync(
-        Guid storageLocationId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        return await dbContext.InventoryCounts
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.StorageLocationId == storageLocationId
-                && x.Status == InventoryCountStatus.Draft,
-                ct);
-    }
-
     public async Task<OperationResult<IReadOnlyList<InventoryCountSkuSearchResult>>> SearchSkusAsync(
         Guid inventoryCountId,
         string searchText,

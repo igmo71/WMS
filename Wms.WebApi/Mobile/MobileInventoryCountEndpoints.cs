@@ -1,7 +1,5 @@
 using System.Security.Claims;
 using Wms.Application.Inventory.Counts;
-using Wms.Application.StockKeepingUnits;
-using Wms.Application.StorageLocations;
 using Wms.Common;
 using Wms.Contracts.Mobile.V1;
 using Wms.Domain;
@@ -71,7 +69,6 @@ internal static class MobileInventoryCountEndpoints
         MobileStartInventoryCountRequest request,
         ClaimsPrincipal principal,
         InventoryCountQueryService queryService,
-        StorageLocationQueryService locationQueryService,
         MobileInventoryCountCommandService commandService,
         CancellationToken ct)
     {
@@ -81,27 +78,9 @@ internal static class MobileInventoryCountEndpoints
         if (!StorageLocation.TryParseBarcode(request.StorageLocationBarcode, out var locationId))
             return MobileEndpointResults.CommandProblem(OperationError.Invalid("Некорректный QR-код ячейки."));
 
-        var existing = await queryService.GetDraftByStorageLocationAsync(locationId, ct);
-        if (existing is not null)
-        {
-            if (existing.WarehouseId != request.WarehouseId)
-                return MobileEndpointResults.CommandProblem(OperationError.Invalid("Ячейка принадлежит другому складу."));
-            var existingDetails = await queryService.GetAsync(existing.Id, ct)
-                ?? throw new InvalidOperationException("Черновик инвентаризации не найден после разрешения ячейки.");
-            return TypedResults.Ok(MapDetails(existingDetails));
-        }
-
-        var locationResult = await locationQueryService.ResolveBarcodeAsync(
-            request.StorageLocationBarcode,
+        var result = await commandService.StartAsync(
             request.WarehouseId,
-            ZoneType.Storage,
-            ct);
-        if (!locationResult.IsSuccess)
-            return MobileEndpointResults.CommandProblem(locationResult.Error!);
-
-        var result = await commandService.CreateAsync(
-            request.WarehouseId,
-            locationResult.Value!.Id,
+            locationId,
             request.ClientRequestId,
             userId,
             ct);
@@ -112,7 +91,6 @@ internal static class MobileInventoryCountEndpoints
         Guid inventoryCountId,
         MobileIncrementInventoryCountSkuRequest request,
         ClaimsPrincipal principal,
-        StockKeepingUnitService skuService,
         MobileInventoryCountCommandService commandService,
         InventoryCountQueryService queryService,
         CancellationToken ct)
@@ -121,13 +99,9 @@ internal static class MobileInventoryCountEndpoints
         if (userId is null)
             return TypedResults.Unauthorized();
 
-        var skuResult = await skuService.ResolveByBarcodeAsync(request.Barcode, ct);
-        if (!skuResult.IsSuccess)
-            return MobileEndpointResults.CommandProblem(skuResult.Error!);
-
         var result = await commandService.IncrementSkuAsync(
             inventoryCountId,
-            skuResult.Value!.Id,
+            request.Barcode,
             request.ClientRequestId,
             userId,
             ct);

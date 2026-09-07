@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Wms.Application.ReceivingOrders;
-using Wms.Application.StorageLocations;
 using Wms.Common;
 using Wms.Contracts.Mobile.V1;
 using Wms.Domain;
@@ -142,7 +141,6 @@ internal static class MobileReceivingOrderEndpoints
         MobileStartReceivingOrderRequest request,
         ClaimsPrincipal principal,
         MobileReceivingOrderQueryService queryService,
-        StorageLocationQueryService locationQueryService,
         MobileReceivingOrderCommandService commandService,
         CancellationToken ct)
     {
@@ -152,25 +150,17 @@ internal static class MobileReceivingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var detailsResult = await queryService.GetDetailsAsync(orderId, ct);
-        if (!detailsResult.IsSuccess)
-        {
-            return MobileEndpointResults.CommandProblem(detailsResult.Error!);
-        }
-
-        var locationResult = await locationQueryService.ResolveBarcodeAsync(
+        if (!StorageLocation.TryParseBarcode(
             request.ReceivingLocationBarcode,
-            detailsResult.Value!.Order.WarehouseId,
-            ZoneType.Receiving,
-            ct);
-        if (!locationResult.IsSuccess)
+            out var receivingLocationId))
         {
-            return MobileEndpointResults.CommandProblem(locationResult.Error!);
+            return MobileEndpointResults.CommandProblem(
+                OperationError.Invalid("Некорректный QR-код ячейки."));
         }
 
         var result = await commandService.StartReceivingAsync(
             orderId,
-            locationResult.Value!.Id,
+            receivingLocationId,
             request.ClientRequestId,
             userId,
             ct);
@@ -305,7 +295,6 @@ internal static class MobileReceivingOrderEndpoints
         MobileAddReceivingOrderPutawayMovementRequest request,
         ClaimsPrincipal principal,
         MobileReceivingOrderQueryService queryService,
-        StorageLocationQueryService locationQueryService,
         MobileReceivingOrderCommandService commandService,
         CancellationToken ct)
     {
@@ -315,26 +304,18 @@ internal static class MobileReceivingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var detailsResult = await queryService.GetDetailsAsync(orderId, ct);
-        if (!detailsResult.IsSuccess)
-        {
-            return MobileEndpointResults.CommandProblem(detailsResult.Error!);
-        }
-
-        var locationResult = await locationQueryService.ResolveBarcodeAsync(
+        if (!StorageLocation.TryParseBarcode(
             request.DestinationStorageLocationBarcode,
-            detailsResult.Value!.Order.WarehouseId,
-            ZoneType.Storage,
-            ct);
-        if (!locationResult.IsSuccess)
+            out var destinationStorageLocationId))
         {
-            return MobileEndpointResults.CommandProblem(locationResult.Error!);
+            return MobileEndpointResults.CommandProblem(
+                OperationError.Invalid("Некорректный QR-код ячейки."));
         }
 
         var result = await commandService.AddPutawayMovementAsync(
             orderId,
             request.LineNumber,
-            locationResult.Value!.Id,
+            destinationStorageLocationId,
             request.Quantity,
             request.ClientRequestId,
             userId,

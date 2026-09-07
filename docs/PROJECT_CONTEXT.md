@@ -345,6 +345,12 @@ Every changing warehouse command uses a persisted receipt keyed by
 authenticated user, command type, and client request id. The receipt contains
 a deterministic request hash and result resource id and is saved atomically
 with the WMS change. Reusing an id with different input is a conflict.
+Receipt lookup and request-hash compatibility happen before mutable entity
+resolution and business preconditions. Authentication and deterministic
+transport parsing, such as decoding a storage-location QR into its identifier,
+may happen first. A Mobile inventory-count start is one idempotent operation:
+without an existing receipt it opens the current draft for the location or
+creates a draft, and persists the selected result in the receipt.
 
 The client retains the same request id after transport failure, `408`, `5xx`,
 or an empty, malformed, truncated, or incompatible successful response. Those

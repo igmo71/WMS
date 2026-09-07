@@ -25,6 +25,7 @@ establish an otherwise undocumented rule.
 
 | Created | Status | Problem | Path |
 | --- | --- | --- | --- |
+| 2026-09-07 | Frozen reference | Mobile receipt replay boundary | [`2026-09-07-mobile-receipt-replay-boundary/spec.md`](2026-09-07-mobile-receipt-replay-boundary/spec.md) |
 | 2026-09-07 | Frozen reference | Operational topology integrity | [`2026-09-07-operational-topology-integrity/spec.md`](2026-09-07-operational-topology-integrity/spec.md) |
 | 2026-09-07 | Frozen reference | Immediate client-visible correctness fixes | [`2026-09-07-immediate-correctness-fixes/spec.md`](2026-09-07-immediate-correctness-fixes/spec.md) |
 | 2026-09-04 | Frozen reference | Architecture and process-boundary review | [`2026-09-04-architecture-process-boundary-review/spec.md`](2026-09-04-architecture-process-boundary-review/spec.md) |

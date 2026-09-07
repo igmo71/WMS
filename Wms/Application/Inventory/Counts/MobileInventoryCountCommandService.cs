@@ -1,14 +1,19 @@
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using Wms.Application.MobileCommands;
+using Wms.Application.StockKeepingUnits;
 using Wms.Common;
+using Wms.Domain.Enums;
 
 namespace Wms.Application.Inventory.Counts;
 
 public sealed class MobileInventoryCountCommandService(
     MobileCommandExecutor mobileCommandExecutor,
-    InventoryCountCommandService inventoryCountCommandService)
+    InventoryCountCommandService inventoryCountCommandService,
+    StockKeepingUnitService stockKeepingUnitService)
 {
-    private const string CreateCommand = "inventory-count.create";
+    // Keep the persisted command type stable for receipts created by earlier versions.
+    private const string StartCommand = "inventory-count.create";
     private const string IncrementCommand = "inventory-count.increment-sku";
     private const string SetQuantityCommand = "inventory-count.set-quantity";
     private const string SetSkuQuantityCommand = "inventory-count.set-sku-quantity";
@@ -16,19 +21,32 @@ public sealed class MobileInventoryCountCommandService(
     private const string PostCommand = "inventory-count.post";
     private const string DeleteDraftCommand = "inventory-count.delete-draft";
 
-    public Task<OperationResult<Guid>> CreateAsync(
+    public Task<OperationResult<Guid>> StartAsync(
         Guid warehouseId,
         Guid storageLocationId,
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
         mobileCommandExecutor.ExecuteAsync(
-            CreateCommand,
+            StartCommand,
             clientRequestId,
             Hash(warehouseId, storageLocationId),
             userId,
             async (dbContext, token) =>
             {
+                var existing = await dbContext.InventoryCounts
+                    .AsNoTracking()
+                    .Where(x => x.StorageLocationId == storageLocationId
+                        && x.Status == InventoryCountStatus.Draft)
+                    .Select(x => new { x.Id, x.WarehouseId })
+                    .SingleOrDefaultAsync(token);
+                if (existing is not null)
+                {
+                    return existing.WarehouseId == warehouseId
+                        ? existing.Id
+                        : OperationError.Invalid("Ячейка принадлежит другому складу.");
+                }
+
                 var result = await inventoryCountCommandService.StageCreateAsync(
                     dbContext,
                     warehouseId,
@@ -41,21 +59,28 @@ public sealed class MobileInventoryCountCommandService(
 
     public Task<OperationResult<Guid>> IncrementSkuAsync(
         Guid inventoryCountId,
-        Guid stockKeepingUnitId,
+        string? barcode,
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
         mobileCommandExecutor.ExecuteAsync(
             IncrementCommand,
             clientRequestId,
-            Hash(inventoryCountId, stockKeepingUnitId),
+            MobileCommandExecutor.ComputeHash($"{inventoryCountId:N}|{barcode}"),
             userId,
             async (dbContext, token) =>
             {
+                var skuResult = await stockKeepingUnitService.ResolveByBarcodeAsync(
+                    dbContext,
+                    barcode,
+                    token);
+                if (!skuResult.IsSuccess)
+                    return skuResult.Error!;
+
                 var result = await inventoryCountCommandService.StageIncrementSkuAsync(
                     dbContext,
                     inventoryCountId,
-                    stockKeepingUnitId,
+                    skuResult.Value!.Id,
                     userId,
                     token);
                 return result.IsSuccess ? result.Value!.Id : result.Error!;
@@ -200,4 +225,5 @@ public sealed class MobileInventoryCountCommandService(
 
     private static string Hash(params Guid[] ids) =>
         MobileCommandExecutor.ComputeHash(string.Join('|', ids.Select(x => x.ToString("N"))));
+
 }

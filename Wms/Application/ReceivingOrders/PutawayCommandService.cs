@@ -338,23 +338,11 @@ public class PutawayCommandService(
             return OperationError.Invalid("Позиция назначения должна отличаться от позиции приёмки.");
         }
 
-        var destination = await dbContext.StorageLocations
-            .Include(x => x.Zone)
-            .Include(x => x.ActiveLock)
-            .SingleOrDefaultAsync(x => x.Id == destinationStorageLocationId, ct);
-
-        if (destination is null
-            || destination.WarehouseId != order.WarehouseId
-            || destination.IsFolder
-            || destination.DeletionMark
-            || destination.Zone?.DeletionMark == true
-            || destination.Zone?.Type != ZoneType.Storage)
-        {
-            return OperationError.Invalid(
-                "Позиция размещения должна быть активной позицией хранения на складе ордера.");
-        }
-
-        var destinationResult = StorageLocationAvailability.ValidateUnlocked(destination);
+        var destinationResult = await ReceivingOrderLocationPolicy.RequirePutawayDestinationAsync(
+            dbContext,
+            order,
+            destinationStorageLocationId,
+            ct);
         if (!destinationResult.IsSuccess)
         {
             return destinationResult;

@@ -23,32 +23,26 @@ by dependency, not by a promised release date.
 
 ## Next delivery
 
-Restore Mobile receipt replay before mutable business prechecks:
+Resolve receiving command consistency:
 
-- consult the persisted receipt and verify request-id compatibility before
-  resolving mutable order, location, draft, or SKU state;
-- keep authentication and deterministic transport parsing outside the receipt
-  boundary;
-- make inventory-count open-existing versus create semantics explicit instead
-  of shortcutting around the receipt.
+- remove the implicit receiving-location save immediately before Web
+  completion by choosing one explicit operation boundary;
+- treat the legacy receiving API as live until its consumers are positively
+  ruled out, then migrate it to the common receiving operation or remove it.
 
-Cover receiving start and putaway, inventory-count start, and SKU scan paths
-identified by the accepted review. Keep this separate from endpoint or client
-file decomposition.
+Keep this separate from application/1C boundary work and from endpoint or
+client file decomposition.
 
 ## Accepted architecture follow-up
 
 After the next delivery, create a focused scope for each ordered batch:
 
-1. remove the implicit receiving-location save before Web completion, and
-   migrate the legacy receiving API to the common operation while treating it
-   as live until consumers are positively ruled out;
-2. introduce application-owned 1C source/execution ports and synchronization
+1. introduce application-owned 1C source/execution ports and synchronization
    operations, remove concrete OneS orchestration from hosts, and make
    synchronization checkpoints versus `Stage...` save ownership explicit;
-3. feature-split Mobile API client/contracts and pilot one concrete page
+2. feature-split Mobile API client/contracts and pilot one concrete page
    process object before repeating any maintainability shape;
-4. apply the accepted template/comment/pass-through/telemetry cleanup as an
+3. apply the accepted template/comment/pass-through/telemetry cleanup as an
    isolated batch.
 
 Keep Mobile shipping rollback Web-only unless pilot evidence creates a Mobile
