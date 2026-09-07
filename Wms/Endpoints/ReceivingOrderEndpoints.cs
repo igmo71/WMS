@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Wms.Application.ReceivingOrders;
+using Wms.Common;
 using Wms.Data;
 
 namespace Wms.Endpoints;
@@ -18,8 +19,18 @@ internal static class ReceivingOrderEndpoints
             .RequireAuthorization(policy => policy.RequireRole(ApplicationRoles.All));
 
         group.MapGet("/ReceivingOrder/{id:guid}", GetOrder);
-        group.MapPost("/ReceivingOrder/{id:guid}/set-in-receiving", SetInReceiving);
-        group.MapPost("/ReceivingOrder/{id:guid}/set-received", SetReceived);
+        group.MapPost("/ReceivingOrder/{id:guid}/set-in-receiving", SetInReceiving)
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status400BadRequest)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status404NotFound)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status409Conflict)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status422UnprocessableEntity);
+        group.MapPost("/ReceivingOrder/{id:guid}/set-received", SetReceived)
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status400BadRequest)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status404NotFound)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status409Conflict)
+            .Produces<ReceivingOrderCommandProblem>(StatusCodes.Status422UnprocessableEntity);
 
         return routeBuilder;
     }
@@ -36,9 +47,9 @@ internal static class ReceivingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await service.SetInReceivingAsync(id, userId, ct);
+        var result = await service.StartReceivingFromAssignedLocationAsync(id, userId, ct);
 
-        return result.IsSuccess ? TypedResults.Ok() : Results.BadRequest();
+        return CommandResult(result);
     }
 
     static async Task<IResult> SetReceived(
@@ -55,7 +66,7 @@ internal static class ReceivingOrderEndpoints
 
         var result = await service.SetReceivedAsync(id, userId, ct);
 
-        return result.IsSuccess ? TypedResults.Ok() : Results.BadRequest();
+        return CommandResult(result);
     }
 
     static async Task<IResult> GetOrder(
@@ -71,4 +82,24 @@ internal static class ReceivingOrderEndpoints
         }
         return Results.Ok(orderDetails);
     }
+
+    private static IResult CommandResult(OperationResult result)
+    {
+        if (result.IsSuccess)
+            return TypedResults.Ok();
+
+        var error = result.Error!;
+        var (statusCode, code) = error.Type switch
+        {
+            OperationErrorType.NotFound => (StatusCodes.Status404NotFound, "resource_not_found"),
+            OperationErrorType.Conflict => (StatusCodes.Status409Conflict, "request_conflict"),
+            OperationErrorType.Invalid => (StatusCodes.Status422UnprocessableEntity, "invalid_command"),
+            _ => (StatusCodes.Status400BadRequest, "command_failed")
+        };
+        return Results.Json(
+            new ReceivingOrderCommandProblem(code, error.Message),
+            statusCode: statusCode);
+    }
+
+    private sealed record ReceivingOrderCommandProblem(string Code, string Message);
 }

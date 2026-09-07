@@ -23,26 +23,25 @@ by dependency, not by a promised release date.
 
 ## Next delivery
 
-Resolve receiving command consistency:
+Make the application/1C synchronization boundary explicit:
 
-- remove the implicit receiving-location save immediately before Web
-  completion by choosing one explicit operation boundary;
-- treat the legacy receiving API as live until its consumers are positively
-  ruled out, then migrate it to the common receiving operation or remove it.
+- introduce application-owned source and execution ports implemented by the
+  current 1C adapters;
+- move repeated host synchronization orchestration behind application-facing
+  receiving and shipping operations;
+- make synchronization checkpoint persistence explicit so `Stage...` again
+  means that the caller owns the final save.
 
-Keep this separate from application/1C boundary work and from endpoint or
-client file decomposition.
+Do not physically split the 1C integration project in this batch. Keep the
+change separate from endpoint/client decomposition.
 
 ## Accepted architecture follow-up
 
 After the next delivery, create a focused scope for each ordered batch:
 
-1. introduce application-owned 1C source/execution ports and synchronization
-   operations, remove concrete OneS orchestration from hosts, and make
-   synchronization checkpoints versus `Stage...` save ownership explicit;
-2. feature-split Mobile API client/contracts and pilot one concrete page
+1. feature-split Mobile API client/contracts and pilot one concrete page
    process object before repeating any maintainability shape;
-3. apply the accepted template/comment/pass-through/telemetry cleanup as an
+2. apply the accepted template/comment/pass-through/telemetry cleanup as an
    isolated batch.
 
 Keep Mobile shipping rollback Web-only unless pilot evidence creates a Mobile

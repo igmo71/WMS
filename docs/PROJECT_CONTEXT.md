@@ -178,6 +178,19 @@ local save boundary in both WebApp and Mobile. `ReceivingOrder.OperationalRevisi
 protects plan reconciliation, facts, transitions, and draft movements from
 stale web or mobile saves.
 
+On the Web receiving screen, changing the selected receiving location is not
+an independently persisted edit. Completion first persists its required fresh
+1C synchronization checkpoint, then validates and stages the selected location
+with the receiving transition and inventory effects for the final classified
+save. A later completion failure therefore does not leave only the newly
+selected location committed.
+
+The legacy authenticated `/api/ReceivingOrder` route group remains mapped
+because external consumers have not been ruled out. Its start route can only
+start an order with an already assigned location and delegates to the common
+start-receiving operation; changing routes return structured business error
+codes and messages instead of an empty bad-request response.
+
 ### Picking and shipping
 
 Shipping orders move from prepared to picking, ready for shipment, and shipped.

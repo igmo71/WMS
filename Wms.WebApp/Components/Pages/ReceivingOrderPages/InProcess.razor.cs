@@ -249,17 +249,10 @@ public partial class InProcess
 
         try
         {
-
-            var setLocationResult = await OrderCommandService.SetReceivingLocationAsync(Id, receivingLocation.Id);
-            if (!setLocationResult.IsSuccess)
-            {
-                _completeFailed = true;
-                _errorMessage = setLocationResult.Error?.Message ?? "Не удалось сохранить место приёмки";
-                return;
-            }
-
-
-            var result = await OrderCommandService.SetReceivedAsync(Id, userId);
+            var result = await OrderCommandService.CompleteReceivingAsync(
+                Id,
+                receivingLocation.Id,
+                userId);
             if (result.IsSuccess)
                 NavigationManager.NavigateTo($"receiving-orders/{Id}");
             else
