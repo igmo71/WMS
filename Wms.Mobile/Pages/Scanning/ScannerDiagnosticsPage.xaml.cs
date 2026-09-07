@@ -5,19 +5,19 @@ namespace Wms.Mobile;
 
 public partial class ScannerDiagnosticsPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly ILifecycleBarcodeScanner _intentScanner;
     private readonly ICameraBarcodeScanner _cameraScanner;
     private readonly Queue<BarcodeScanEvent> _recentScans = new();
     private bool _scannerSubscribed;
 
     public ScannerDiagnosticsPage(
-        MobileApiClient apiClient,
+        MobileReferenceDataClient referenceDataClient,
         ILifecycleBarcodeScanner intentScanner,
         ICameraBarcodeScanner cameraScanner)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _referenceDataClient = referenceDataClient;
         _intentScanner = intentScanner;
         _cameraScanner = cameraScanner;
     }
@@ -92,12 +92,12 @@ public partial class ScannerDiagnosticsPage : ContentPage
         {
             if (ScanContextPicker.SelectedIndex == 1)
             {
-                var sku = await _apiClient.ResolveSkuAsync(barcode);
+                var sku = await _referenceDataClient.ResolveSkuAsync(barcode);
                 ResolvedBarcodeLabel.Text = $"Товар: {sku.Name}\nКод: {sku.Code}";
             }
             else
             {
-                var location = await _apiClient.ResolveStorageLocationAsync(barcode);
+                var location = await _referenceDataClient.ResolveStorageLocationAsync(barcode);
                 ResolvedBarcodeLabel.Text =
                     $"Ячейка: {location.Address} · {location.Name}\nСклад: {location.WarehouseName}";
             }

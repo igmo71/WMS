@@ -6,7 +6,8 @@ namespace Wms.Mobile;
 
 public partial class InventoryCountPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileInventoryCountClient _inventoryCountClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private bool _loaded;
     private bool _isVisible;
@@ -16,10 +17,14 @@ public partial class InventoryCountPage : ContentPage
     private Guid? _pendingStartRequestId;
     private string? _pendingBarcode;
 
-    public InventoryCountPage(MobileApiClient apiClient, IOperationalBarcodeScanner scanner)
+    public InventoryCountPage(
+        MobileInventoryCountClient inventoryCountClient,
+        MobileReferenceDataClient referenceDataClient,
+        IOperationalBarcodeScanner scanner)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _inventoryCountClient = inventoryCountClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         CameraScannerView.Configure(scanner);
     }
@@ -66,7 +71,7 @@ public partial class InventoryCountPage : ContentPage
         SetBusy(true);
         try
         {
-            var warehouses = await _apiClient.GetWarehousesAsync();
+            var warehouses = await _referenceDataClient.GetWarehousesAsync();
             WarehousePicker.ItemsSource = warehouses.ToList();
             _loaded = true;
             if (warehouses.Count == 1)
@@ -120,14 +125,17 @@ public partial class InventoryCountPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var details = await _apiClient.StartInventoryCountAsync(
+            var details = await _inventoryCountClient.StartAsync(
                 warehouse.Id,
                 barcode,
                 _pendingStartRequestId.Value);
             _pendingStartRequestId = null;
             _pendingBarcode = null;
             if (_isVisible)
-                await Navigation.PushAsync(new InventoryCountDetailsPage(_apiClient, _scanner, details));
+                await Navigation.PushAsync(new InventoryCountDetailsPage(
+                    _inventoryCountClient,
+                    _scanner,
+                    details));
         }
         catch (MobileApiException exception)
         {
@@ -158,7 +166,7 @@ public partial class InventoryCountPage : ContentPage
 
         try
         {
-            var drafts = await _apiClient.GetInventoryCountDraftsAsync(warehouse.Id);
+            var drafts = await _inventoryCountClient.GetDraftsAsync(warehouse.Id);
             if (loadVersion != _draftLoadVersion || SelectedWarehouse?.Id != warehouse.Id)
                 return;
 
@@ -214,9 +222,12 @@ public partial class InventoryCountPage : ContentPage
         SetBusy(true);
         try
         {
-            var details = await _apiClient.GetInventoryCountAsync(inventoryCountId);
+            var details = await _inventoryCountClient.GetAsync(inventoryCountId);
             if (_isVisible)
-                await Navigation.PushAsync(new InventoryCountDetailsPage(_apiClient, _scanner, details));
+                await Navigation.PushAsync(new InventoryCountDetailsPage(
+                    _inventoryCountClient,
+                    _scanner,
+                    details));
         }
         catch (MobileApiException exception)
         {

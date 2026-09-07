@@ -7,7 +7,8 @@ namespace Wms.Mobile;
 
 public partial class DirectInventoryTransferPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileInventoryTransferClient _transferClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private readonly MobileInventoryTransferSummaryResponse _transfer;
     private readonly Action<MobileMoveDirectInventoryTransferResponse> _movementCompleted;
@@ -22,13 +23,15 @@ public partial class DirectInventoryTransferPage : ContentPage
     private bool _resolving;
 
     public DirectInventoryTransferPage(
-        MobileApiClient apiClient,
+        MobileInventoryTransferClient transferClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner,
         MobileInventoryTransferSummaryResponse transfer,
         Action<MobileMoveDirectInventoryTransferResponse> movementCompleted)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _transferClient = transferClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         _transfer = transfer;
         _movementCompleted = movementCompleted;
@@ -118,7 +121,7 @@ public partial class DirectInventoryTransferPage : ContentPage
         {
             if (_sourceLocation is null)
             {
-                _sourceLocation = await _apiClient.ResolveStorageLocationAsync(
+                _sourceLocation = await _referenceDataClient.ResolveStorageLocationAsync(
                     barcode,
                     _transfer.WarehouseId,
                     MobileStorageLocationContext.Storage);
@@ -132,7 +135,7 @@ public partial class DirectInventoryTransferPage : ContentPage
             }
             else if (_sku is null)
             {
-                var sku = await _apiClient.ResolveDirectTransferSkuAsync(
+                var sku = await _transferClient.ResolveDirectSkuAsync(
                     _transfer.Id,
                     _sourceLocation.Id,
                     barcode);
@@ -140,7 +143,7 @@ public partial class DirectInventoryTransferPage : ContentPage
             }
             else
             {
-                var destinationLocation = await _apiClient.ResolveStorageLocationAsync(
+                var destinationLocation = await _referenceDataClient.ResolveStorageLocationAsync(
                     barcode,
                     _transfer.WarehouseId,
                     MobileStorageLocationContext.Storage);
@@ -224,7 +227,7 @@ public partial class DirectInventoryTransferPage : ContentPage
             await Task.Delay(300, cancellation.Token);
             SetSkuSearchBusy(true);
 
-            var results = await _apiClient.SearchDirectTransferSkusAsync(
+            var results = await _transferClient.SearchDirectSkusAsync(
                 _transfer.Id,
                 _sourceLocation.Id,
                 query,
@@ -443,7 +446,7 @@ public partial class DirectInventoryTransferPage : ContentPage
 
         try
         {
-            _confirmedMovement = await _apiClient.MoveDirectAsync(
+            _confirmedMovement = await _transferClient.MoveDirectAsync(
                 _transfer.Id,
                 _sourceLocation.Id,
                 _destinationLocation.Id,
@@ -471,18 +474,12 @@ public partial class DirectInventoryTransferPage : ContentPage
         }
     }
 
-    private void OnConfirmButtonLoaded(object? sender, EventArgs e) =>
-        DisableAndroidButtonFocus(ConfirmButton);
-
-    private static void DisableAndroidButtonFocus(Button mauiButton)
+    private void OnConfirmButtonLoaded(object? sender, EventArgs e)
     {
-#if ANDROID
-        if (mauiButton.Handler?.PlatformView is Android.Widget.Button button)
+        if (sender is VisualElement element)
         {
-            button.Focusable = false;
-            button.FocusableInTouchMode = false;
+            AndroidFocus.Suppress(element);
         }
-#endif
     }
 
     private static string GetStatusText(MobileInventoryTransferStatus status) => status switch

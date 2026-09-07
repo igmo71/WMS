@@ -7,7 +7,8 @@ namespace Wms.Mobile;
 
 public partial class ShippingOrderPickingMovementPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileShippingOrderClient _orderClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private MobileShippingOrderDetailsResponse? _details;
     private MobileShippingOrderLineResponse? _selectedLine;
@@ -23,11 +24,13 @@ public partial class ShippingOrderPickingMovementPage : ContentPage
     private Guid? _pendingRequestId;
 
     public ShippingOrderPickingMovementPage(
-        MobileApiClient apiClient,
+        MobileShippingOrderClient orderClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _orderClient = orderClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         CameraScannerView.Configure(scanner);
     }
@@ -136,7 +139,7 @@ public partial class ShippingOrderPickingMovementPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var candidates = await _apiClient.ResolveShippingOrderSkuAsync(
+            var candidates = await _orderClient.ResolveSkuAsync(
                 Details.Order.Id,
                 barcode);
             if (candidates.Count == 1)
@@ -227,7 +230,7 @@ public partial class ShippingOrderPickingMovementPage : ContentPage
         try
         {
             SourceHintsStatusLabel.Text = "Обновление доступности...";
-            var sources = await _apiClient.GetShippingOrderSourcesAsync(
+            var sources = await _orderClient.GetSourcesAsync(
                 Details.Order.Id,
                 _selectedLine.LineNumber);
             SourceHints = sources;
@@ -252,7 +255,7 @@ public partial class ShippingOrderPickingMovementPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var source = await _apiClient.ResolveStorageLocationAsync(
+            var source = await _referenceDataClient.ResolveStorageLocationAsync(
                 barcode,
                 Details.Order.WarehouseId,
                 MobileStorageLocationContext.Storage);
@@ -358,7 +361,7 @@ public partial class ShippingOrderPickingMovementPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.AddShippingOrderPickingMovementAsync(
+            var response = await _orderClient.AddPickingMovementAsync(
                 Details.Order.Id,
                 _selectedLine.LineNumber,
                 _sourceBarcode,
@@ -471,19 +474,8 @@ public partial class ShippingOrderPickingMovementPage : ContentPage
     {
         if (sender is VisualElement element)
         {
-            DisableAndroidFocus(element);
+            AndroidFocus.Suppress(element);
         }
-    }
-
-    private static void DisableAndroidFocus(VisualElement element)
-    {
-#if ANDROID
-        if (element.Handler?.PlatformView is Android.Views.View view)
-        {
-            view.Focusable = false;
-            view.FocusableInTouchMode = false;
-        }
-#endif
     }
 
     private enum MovementPageMode

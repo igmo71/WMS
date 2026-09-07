@@ -13,7 +13,8 @@ public enum TransitInventoryTransferMovementMode
 
 public partial class TransitInventoryTransferMovementPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileInventoryTransferClient _transferClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private readonly MobileInventoryTransferSummaryResponse _transfer;
     private readonly TransitInventoryTransferMovementMode _mode;
@@ -27,7 +28,8 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
     private bool _busy;
 
     public TransitInventoryTransferMovementPage(
-        MobileApiClient apiClient,
+        MobileInventoryTransferClient transferClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner,
         MobileInventoryTransferSummaryResponse transfer,
         TransitInventoryTransferMovementMode mode,
@@ -36,7 +38,8 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
         Action<MobileTransitInventoryTransferMovementResponse> completed)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _transferClient = transferClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         _transfer = transfer;
         _mode = mode;
@@ -158,11 +161,11 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
             else if (_sku is null)
             {
                 var sku = _mode == TransitInventoryTransferMovementMode.Pick
-                    ? await _apiClient.ResolveDirectTransferSkuAsync(
+                    ? await _transferClient.ResolveDirectSkuAsync(
                         _transfer.Id,
                         _storageLocation!.Id,
                         barcode)
-                    : await _apiClient.ResolveTransitTransferSkuAsync(_transfer.Id, barcode);
+                    : await _transferClient.ResolveTransitSkuAsync(_transfer.Id, barcode);
                 if (sku.AvailableQuantity <= 0)
                 {
                     ErrorLabel.Text = "В исходной ячейке этого товара нет.";
@@ -195,7 +198,7 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
     }
 
     private Task<MobileStorageLocationResponse> ResolveStorageLocationAsync(string barcode) =>
-        _apiClient.ResolveStorageLocationAsync(
+        _referenceDataClient.ResolveStorageLocationAsync(
             barcode,
             _transfer.WarehouseId,
             MobileStorageLocationContext.Storage);
@@ -346,13 +349,13 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
         try
         {
             var result = _mode == TransitInventoryTransferMovementMode.Pick
-                ? await _apiClient.PickToTransitAsync(
+                ? await _transferClient.PickToTransitAsync(
                     _transfer.Id,
                     _storageLocation.Id,
                     _sku.Id,
                     quantity,
                     _pendingRequestId.Value)
-                : await _apiClient.PutFromTransitAsync(
+                : await _transferClient.PutFromTransitAsync(
                     _transfer.Id,
                     _storageLocation.Id,
                     _sku.Id,
@@ -437,12 +440,12 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
             await Task.Delay(300, cancellation.Token);
             SetSearchBusy(true);
             var results = _mode == TransitInventoryTransferMovementMode.Pick
-                ? await _apiClient.SearchDirectTransferSkusAsync(
+                ? await _transferClient.SearchDirectSkusAsync(
                     _transfer.Id,
                     _storageLocation!.Id,
                     query,
                     cancellation.Token)
-                : await _apiClient.SearchTransitTransferSkusAsync(
+                : await _transferClient.SearchTransitSkusAsync(
                     _transfer.Id,
                     query,
                     cancellation.Token);
@@ -573,12 +576,9 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
 
     private void OnActionButtonLoaded(object? sender, EventArgs e)
     {
-#if ANDROID
-        if (sender is Button { Handler.PlatformView: Android.Widget.Button button })
+        if (sender is VisualElement element)
         {
-            button.Focusable = false;
-            button.FocusableInTouchMode = false;
+            AndroidFocus.Suppress(element);
         }
-#endif
     }
 }

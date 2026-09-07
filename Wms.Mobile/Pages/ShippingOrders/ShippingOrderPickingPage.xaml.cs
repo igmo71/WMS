@@ -7,7 +7,8 @@ namespace Wms.Mobile;
 
 public partial class ShippingOrderPickingPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileShippingOrderClient _orderClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private readonly IServiceProvider _services;
     private MobileShippingOrderDetailsResponse? _details;
@@ -28,12 +29,14 @@ public partial class ShippingOrderPickingPage : ContentPage
     private bool _busy;
 
     public ShippingOrderPickingPage(
-        MobileApiClient apiClient,
+        MobileShippingOrderClient orderClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner,
         IServiceProvider services)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _orderClient = orderClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         _services = services;
         CameraScannerView.Configure(scanner);
@@ -172,7 +175,7 @@ public partial class ShippingOrderPickingPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var location = await _apiClient.ResolveStorageLocationAsync(
+            var location = await _referenceDataClient.ResolveStorageLocationAsync(
                 barcode,
                 Details.Order.WarehouseId,
                 MobileStorageLocationContext.Shipping);
@@ -208,7 +211,7 @@ public partial class ShippingOrderPickingPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.StartShippingOrderPickingAsync(
+            var response = await _orderClient.StartPickingAsync(
                 Details.Order.Id,
                 _scannedLocationBarcode,
                 _pendingStartRequestId.Value);
@@ -263,7 +266,7 @@ public partial class ShippingOrderPickingPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var candidates = await _apiClient.ResolveShippingOrderSkuAsync(
+            var candidates = await _orderClient.ResolveSkuAsync(
                 Details.Order.Id,
                 barcode);
             if (candidates.Count == 1)
@@ -390,7 +393,7 @@ public partial class ShippingOrderPickingPage : ContentPage
             }
 
             SetSearchBusy(true);
-            var result = await _apiClient.SearchShippingOrderLinesAsync(
+            var result = await _orderClient.SearchLinesAsync(
                 Details.Order.Id,
                 query);
             if (!IsCurrentSearch(version))
@@ -496,7 +499,7 @@ public partial class ShippingOrderPickingPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.DeleteShippingOrderPickingMovementAsync(
+            var response = await _orderClient.DeletePickingMovementAsync(
                 Details.Order.Id,
                 movement.Id,
                 _pendingDeleteRequestId.Value);
@@ -582,7 +585,7 @@ public partial class ShippingOrderPickingPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.CompleteShippingOrderPickingAsync(
+            var response = await _orderClient.CompletePickingAsync(
                 Details.Order.Id,
                 _pendingCompletionRequestId.Value);
             _pendingCompletionRequestId = null;
@@ -807,19 +810,8 @@ public partial class ShippingOrderPickingPage : ContentPage
     {
         if (sender is VisualElement element)
         {
-            DisableAndroidFocus(element);
+            AndroidFocus.Suppress(element);
         }
-    }
-
-    private static void DisableAndroidFocus(VisualElement element)
-    {
-#if ANDROID
-        if (element.Handler?.PlatformView is Android.Views.View view)
-        {
-            view.Focusable = false;
-            view.FocusableInTouchMode = false;
-        }
-#endif
     }
 
     private enum PickingPageMode

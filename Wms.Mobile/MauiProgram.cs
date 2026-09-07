@@ -26,6 +26,8 @@ public static class MauiProgram
         builder.Services.AddTransient<InventoryCountPage>();
         builder.Services.AddTransient<ReceivingOrderPage>();
         builder.Services.AddTransient<ReceivingOrderReceivingPage>();
+        builder.Services.AddTransient(serviceProvider => new ReceivingOrderReceivingProcess(
+            serviceProvider.GetRequiredService<MobileReceivingOrderClient>()));
         builder.Services.AddTransient<ReceivingOrderPutawayPage>();
         builder.Services.AddTransient<ReceivingOrderPutawayMovementPage>();
         builder.Services.AddTransient<ShippingOrderPage>();
@@ -52,9 +54,21 @@ public static class MauiProgram
             BaseAddress = new Uri(
                 serviceProvider.GetRequiredService<MobileApiSettings>().BaseAddress)
         });
-        builder.Services.AddSingleton(serviceProvider => new MobileApiClient(
-            serviceProvider.GetRequiredService<HttpClient>(),
+        builder.Services.AddSingleton(serviceProvider => new MobileApiTransport(
+            serviceProvider.GetRequiredService<HttpClient>()));
+        builder.Services.AddSingleton(serviceProvider => new MobileIdentityClient(
+            serviceProvider.GetRequiredService<MobileApiTransport>(),
             serviceProvider.GetRequiredService<IMobileSessionStore>()));
+        builder.Services.AddSingleton(serviceProvider => new MobileReferenceDataClient(
+            serviceProvider.GetRequiredService<MobileApiTransport>()));
+        builder.Services.AddSingleton(serviceProvider => new MobileReceivingOrderClient(
+            serviceProvider.GetRequiredService<MobileApiTransport>()));
+        builder.Services.AddSingleton(serviceProvider => new MobileShippingOrderClient(
+            serviceProvider.GetRequiredService<MobileApiTransport>()));
+        builder.Services.AddSingleton(serviceProvider => new MobileInventoryTransferClient(
+            serviceProvider.GetRequiredService<MobileApiTransport>()));
+        builder.Services.AddSingleton(serviceProvider => new MobileInventoryCountClient(
+            serviceProvider.GetRequiredService<MobileApiTransport>()));
 
 #if DEBUG
         builder.Logging.AddDebug();

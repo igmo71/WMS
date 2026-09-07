@@ -5,7 +5,7 @@ namespace Wms.Mobile;
 
 public partial class ShippingOrderShippingPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileShippingOrderClient _orderClient;
     private MobileShippingOrderDetailsResponse? _details;
     private MobileOrderSynchronizationResponse? _synchronization;
     private ShippingPageMode _mode = ShippingPageMode.Ready;
@@ -13,10 +13,10 @@ public partial class ShippingOrderShippingPage : ContentPage
     private bool _isVisible;
     private bool _busy;
 
-    public ShippingOrderShippingPage(MobileApiClient apiClient)
+    public ShippingOrderShippingPage(MobileShippingOrderClient orderClient)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _orderClient = orderClient;
     }
 
     public IReadOnlyList<MobileShippingOrderLineResponse> Lines { get; private set; } = [];
@@ -106,7 +106,7 @@ public partial class ShippingOrderShippingPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.ShipShippingOrderAsync(
+            var response = await _orderClient.ShipAsync(
                 Details.Order.Id,
                 _pendingShippingRequestId.Value);
             _pendingShippingRequestId = null;
@@ -200,19 +200,8 @@ public partial class ShippingOrderShippingPage : ContentPage
     {
         if (sender is VisualElement element)
         {
-            DisableAndroidFocus(element);
+            AndroidFocus.Suppress(element);
         }
-    }
-
-    private static void DisableAndroidFocus(VisualElement element)
-    {
-#if ANDROID
-        if (element.Handler?.PlatformView is Android.Views.View view)
-        {
-            view.Focusable = false;
-            view.FocusableInTouchMode = false;
-        }
-#endif
     }
 
     private enum ShippingPageMode

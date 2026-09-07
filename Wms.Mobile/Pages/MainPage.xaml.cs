@@ -5,18 +5,18 @@ namespace Wms.Mobile;
 
 public partial class MainPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileIdentityClient _identityClient;
     private readonly IMobileSessionStore _sessionStore;
     private readonly IServiceProvider _services;
     private bool _checkingSession;
     private bool _currentUserLoaded;
 
     public MainPage(
-        MobileApiClient apiClient,
+        MobileIdentityClient identityClient,
         IServiceProvider services)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _identityClient = identityClient;
         _sessionStore = services.GetRequiredService<IMobileSessionStore>();
         _services = services;
     }
@@ -60,7 +60,7 @@ public partial class MainPage : ContentPage
         StatusLabel.Text = string.Empty;
         try
         {
-            ShowLoggedIn(await _apiClient.LoginAsync(email, password));
+            ShowLoggedIn(await _identityClient.LoginAsync(email, password));
         }
         catch (MobileApiException exception)
         {
@@ -80,7 +80,7 @@ public partial class MainPage : ContentPage
 
     private void OnLogoutClicked(object? sender, EventArgs e)
     {
-        _apiClient.Logout();
+        _identityClient.Logout();
         ShowLoggedOut();
         StatusLabel.Text = "Сессия завершена на устройстве.";
     }
@@ -107,7 +107,7 @@ public partial class MainPage : ContentPage
 
         try
         {
-            ShowLoggedIn(await _apiClient.GetCurrentUserAsync());
+            ShowLoggedIn(await _identityClient.GetCurrentUserAsync());
         }
         catch (MobileApiException exception)
         {

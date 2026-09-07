@@ -6,18 +6,21 @@ namespace Wms.Mobile;
 
 public partial class InventoryTransferPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileInventoryTransferClient _transferClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private bool _loaded;
     private Guid? _pendingCreateRequestId;
     private Guid? _pendingCreateWarehouseId;
 
     public InventoryTransferPage(
-        MobileApiClient apiClient,
+        MobileInventoryTransferClient transferClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _transferClient = transferClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
     }
 
@@ -41,7 +44,7 @@ public partial class InventoryTransferPage : ContentPage
 
         try
         {
-            var warehouses = await _apiClient.GetWarehousesAsync();
+            var warehouses = await _referenceDataClient.GetWarehousesAsync();
             WarehousePicker.ItemsSource = warehouses.ToList();
             if (warehouses.Count == 1)
             {
@@ -89,7 +92,7 @@ public partial class InventoryTransferPage : ContentPage
 
         try
         {
-            var transfer = await _apiClient.CreateInventoryTransferAsync(
+            var transfer = await _transferClient.CreateAsync(
                 warehouseId,
                 _pendingCreateRequestId.Value);
             ClearPendingCreate();
@@ -122,7 +125,8 @@ public partial class InventoryTransferPage : ContentPage
         }
 
         await Navigation.PushAsync(new TransitInventoryTransferStartPage(
-            _apiClient,
+            _transferClient,
+            _referenceDataClient,
             _scanner,
             warehouse));
     }
@@ -140,7 +144,7 @@ public partial class InventoryTransferPage : ContentPage
 
         try
         {
-            var transfers = await _apiClient.GetInventoryTransfersAsync(warehouse.Id);
+            var transfers = await _transferClient.GetListAsync(warehouse.Id);
             TransfersView.ItemsSource = transfers.Select(x => new TransferListItem(
                 x,
                 x.Number,
@@ -197,7 +201,8 @@ public partial class InventoryTransferPage : ContentPage
 
     private Task OpenTransferAsync(MobileInventoryTransferSummaryResponse transfer) =>
         Navigation.PushAsync(new InventoryTransferDetailsPage(
-            _apiClient,
+            _transferClient,
+            _referenceDataClient,
             _scanner,
             transfer));
 

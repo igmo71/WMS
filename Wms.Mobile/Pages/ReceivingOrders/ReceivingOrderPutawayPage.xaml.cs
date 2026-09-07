@@ -6,7 +6,7 @@ namespace Wms.Mobile;
 
 public partial class ReceivingOrderPutawayPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileReceivingOrderClient _orderClient;
     private readonly IServiceProvider _services;
     private MobileReceivingOrderDetailsResponse? _details;
     private bool _busy;
@@ -18,11 +18,11 @@ public partial class ReceivingOrderPutawayPage : ContentPage
     private Guid? _accentedMovementId;
 
     public ReceivingOrderPutawayPage(
-        MobileApiClient apiClient,
+        MobileReceivingOrderClient orderClient,
         IServiceProvider services)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _orderClient = orderClient;
         _services = services;
     }
 
@@ -88,7 +88,7 @@ public partial class ReceivingOrderPutawayPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.StartReceivingOrderPutawayAsync(
+            var response = await _orderClient.StartPutawayAsync(
                 Details.Order.Id,
                 _pendingStartRequestId.Value);
             _pendingStartRequestId = null;
@@ -194,7 +194,7 @@ public partial class ReceivingOrderPutawayPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.DeleteReceivingOrderPutawayMovementAsync(
+            var response = await _orderClient.DeletePutawayMovementAsync(
                 Details.Order.Id,
                 movement.Id,
                 _pendingDeleteRequestId.Value);
@@ -252,7 +252,7 @@ public partial class ReceivingOrderPutawayPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.CompleteReceivingOrderPutawayAsync(
+            var response = await _orderClient.CompletePutawayAsync(
                 Details.Order.Id,
                 _pendingCompletionRequestId.Value);
             _pendingCompletionRequestId = null;
@@ -398,18 +398,7 @@ public partial class ReceivingOrderPutawayPage : ContentPage
     {
         if (sender is VisualElement element)
         {
-            DisableAndroidFocus(element);
+            AndroidFocus.Suppress(element);
         }
-    }
-
-    private static void DisableAndroidFocus(VisualElement element)
-    {
-#if ANDROID
-        if (element.Handler?.PlatformView is Android.Views.View view)
-        {
-            view.Focusable = false;
-            view.FocusableInTouchMode = false;
-        }
-#endif
     }
 }

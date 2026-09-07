@@ -6,7 +6,8 @@ namespace Wms.Mobile;
 
 public partial class TransitInventoryTransferStartPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileInventoryTransferClient _transferClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private readonly MobileWarehouseResponse _warehouse;
     private MobileStorageLocationResponse? _transitLocation;
@@ -16,12 +17,14 @@ public partial class TransitInventoryTransferStartPage : ContentPage
     private bool _busy;
 
     public TransitInventoryTransferStartPage(
-        MobileApiClient apiClient,
+        MobileInventoryTransferClient transferClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner,
         MobileWarehouseResponse warehouse)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _transferClient = transferClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         _warehouse = warehouse;
         CameraScannerView.Configure(scanner);
@@ -91,11 +94,11 @@ public partial class TransitInventoryTransferStartPage : ContentPage
 
         try
         {
-            var location = await _apiClient.ResolveStorageLocationAsync(
+            var location = await _referenceDataClient.ResolveStorageLocationAsync(
                 barcode,
                 _warehouse.Id,
                 MobileStorageLocationContext.Transit);
-            var transfer = await _apiClient.GetInventoryTransferByTransitStorageLocationAsync(
+            var transfer = await _transferClient.GetByTransitLocationAsync(
                 location.Id);
 
             _transitLocation = location;
@@ -147,7 +150,7 @@ public partial class TransitInventoryTransferStartPage : ContentPage
 
         try
         {
-            var transfer = await _apiClient.CreateInventoryTransferAsync(
+            var transfer = await _transferClient.CreateAsync(
                 _warehouse.Id,
                 _pendingCreateRequestId.Value,
                 _transitLocation.Id);
@@ -173,7 +176,8 @@ public partial class TransitInventoryTransferStartPage : ContentPage
     private async Task OpenTransferAsync(MobileInventoryTransferSummaryResponse transfer)
     {
         await Navigation.PushAsync(new InventoryTransferDetailsPage(
-            _apiClient,
+            _transferClient,
+            _referenceDataClient,
             _scanner,
             transfer));
         Navigation.RemovePage(this);
@@ -189,12 +193,9 @@ public partial class TransitInventoryTransferStartPage : ContentPage
 
     private void OnContinueButtonLoaded(object? sender, EventArgs e)
     {
-#if ANDROID
-        if (ContinueButton.Handler?.PlatformView is Android.Widget.Button button)
+        if (sender is VisualElement element)
         {
-            button.Focusable = false;
-            button.FocusableInTouchMode = false;
+            AndroidFocus.Suppress(element);
         }
-#endif
     }
 }

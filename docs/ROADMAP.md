@@ -23,23 +23,12 @@ by dependency, not by a promised release date.
 
 ## Next delivery
 
-Run the first Mobile maintainability pilot:
-
-- split the Mobile API client and contracts by business feature while retaining
-  one internal HTTP/session transport and unchanged wire contracts;
-- extract the repeated Android focus helper;
-- decompose one receiving or picking page with a concrete feature process that
-  owns its API sequences and stable retry ids while the page keeps UI modes,
-  scanner decisions, navigation, and rendering.
-
-Stop after one page and review whether its primary path became easier to read.
-Do not introduce a common controller, page base, MVVM framework, or workflow
-engine, and do not propagate the shape before that review.
+Review the completed behavior-preserving cleanup batch before moving to pilot
+prerequisites. Confirm that only the reviewed template artifacts, stale
+comment, and transfer save pass-through were removed; the already-correct
+receiving telemetry category was intentionally unchanged.
 
 ## Accepted architecture follow-up
-
-After the next delivery, apply the accepted
-template/comment/pass-through/telemetry cleanup as an isolated batch.
 
 Keep Mobile shipping rollback Web-only unless pilot evidence creates a Mobile
 requirement. Leave receiving/shipping aggregate reconciliation extraction

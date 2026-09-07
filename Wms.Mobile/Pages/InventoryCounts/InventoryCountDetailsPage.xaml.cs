@@ -10,7 +10,7 @@ public partial class InventoryCountDetailsPage : ContentPage
 {
     private const int VisibleSearchResultCount = 10;
 
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileInventoryCountClient _inventoryCountClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private MobileInventoryCountDetailsResponse _details;
     private int _searchVersion;
@@ -28,14 +28,14 @@ public partial class InventoryCountDetailsPage : ContentPage
     private Guid? _pendingRemoveItemId;
 
     public InventoryCountDetailsPage(
-        MobileApiClient apiClient,
+        MobileInventoryCountClient inventoryCountClient,
         IOperationalBarcodeScanner scanner,
         MobileInventoryCountDetailsResponse details)
     {
         InitializeComponent();
         ItemStates.CollectionChanged += (_, _) =>
             EmptyItemsLabel.IsVisible = ItemStates.Count == 0;
-        _apiClient = apiClient;
+        _inventoryCountClient = inventoryCountClient;
         _scanner = scanner;
         _details = details;
         CameraScannerView.Configure(scanner);
@@ -104,7 +104,7 @@ public partial class InventoryCountDetailsPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var response = await _apiClient.IncrementInventoryCountSkuAsync(
+            var response = await _inventoryCountClient.IncrementSkuAsync(
                 _details.Count.Id,
                 barcode,
                 _pendingScanRequestId.Value);
@@ -172,7 +172,7 @@ public partial class InventoryCountDetailsPage : ContentPage
                 return;
 
             SetSearchBusy(true);
-            var results = await _apiClient.SearchInventoryCountSkusAsync(
+            var results = await _inventoryCountClient.SearchSkusAsync(
                 _details.Count.Id,
                 query,
                 CancellationToken.None);
@@ -272,7 +272,7 @@ public partial class InventoryCountDetailsPage : ContentPage
         _pendingPostRequestId ??= Guid.NewGuid();
         try
         {
-            _details = await _apiClient.PostInventoryCountAsync(
+            _details = await _inventoryCountClient.PostAsync(
                 _details.Count.Id,
                 _pendingPostRequestId.Value);
             _pendingPostRequestId = null;
@@ -330,7 +330,7 @@ public partial class InventoryCountDetailsPage : ContentPage
         _pendingDeleteRequestId ??= Guid.NewGuid();
         try
         {
-            await _apiClient.DeleteInventoryCountDraftAsync(
+            await _inventoryCountClient.DeleteDraftAsync(
                 _details.Count.Id,
                 _pendingDeleteRequestId.Value);
             _pendingDeleteRequestId = null;
@@ -446,7 +446,7 @@ public partial class InventoryCountDetailsPage : ContentPage
             MobileInventoryCountDetailsResponse details;
             if (item.IsPending)
             {
-                details = await _apiClient.SetInventoryCountSkuQuantityAsync(
+                details = await _inventoryCountClient.SetSkuQuantityAsync(
                     _details.Count.Id,
                     item.StockKeepingUnitId,
                     quantity,
@@ -454,7 +454,7 @@ public partial class InventoryCountDetailsPage : ContentPage
             }
             else if (item.ItemId is Guid itemId)
             {
-                details = await _apiClient.SetInventoryCountItemQuantityAsync(
+                details = await _inventoryCountClient.SetItemQuantityAsync(
                     _details.Count.Id,
                     itemId,
                     quantity,
@@ -561,7 +561,7 @@ public partial class InventoryCountDetailsPage : ContentPage
         _pendingRemoveRequestId ??= Guid.NewGuid();
         try
         {
-            var details = await _apiClient.RemoveInventoryCountItemAsync(
+            var details = await _inventoryCountClient.RemoveItemAsync(
                 _details.Count.Id,
                 itemId,
                 _pendingRemoveRequestId.Value);
@@ -658,18 +658,7 @@ public partial class InventoryCountDetailsPage : ContentPage
     private void OnNonScanControlLoaded(object? sender, EventArgs e)
     {
         if (sender is VisualElement element)
-            DisableAndroidFocus(element);
-    }
-
-    private static void DisableAndroidFocus(VisualElement element)
-    {
-#if ANDROID
-        if (element.Handler?.PlatformView is Android.Views.View view)
-        {
-            view.Focusable = false;
-            view.FocusableInTouchMode = false;
-        }
-#endif
+            AndroidFocus.Suppress(element);
     }
 
     private enum InventoryCountPageMode

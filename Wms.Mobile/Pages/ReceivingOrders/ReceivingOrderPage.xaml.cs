@@ -6,7 +6,8 @@ namespace Wms.Mobile;
 
 public partial class ReceivingOrderPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileReceivingOrderClient _orderClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private readonly IServiceProvider _services;
     private bool _loaded;
@@ -17,12 +18,14 @@ public partial class ReceivingOrderPage : ContentPage
     private int _loadVersion;
 
     public ReceivingOrderPage(
-        MobileApiClient apiClient,
+        MobileReceivingOrderClient orderClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner,
         IServiceProvider services)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _orderClient = orderClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         _services = services;
         BindingContext = this;
@@ -76,7 +79,7 @@ public partial class ReceivingOrderPage : ContentPage
         SetBusy(true);
         try
         {
-            var warehouses = await _apiClient.GetWarehousesAsync();
+            var warehouses = await _referenceDataClient.GetWarehousesAsync();
             WarehousePicker.ItemsSource = warehouses.ToList();
             _loaded = true;
             if (warehouses.Count == 1)
@@ -144,7 +147,7 @@ public partial class ReceivingOrderPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var details = await _apiClient.ResolveReceivingOrderDocumentAsync(
+            var details = await _orderClient.ResolveDocumentAsync(
                 warehouse.Id,
                 barcode);
             await OpenDetailsAsync(details);
@@ -175,7 +178,7 @@ public partial class ReceivingOrderPage : ContentPage
         ErrorLabel.Text = string.Empty;
         try
         {
-            var details = await _apiClient.GetReceivingOrderAsync(orderId);
+            var details = await _orderClient.GetAsync(orderId);
             await OpenDetailsAsync(details);
         }
         catch (MobileApiException exception)
@@ -226,7 +229,7 @@ public partial class ReceivingOrderPage : ContentPage
 
         try
         {
-            var queue = await _apiClient.GetReceivingOrderWorkQueueAsync(warehouse.Id);
+            var queue = await _orderClient.GetWorkQueueAsync(warehouse.Id);
             if (loadVersion != _loadVersion || SelectedWarehouse?.Id != warehouse.Id)
             {
                 return;
@@ -299,18 +302,7 @@ public partial class ReceivingOrderPage : ContentPage
     {
         if (sender is VisualElement element)
         {
-            DisableAndroidFocus(element);
+            AndroidFocus.Suppress(element);
         }
-    }
-
-    private static void DisableAndroidFocus(VisualElement element)
-    {
-#if ANDROID
-        if (element.Handler?.PlatformView is Android.Views.View view)
-        {
-            view.Focusable = false;
-            view.FocusableInTouchMode = false;
-        }
-#endif
     }
 }

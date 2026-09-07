@@ -347,6 +347,17 @@ The packaged configuration contains separate debug and standalone addresses;
 the build configuration selects one when the app starts and creates one client
 with that fixed base address.
 
+Mobile client access is grouped by business feature: identity, reference data,
+inventory transfer, inventory count, receiving, and shipping clients share one
+internal authenticated HTTP transport. Mobile V1 contract types use the same
+feature grouping in source while retaining one versioned namespace and wire
+contract. A page-specific process may own a multi-call business interaction and
+its uncertain-result request ids when that makes the operator path explicit;
+page modes, scanner lifecycle, navigation, dialogs, and rendering remain in the
+page. This is a local feature boundary, not a common controller or validation
+pipeline. Repeated Android native-focus suppression is centralized in one
+technical helper while each page retains its own Loaded event handler.
+
 The staging Android build additionally trusts user-installed certificate
 authorities only for the proven internal host `vm-xms-dev`; other configured
 hosts retain the normal system trust policy. This supports the Caddy staging

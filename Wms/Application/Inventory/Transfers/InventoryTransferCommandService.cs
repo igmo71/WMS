@@ -87,7 +87,7 @@ public class InventoryTransferCommandService(
         }
 
         dbContext.InventoryTransfers.Remove(transfer);
-        return await SaveChangesAsync(dbContext, ct);
+        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
     }
 
     public Task<OperationResult> PickAsync(
@@ -212,7 +212,7 @@ public class InventoryTransferCommandService(
             return completionResult.Error!;
         }
 
-        return await SaveChangesAsync(dbContext, ct);
+        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
     }
 
     internal async Task<OperationResult<InventoryTransfer>> StageCompleteAsync(
@@ -272,7 +272,7 @@ public class InventoryTransferCommandService(
             return movementResult.Error!;
         }
 
-        return await SaveChangesAsync(dbContext, ct);
+        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
     }
 
     private async Task<OperationResult<InventoryMovement>> StageMovementAsync(
@@ -365,11 +365,6 @@ public class InventoryTransferCommandService(
 
         return movement;
     }
-
-    private static async Task<OperationResult> SaveChangesAsync(
-        ApplicationDbContext dbContext,
-        CancellationToken ct) =>
-        await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
 
     private static OperationResult<InventoryTransferRoute> CreateRoute(
         InventoryTransfer transfer,

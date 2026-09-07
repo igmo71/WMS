@@ -6,7 +6,8 @@ namespace Wms.Mobile;
 
 public partial class InventoryTransferDetailsPage : ContentPage
 {
-    private readonly MobileApiClient _apiClient;
+    private readonly MobileInventoryTransferClient _transferClient;
+    private readonly MobileReferenceDataClient _referenceDataClient;
     private readonly IOperationalBarcodeScanner _scanner;
     private MobileInventoryTransferSummaryResponse _transfer;
     private IReadOnlyList<MobileInventoryTransferSkuBalanceResponse> _transitBalances = [];
@@ -16,12 +17,14 @@ public partial class InventoryTransferDetailsPage : ContentPage
     private bool _detailsLoaded;
 
     public InventoryTransferDetailsPage(
-        MobileApiClient apiClient,
+        MobileInventoryTransferClient transferClient,
+        MobileReferenceDataClient referenceDataClient,
         IOperationalBarcodeScanner scanner,
         MobileInventoryTransferSummaryResponse transfer)
     {
         InitializeComponent();
-        _apiClient = apiClient;
+        _transferClient = transferClient;
+        _referenceDataClient = referenceDataClient;
         _scanner = scanner;
         _transfer = transfer;
         ShowTransferHeader();
@@ -42,7 +45,7 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
         try
         {
-            var details = await _apiClient.GetInventoryTransferAsync(_transfer.Id);
+            var details = await _transferClient.GetAsync(_transfer.Id);
             _transfer = details.Transfer;
             _transitBalances = details.TransitBalances;
             _detailsLoaded = true;
@@ -106,7 +109,8 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
         _highlightMovementId = null;
         await Navigation.PushAsync(new DirectInventoryTransferPage(
-            _apiClient,
+            _transferClient,
+            _referenceDataClient,
             _scanner,
             _transfer,
             OnMovementCompleted));
@@ -125,7 +129,8 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
         _highlightMovementId = null;
         await Navigation.PushAsync(new TransitInventoryTransferMovementPage(
-            _apiClient,
+            _transferClient,
+            _referenceDataClient,
             _scanner,
             _transfer,
             mode,
@@ -176,7 +181,7 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
         try
         {
-            await _apiClient.CompleteInventoryTransferAsync(
+            await _transferClient.CompleteAsync(
                 _transfer.Id,
                 _pendingCompleteRequestId.Value);
             _pendingCompleteRequestId = null;
@@ -307,13 +312,10 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
     private void OnActionButtonLoaded(object? sender, EventArgs e)
     {
-#if ANDROID
-        if (sender is Button { Handler.PlatformView: Android.Widget.Button button })
+        if (sender is VisualElement element)
         {
-            button.Focusable = false;
-            button.FocusableInTouchMode = false;
+            AndroidFocus.Suppress(element);
         }
-#endif
     }
 
     private static string GetStatusText(MobileInventoryTransferStatus status) => status switch
