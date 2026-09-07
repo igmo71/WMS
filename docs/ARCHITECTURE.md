@@ -53,11 +53,13 @@ Manual 1C synchronization UI
   concrete implementations under `Integration.OneS` name the corresponding 1C
   metadata object. For example, `IShippingOrderSource` is implemented by
   `Document_РасходныйОрдерНаТовары_InboundService`.
-- UI and HTTP boundaries should not require concrete 1C integration types.
-  Existing direct dependencies on document synchronization services are a
-  known boundary issue for the architecture review, especially before moving
-  integration into a separate project. Do not add another pass-through facade
-  before that review establishes the actual application operation boundary.
+- Application owns both source and execution-sink ports and the synchronization
+  operation that applies a snapshot and produces its assessment. UI and HTTP
+  boundaries do not compose concrete 1C synchronization services.
+- `Integration.OneS` implements those ports and owns OData DTOs, metadata
+  names, protocol statuses, notification parsing, and PATCH/POST mechanics.
+  Existing dependencies that point in the opposite direction are accepted
+  follow-up work; do not add a pass-through facade around them.
 
 ## Domain model categories
 
@@ -90,6 +92,19 @@ The MAUI client keeps pages under `Pages`, grouped by operator workflow. Shared
 scanner adapters, HTTP/session services, platform code, and resources remain in
 their corresponding top-level folders. Physical page folders do not require a
 namespace per folder while the client remains small.
+
+Mobile HTTP clients and transport contracts are grouped by business feature
+over one internal HTTP/session transport. A page owns controls, modes,
+navigation, focus, dialogs, and rendering. If retry-aware API sequences make a
+page difficult to read, a concrete feature process may own those sequences and
+stable request ids; this does not imply a common page base, controller
+interface, MVVM framework, or workflow engine.
+
+A file around 300 lines deserves a responsibility review but is not required
+to be split. Extract only a business-named or clearly technical cohesive
+responsibility that reduces the context needed to read the primary path. Keep
+a large cohesive algorithm or aggregate intact when splitting would scatter
+its invariants.
 
 ## Commands and queries
 
@@ -130,6 +145,12 @@ Do not catch every `Exception` inside domain or application operations merely
 to turn failures into results; an outer UI or API boundary may provide the
 last-resort user-facing response and logging.
 
+Repeated database-backed eligibility checks may use a narrow, named policy
+with one explicit context. Such a policy does not own feature lifecycle,
+quantities, allocation, or persistence. Do not introduce `IValidator<T>`,
+automatic validator discovery, per-command validators, validation pipelines,
+or option objects containing independent rule flags.
+
 ## Persistence
 
 - Application services use `ApplicationDbContext` directly; EF Core is the
@@ -141,6 +162,10 @@ last-resort user-facing response and logging.
   orchestration stages the business change and receipt in that context and
   performs one `SaveChangesAsync`; repositories or cross-context transactions
   are not introduced for this purpose.
+- A method named `Stage...` never saves. When a critical external transition
+  intentionally persists a synchronization checkpoint before later effects,
+  name and document that higher-level two-phase operation explicitly rather
+  than hiding the checkpoint behind the staging contract.
 - Persistent invariant changes include a migration.
 - Once a migration may have been applied outside the developer's disposable
   local database, keep it immutable: do not edit, rename, or delete it. Fix the

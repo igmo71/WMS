@@ -9,10 +9,9 @@ by dependency, not by a promised release date.
 
 ## Delivery sequence
 
-1. **Architecture review and pilot preparation:** inspect process boundaries
-   while warehouse users evaluate the current staging build; use their
-   observations as input instead of delaying the first deployment for broad
-   refactoring.
+1. **Accepted architecture follow-up and pilot preparation:** deliver the
+   focused correctness batches first while warehouse users continue evaluating
+   staging; do not delay the pilot for optional broad refactoring.
 2. **Pilot prerequisites:** security boundaries, inventory confidence, and an
    operator recovery procedure for partial 1C failures.
 3. **Pilot rehearsal:** one documented end-to-end run after its prerequisites
@@ -22,40 +21,44 @@ by dependency, not by a promised release date.
 5. **Production maintenance:** dependency, diagnostics, and administrative
    concurrency work that does not block staging.
 
-## Architecture and process-boundary review
+## Next delivery
 
-### Outcome
+Deliver the isolated correctness items from the accepted architecture review:
 
-Produce an evidence-based simplification proposal before changing the current
-architecture. Each business action should have one recognizable server-side
-path shared by WebApp and Mobile, with explicit ownership of local persistence,
-1C calls, idempotency, and concurrency handling.
+1. route Web transfer creation through classified persistence so a competing
+   transit-location assignment returns the intended conflict;
+2. synchronize a Mobile receiving or shipping document before querying the
+   details returned by that same open operation.
 
-### Work
+Keep these changes independent and do not combine them with file movement or
+new abstractions.
 
-1. Trace receiving, putaway, picking, shipping, rollback, inventory count, and
-   transfer commands from UI or API through application, domain, integration,
-   and persistence code.
-2. Find actions implemented through different WebApp and Mobile command
-   sequences, especially partial local saves and duplicated validation.
-3. Resolve the direct WebApp and WebApi dependencies on concrete 1C document
-   synchronization services. Define an application-facing boundary that keeps
-   `Integration.OneS` extractable into a separate library without circular
-   project dependencies.
-4. Review external-call and database-save ordering, retry behavior, transaction
-   boundaries, and the meaning of `Stage...` methods.
-5. Identify unreachable code, accidental abstractions, oversized services, and
-   domain rules obscured by persistence or transport details.
-6. Separate concrete defects and safe cleanup from optional architectural
-   redesign; prepare staged recommendations before implementation.
+## Accepted architecture follow-up
 
-### Done when
+After the next delivery, create a focused scope for each ordered batch:
 
-- findings cite concrete code paths and operational consequences;
-- recommended changes are prioritized by correctness and simplification value;
-- any proposed architectural shape is justified by repeated evidence rather
-  than introduced speculatively;
-- no broad refactoring begins until the review is accepted.
+1. enforce active topology during final posting and make location revisions
+   participate in concurrent location, zone, and warehouse eligibility
+   changes;
+2. ensure Mobile receipt replay precedes mutable business resolution and
+   preconditions;
+3. remove the implicit receiving-location save before Web completion, and
+   migrate the legacy receiving API to the common operation while treating it
+   as live until consumers are positively ruled out;
+4. introduce application-owned 1C source/execution ports and synchronization
+   operations, remove concrete OneS orchestration from hosts, and make
+   synchronization checkpoints versus `Stage...` save ownership explicit;
+5. pilot the narrow operational-location policy, feature-split Mobile API
+   client/contracts, and one concrete page process object before repeating any
+   maintainability shape;
+6. apply the accepted template/comment/pass-through/telemetry cleanup as an
+   isolated batch.
+
+Keep Mobile shipping rollback Web-only unless pilot evidence creates a Mobile
+requirement. Leave receiving/shipping aggregate reconciliation extraction
+deferred until a concrete change needs it. The accepted evidence and detailed
+batch boundaries remain in
+[`../specs/2026-09-04-architecture-process-boundary-review/change-plan.md`](../specs/2026-09-04-architecture-process-boundary-review/change-plan.md).
 
 ## Pilot prerequisites
 
