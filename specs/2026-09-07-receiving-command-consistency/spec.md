@@ -6,9 +6,8 @@ Status: frozen reference. Completed 2026-09-07.
 
 Web completion of receiving treats the operator's selected receiving location
 and the final receiving transition as one explicit final-save operation. The
-mapped legacy receiving API remains available for unknown external consumers,
-but delegates to the same application operations and returns actionable
-business errors.
+unused legacy receiving API is removed because the supported interactive
+clients are explicitly limited to `Wms.WebApp` and `Wms.Mobile`.
 
 ## Scope
 
@@ -19,17 +18,14 @@ business errors.
   outbound completion, and the final classified save.
 - Replace the Web page's preliminary location save plus completion call with
   the combined operation.
-- Keep the legacy route group because repository search cannot rule out
-  external callers.
-- Route legacy start through the common start-receiving operation using the
-  order's already assigned location, and expose typed status/message errors for
-  both changing legacy routes.
+- Remove the legacy `/api/ReceivingOrder` route group and its application
+  endpoint mapper.
+- Remove command methods that become unreachable with the legacy routes and
+  the Web preliminary location save gone.
 - Preserve Mobile receipt behavior, routes, domain rules, and 1C protocol.
 
 ## Out of scope
 
-- Removing or renaming legacy routes without external-consumer evidence.
-- Adding a new legacy request contract for selecting a location.
 - Refactoring application/1C ports or the synchronization checkpoint contract.
 - Endpoint or page decomposition.
 - New automated tests.
@@ -42,10 +38,8 @@ business errors.
   inventory effects, and final local changes through the existing final save.
 - Mobile completion continues using the location assigned at start and its
   receipt-protected staged operation.
-- Legacy `set-in-receiving` uses the common start operation and rejects a
-  missing or invalid assigned location instead of bypassing location checks.
-- Legacy changing routes preserve their URLs and return the operation error
-  message with status 404, 409, 422, or 400 as appropriate.
+- `/api/ReceivingOrder` is no longer mapped, and no legacy-only receiving
+  command path remains.
 - Relevant projects build and `git diff --check` passes; no tests are created.
 
 ## Result
@@ -56,10 +50,9 @@ business errors.
 - The standalone public location-save command and the location-free receiving
   transition were removed. Start receiving continues through the combined
   location validation, transition, outbound call, and classified save.
-- Repository search found no legacy route callers but cannot establish the
-  absence of external consumers, so `/api/ReceivingOrder` remains mapped.
-  Legacy start delegates to the common start operation with the order's
-  assigned location; both changing routes return structured error responses.
+- The supported-client boundary was clarified as `Wms.WebApp` and
+  `Wms.Mobile`; repository search confirms neither uses `/api/ReceivingOrder`.
+  Its endpoint group, mapper, and legacy-only command paths were removed.
 - Mobile start and completion keep their existing receipt-protected staged
   operations and transport contracts.
 - `Wms`, `Wms.WebApi`, and `Wms.WebApp` build successfully. WebApi retains the

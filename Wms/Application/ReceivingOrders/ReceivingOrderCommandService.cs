@@ -148,29 +148,6 @@ public class ReceivingOrderCommandService(
             : result;
     }
 
-    public async Task<OperationResult> StartReceivingFromAssignedLocationAsync(
-        Guid orderId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var order = await LoadOrderAsync(dbContext, orderId, ct);
-        if (order is null)
-            return OperationError.NotFound($"Приходный ордер '{orderId}' не найден.");
-        if (order.ReceivingLocationId is not Guid receivingLocationId)
-            return OperationError.Invalid("Для начала приёмки у ордера должна быть назначена позиция приёмки.");
-
-        OperationResult result = await StageStartReceivingAsync(
-            dbContext,
-            orderId,
-            receivingLocationId,
-            userId,
-            ct);
-        return result.IsSuccess
-            ? await ApplicationPersistence.SaveChangesAsync(dbContext, ct)
-            : result;
-    }
-
     internal async Task<OperationResult> StageStartReceivingAsync(
         ApplicationDbContext dbContext,
         Guid orderId,
@@ -229,12 +206,6 @@ public class ReceivingOrderCommandService(
 
         return OperationResult.Success();
     }
-
-    public Task<OperationResult> SetReceivedAsync(
-        Guid orderId,
-        string userId,
-        CancellationToken ct = default) =>
-        ExecuteReceivingCompletionAsync(orderId, null, userId, ct);
 
     public Task<OperationResult> CompleteReceivingAsync(
         Guid orderId,

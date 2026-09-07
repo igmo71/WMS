@@ -4,7 +4,6 @@ using Serilog;
 using SerilogTracing;
 using Wms.Application;
 using Wms.Data;
-using Wms.Endpoints;
 using Wms.Integration;
 using Wms.Integration.OneS.Endpoints;
 using Wms.WebApi.Mobile;
@@ -81,7 +80,6 @@ public class Program
 
         app.UseSerilogRequestLogging();
 
-        app.MapApplicationEndpoints();
         app.MapMobileIdentityEndpoints();
         app.MapMobileBarcodeEndpoints();
         app.MapMobileInventoryTransferEndpoints();

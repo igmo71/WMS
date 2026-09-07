@@ -185,11 +185,10 @@ with the receiving transition and inventory effects for the final classified
 save. A later completion failure therefore does not leave only the newly
 selected location committed.
 
-The legacy authenticated `/api/ReceivingOrder` route group remains mapped
-because external consumers have not been ruled out. Its start route can only
-start an order with an already assigned location and delegates to the common
-start-receiving operation; changing routes return structured business error
-codes and messages instead of an empty bad-request response.
+The supported interactive clients are `Wms.WebApp` and `Wms.Mobile`. The old
+authenticated `/api/ReceivingOrder` route group is not part of either client
+contract and is not mapped. 1C notification/import endpoints are a separate,
+explicit integration boundary rather than a generic external-client API.
 
 ### Picking and shipping
 
