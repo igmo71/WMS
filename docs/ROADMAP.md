@@ -23,26 +23,23 @@ by dependency, not by a promised release date.
 
 ## Next delivery
 
-Make the application/1C synchronization boundary explicit:
+Run the first Mobile maintainability pilot:
 
-- introduce application-owned source and execution ports implemented by the
-  current 1C adapters;
-- move repeated host synchronization orchestration behind application-facing
-  receiving and shipping operations;
-- make synchronization checkpoint persistence explicit so `Stage...` again
-  means that the caller owns the final save.
+- split the Mobile API client and contracts by business feature while retaining
+  one internal HTTP/session transport and unchanged wire contracts;
+- extract the repeated Android focus helper;
+- decompose one receiving or picking page with a concrete feature process that
+  owns its API sequences and stable retry ids while the page keeps UI modes,
+  scanner decisions, navigation, and rendering.
 
-Do not physically split the 1C integration project in this batch. Keep the
-change separate from endpoint/client decomposition.
+Stop after one page and review whether its primary path became easier to read.
+Do not introduce a common controller, page base, MVVM framework, or workflow
+engine, and do not propagate the shape before that review.
 
 ## Accepted architecture follow-up
 
-After the next delivery, create a focused scope for each ordered batch:
-
-1. feature-split Mobile API client/contracts and pilot one concrete page
-   process object before repeating any maintainability shape;
-2. apply the accepted template/comment/pass-through/telemetry cleanup as an
-   isolated batch.
+After the next delivery, apply the accepted
+template/comment/pass-through/telemetry cleanup as an isolated batch.
 
 Keep Mobile shipping rollback Web-only unless pilot evidence creates a Mobile
 requirement. Leave receiving/shipping aggregate reconciliation extraction

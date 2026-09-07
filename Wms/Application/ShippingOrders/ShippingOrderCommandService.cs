@@ -7,131 +7,16 @@ using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
 using Wms.Domain.Enums;
-using Wms.Integration.OneS.Services;
 
 namespace Wms.Application.ShippingOrders;
 
 public class ShippingOrderCommandService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     InventoryPostingService inventoryPostingService,
-    IShippingOrderSource orderSource,
-    Document_РасходныйОрдерНаТовары_OutboundService outboundService,
+    ShippingOrderSynchronizationService synchronizationService,
+    IShippingOrderExecutionSink executionSink,
     ILogger<ShippingOrderCommandService> logger)
 {
-    internal async Task<OperationResult<OrderSynchronizationAssessment>> SynchronizeOrderAsync(
-        ShippingOrderImportSnapshot snapshot,
-        bool allowCreate,
-        CancellationToken ct = default)
-    {
-        using IDisposable? scope = logger.BeginScope("ShippingOrder Synchronize {OrderId}", snapshot.Id);
-        using Activity? activity = AppTracing.StartActivity("ShippingOrder.Synchronize", nameof(ShippingOrderCommandService));
-
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-
-        ShippingOrder? existingOrder = await dbContext.ShippingOrders
-            .Include(x => x.Items)
-            .Include(x => x.BaseItems)
-            .FirstOrDefaultAsync(x => x.Id == snapshot.Id, ct);
-
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        if (existingOrder is null)
-        {
-            if (!allowCreate)
-            {
-                return OperationError.NotFound(
-                    $"Расходный ордер '{snapshot.Id}' не найден в WMS.");
-            }
-
-            OperationResult<ShippingOrder> creationResult = ShippingOrder.Create(snapshot, now);
-            if (!creationResult.IsSuccess)
-            {
-                return creationResult.Error!;
-            }
-
-            ShippingOrder createdOrder = creationResult.Value!;
-            dbContext.ShippingOrders.Add(createdOrder);
-            OperationResult saveCreationResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-            return saveCreationResult.IsSuccess
-                ? ShippingOrderSynchronizationComparer.Compare(createdOrder, snapshot)
-                : saveCreationResult.Error!;
-        }
-
-        OperationResult<ShippingOrderReconciliation> reconciliationResult = existingOrder.Reconcile(snapshot, now);
-        if (!reconciliationResult.IsSuccess)
-        {
-            return reconciliationResult.Error!;
-        }
-
-        OrderSynchronizationAssessment assessment =
-            existingOrder.AssessSynchronization(snapshot, now);
-
-        if (reconciliationResult.Value == ShippingOrderReconciliation.Unchanged)
-        {
-            logger.LogDebug("Изменения документа в 1С не обнаружены");
-            return assessment;
-        }
-
-        OperationResult saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-        if (!saveResult.IsSuccess)
-        {
-            return saveResult.Error!;
-        }
-
-        if (reconciliationResult.Value == ShippingOrderReconciliation.DifferencesDetected)
-        {
-            logger.LogWarning(
-                "При сверке расходного ордера с 1С обнаружены расхождения. Уровень: {Level}, поля: {Fields}",
-                assessment.Level,
-                assessment.Differences.Select(x => x.FieldCode).ToArray());
-        }
-
-        return assessment;
-    }
-
-    internal async Task<OperationResult> AcknowledgeSynchronizationAsync(
-        ShippingOrderImportSnapshot snapshot,
-        string expectedFingerprint,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        ShippingOrder? order = await dbContext.ShippingOrders
-            .Include(x => x.Items)
-            .Include(x => x.BaseItems)
-            .FirstOrDefaultAsync(x => x.Id == snapshot.Id, ct);
-        if (order is null)
-        {
-            return OperationError.NotFound($"Расходный ордер '{snapshot.Id}' не найден в WMS.");
-        }
-
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        OrderSynchronizationAssessment assessment =
-            order.AssessSynchronization(snapshot, now);
-        if (!string.Equals(assessment.Fingerprint, expectedFingerprint, StringComparison.Ordinal))
-        {
-            OperationResult<ShippingOrderReconciliation> reconciliationResult =
-                order.Reconcile(snapshot, now);
-            if (!reconciliationResult.IsSuccess)
-                return reconciliationResult.Error!;
-
-            OperationResult saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-            if (!saveResult.IsSuccess)
-                return saveResult;
-
-            return OperationError.Conflict(
-                "Расходный ордер в 1С изменился. Просмотрите новые расхождения.");
-        }
-
-        OperationResult acknowledgeResult = order.AcknowledgeSynchronization(
-            snapshot,
-            assessment,
-            DateTimeOffset.UtcNow,
-            userId);
-        return acknowledgeResult.IsSuccess
-            ? await ApplicationPersistence.SaveChangesAsync(dbContext, ct)
-            : acknowledgeResult;
-    }
-
     public async Task<OperationResult> StartPickingAsync(
         Guid orderId,
         Guid shippingLocationId,
@@ -199,7 +84,7 @@ public class ShippingOrderCommandService(
             return transitionResult;
         }
 
-        OperationResult externalResult = await outboundService.SetReadyForPickingAsync(order.Id, ct);
+        OperationResult externalResult = await executionSink.SetReadyForPickingAsync(order.Id, ct);
 
         if (!externalResult.IsSuccess)
         {
@@ -213,7 +98,7 @@ public class ShippingOrderCommandService(
     public async Task<OperationResult> SetReadyForShipmentAsync(Guid orderId, string userId, CancellationToken ct = default)
     {
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        OperationResult result = await StageSetReadyForShipmentAsync(
+        OperationResult result = await ExecuteReadyForShipmentWithSynchronizationCheckpointAsync(
             dbContext,
             orderId,
             userId,
@@ -224,7 +109,7 @@ public class ShippingOrderCommandService(
             : result;
     }
 
-    internal async Task<OperationResult> StageSetReadyForShipmentAsync(
+    internal async Task<OperationResult> ExecuteReadyForShipmentWithSynchronizationCheckpointAsync(
         ApplicationDbContext dbContext,
         Guid orderId,
         string userId,
@@ -244,14 +129,22 @@ public class ShippingOrderCommandService(
             return OperationError.NotFound($"Расходный ордер '{orderId}' не найден.");
         }
 
-        OperationResult synchronizationResult = await VerifyFreshSynchronizationAsync(
+        OperationResult synchronizationResult = await synchronizationService.PersistReadyForShipmentCheckpointAsync(
             dbContext,
             existingOrder,
-            ShippingSynchronizationTarget.ReadyForShipment,
             ct);
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
+        return await StageSetReadyForShipmentAsync(dbContext, existingOrder, userId, ct);
+    }
+
+    private async Task<OperationResult> StageSetReadyForShipmentAsync(
+        ApplicationDbContext dbContext,
+        ShippingOrder existingOrder,
+        string userId,
+        CancellationToken ct)
+    {
         List<InventoryMovement> draftPickingMovements = await dbContext.InventoryMovements
             .Where(x => x.PostedAtUtc == null
                 && x.RecorderType == RecorderType.ShippingOrder
@@ -296,7 +189,7 @@ public class ShippingOrderCommandService(
             return balanceAndTurnoverResult;
         }
 
-        OperationResult externalItemsUpdateResult = await outboundService.UpdateDocumentItemsAsync(existingOrder, ct);
+        OperationResult externalItemsUpdateResult = await executionSink.UpdateItemsAsync(existingOrder, ct);
 
         if (!externalItemsUpdateResult.IsSuccess)
         {
@@ -304,7 +197,7 @@ public class ShippingOrderCommandService(
             return externalItemsUpdateResult;
         }
 
-        OperationResult externalResult = await outboundService.SetReadyForShipmentAsync(orderId, ct);
+        OperationResult externalResult = await executionSink.SetReadyForShipmentAsync(existingOrder.Id, ct);
 
         if (!externalResult.IsSuccess)
         {
@@ -321,7 +214,7 @@ public class ShippingOrderCommandService(
     public async Task<OperationResult> SetShippedAsync(Guid orderId, string userId, CancellationToken ct = default)
     {
         await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        OperationResult result = await StageSetShippedAsync(
+        OperationResult result = await ExecuteShipmentWithSynchronizationCheckpointAsync(
             dbContext,
             orderId,
             userId,
@@ -332,7 +225,7 @@ public class ShippingOrderCommandService(
             : result;
     }
 
-    internal async Task<OperationResult> StageSetShippedAsync(
+    internal async Task<OperationResult> ExecuteShipmentWithSynchronizationCheckpointAsync(
         ApplicationDbContext dbContext,
         Guid orderId,
         string userId,
@@ -352,14 +245,22 @@ public class ShippingOrderCommandService(
             return OperationError.NotFound($"Расходный ордер '{orderId}' не найден.");
         }
 
-        OperationResult synchronizationResult = await VerifyFreshSynchronizationAsync(
+        OperationResult synchronizationResult = await synchronizationService.PersistShippedCheckpointAsync(
             dbContext,
             existingOrder,
-            ShippingSynchronizationTarget.Shipped,
             ct);
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
+        return await StageSetShippedAsync(dbContext, existingOrder, userId, ct);
+    }
+
+    private async Task<OperationResult> StageSetShippedAsync(
+        ApplicationDbContext dbContext,
+        ShippingOrder existingOrder,
+        string userId,
+        CancellationToken ct)
+    {
         OperationResult locationResult = await ShippingOrderLocationPolicy.RequireShippingLocationAsync(
             dbContext,
             existingOrder,
@@ -395,7 +296,7 @@ public class ShippingOrderCommandService(
             return balanceAndTurnoverResult;
         }
 
-        OperationResult externalResult = await outboundService.SetShippedAsync(orderId, ct);
+        OperationResult externalResult = await executionSink.SetShippedAsync(existingOrder.Id, ct);
 
         if (!externalResult.IsSuccess)
         {
@@ -407,46 +308,6 @@ public class ShippingOrderCommandService(
         // There is no outbox or distributed transaction; target-state calls are repeat-safe
         // so the same command can recover after external success and local save failure.
         return OperationResult.Success();
-    }
-
-    private enum ShippingSynchronizationTarget
-    {
-        ReadyForShipment,
-        Shipped
-    }
-
-    private async Task<OperationResult> VerifyFreshSynchronizationAsync(
-        ApplicationDbContext dbContext,
-        ShippingOrder order,
-        ShippingSynchronizationTarget target,
-        CancellationToken ct)
-    {
-        OperationResult<ShippingOrderImportSnapshot> snapshotResult =
-            await orderSource.GetSnapshotAsync(order.Id, ct);
-        if (!snapshotResult.IsSuccess)
-            return snapshotResult.Error!;
-
-        ShippingOrderImportSnapshot snapshot = snapshotResult.Value!;
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        OrderSynchronizationAssessment sourceAssessment =
-            order.AssessSynchronization(snapshot, now);
-        OrderSynchronizationAssessment targetAssessment = target switch
-        {
-            ShippingSynchronizationTarget.ReadyForShipment =>
-                ShippingOrderSynchronizationComparer.CompareReadyForShipmentTarget(order, snapshot),
-            _ => ShippingOrderSynchronizationComparer.CompareShippedTarget(order, snapshot)
-        };
-        OrderSynchronizationAssessment assessment = sourceAssessment.Level == OrderSynchronizationLevel.Synchronized
-            ? sourceAssessment
-            : targetAssessment.Level == OrderSynchronizationLevel.Synchronized
-                ? targetAssessment
-                : sourceAssessment;
-
-        order.ApplySynchronizationAssessment(assessment, now);
-        OperationResult saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-        return saveResult.IsSuccess
-            ? EnsureSynchronizationAllowsWork(order)
-            : saveResult;
     }
 
     private static OperationResult EnsureSynchronizationAllowsWork(ShippingOrder order) =>

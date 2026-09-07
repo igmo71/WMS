@@ -1,27 +1,27 @@
 using Microsoft.Extensions.Logging;
-using Wms.Application.ShippingOrders;
+using Wms.Application.ReceivingOrders;
 using Wms.Common;
 using Wms.Domain;
 using Document = Wms.Integration.OneS.Models.Document_ПриходныйОрдерНаТовары;
 
 namespace Wms.Integration.OneS.Services;
 
-public class Document_ПриходныйОрдерНаТовары_OutboundService(
+internal sealed class Document_ПриходныйОрдерНаТовары_OutboundService(
     OneCClient oneCClient,
-    ILogger<Document_ПриходныйОрдерНаТовары_OutboundService> logger)
+    ILogger<Document_ПриходныйОрдерНаТовары_OutboundService> logger) : IReceivingOrderExecutionSink
 {
     private record StatusOrderCommand(string Статус);
 
-    internal Task<OperationResult> SetInReceivingAsync(Guid orderId, CancellationToken ct) =>
+    public Task<OperationResult> SetInReceivingAsync(Guid orderId, CancellationToken ct) =>
         SwitchStatusAsync("ВРаботе", orderId, ct);
 
-    internal Task<OperationResult> SetReceivedAsync(Guid orderId, CancellationToken ct) =>
+    public Task<OperationResult> SetReceivedAsync(Guid orderId, CancellationToken ct) =>
         SwitchStatusAsync("Принят", orderId, ct);
 
     private async Task<OperationResult> SwitchStatusAsync(string expectedStatus, Guid orderId, CancellationToken ct)
     {
         using var scope = logger.BeginScope("SwitchStatus {OrderId} {ExpectedStatus}", orderId, expectedStatus);
-        using var activity = AppTracing.StartActivity("Document_ПриходныйОрдерНаТовары.SwitchStatus", nameof(ShippingOrderCommandService));
+        using var activity = AppTracing.StartActivity("Document_ПриходныйОрдерНаТовары.SwitchStatus", nameof(ReceivingOrderCommandService));
 
         var patchUri = Document.PatchUri(orderId.ToString());
 
@@ -45,13 +45,13 @@ public class Document_ПриходныйОрдерНаТовары_OutboundServi
         return await oneCClient.PostValueAsync(postUri, ct);
     }
 
-    internal async Task<OperationResult> UpdateDocumentItemsAsync(
+    public async Task<OperationResult> UpdateItemsAsync(
         Guid orderId,
         IReadOnlyCollection<ReceivingOrderItem> receivingOrderItems,
         CancellationToken ct)
     {
         using var scope = logger.BeginScope("UpdateDocumentItems {OrderId}", orderId);
-        using var activity = AppTracing.StartActivity("Document_ПриходныйОрдерНаТовары.UpdateDocumentItems", nameof(ShippingOrderCommandService));
+        using var activity = AppTracing.StartActivity("Document_ПриходныйОрдерНаТовары.UpdateItems", nameof(ReceivingOrderCommandService));
 
         var patchItems = receivingOrderItems.Select(PatchItem.From).ToList();
         var patchBody = new PatchBody { Товары = patchItems };

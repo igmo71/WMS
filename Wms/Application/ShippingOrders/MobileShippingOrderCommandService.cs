@@ -115,7 +115,7 @@ public sealed class MobileShippingOrderCommandService(
             userId,
             async (dbContext, token) =>
             {
-                var result = await shippingOrderCommandService.StageSetReadyForShipmentAsync(
+                var result = await shippingOrderCommandService.ExecuteReadyForShipmentWithSynchronizationCheckpointAsync(
                     dbContext,
                     orderId,
                     userId,
@@ -137,7 +137,7 @@ public sealed class MobileShippingOrderCommandService(
             userId,
             async (dbContext, token) =>
             {
-                var result = await shippingOrderCommandService.StageSetShippedAsync(
+                var result = await shippingOrderCommandService.ExecuteShipmentWithSynchronizationCheckpointAsync(
                     dbContext,
                     orderId,
                     userId,

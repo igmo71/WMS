@@ -275,12 +275,15 @@ need an operator recovery procedure for external success followed by local
 failure. Shipping completion recognizes an already-applied exact 1C item-table
 target as success; target status and posting calls are deliberately repeatable.
 
-Document notifications and explicit fresh checks use the same receiving or
-shipping synchronization service. A successfully fetched document produces a
-structured synchronization assessment even when business differences exist;
-only transport, malformed-response, missing-local-order, and persistence
-failures are returned as operation errors. Notifications may create a new
-source order, while an explicit check requires the order to exist in WMS.
+Application-owned receiving and shipping synchronization services apply source
+snapshots and produce synchronization assessments. Explicit checks, Web
+acknowledgement, and document-notification imports use those same operations;
+the 1C adapter retains notification delay and identifier parsing. A
+successfully fetched document produces a structured assessment even when
+business differences exist; only transport, malformed-response,
+missing-local-order, and persistence failures are returned as operation errors.
+Notifications may create a new source order, while an explicit check requires
+the order to exist in WMS.
 
 Before warehouse work starts, an admissible initial source document remains
 owned by 1C. Receiving orders without `StartedAtUtc` and shipping orders without
@@ -307,6 +310,10 @@ snapshot before local transitions, inventory posting, or outbound mutation.
 An exact source state or the exact repeat-safe target of the requested command
 may continue; technical verification failure, an unacknowledged decision, or a
 blocking assessment stops the transition and preserves the new compact state.
+These critical commands explicitly persist that synchronization checkpoint
+before staging later effects. A method named `Stage...` remains save-free; the
+named higher-level two-phase operation makes the earlier checkpoint visible to
+both WebApp and receipt-protected Mobile orchestration.
 
 Mobile receiving and shipping queues show the last known synchronization
 level. Opening active receiving, picking, or final shipping performs the fresh

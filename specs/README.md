@@ -25,6 +25,7 @@ establish an otherwise undocumented rule.
 
 | Created | Status | Problem | Path |
 | --- | --- | --- | --- |
+| 2026-09-07 | Frozen reference | Application and 1C boundary | [`2026-09-07-application-onec-boundary/spec.md`](2026-09-07-application-onec-boundary/spec.md) |
 | 2026-09-07 | Frozen reference | Receiving command consistency | [`2026-09-07-receiving-command-consistency/spec.md`](2026-09-07-receiving-command-consistency/spec.md) |
 | 2026-09-07 | Frozen reference | Mobile receipt replay boundary | [`2026-09-07-mobile-receipt-replay-boundary/spec.md`](2026-09-07-mobile-receipt-replay-boundary/spec.md) |
 | 2026-09-07 | Frozen reference | Operational topology integrity | [`2026-09-07-operational-topology-integrity/spec.md`](2026-09-07-operational-topology-integrity/spec.md) |

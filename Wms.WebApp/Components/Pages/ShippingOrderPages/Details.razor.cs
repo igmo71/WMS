@@ -9,7 +9,6 @@ using Wms.Application.Zones;
 using Wms.Common;
 using Wms.Domain;
 using Wms.Domain.Enums;
-using Wms.Integration.OneS.Services;
 
 namespace Wms.WebApp.Components.Pages.ShippingOrderPages;
 
@@ -18,7 +17,7 @@ public partial class Details
     [Parameter] public Guid Id { get; set; }
 
     [Inject] private ShippingOrderQueryService OrderQueryService { get; set; } = null!;
-    [Inject] private Document_РасходныйОрдерНаТовары_SynchronizationService SynchronizationService { get; set; } = null!;
+    [Inject] private ShippingOrderSynchronizationService SynchronizationService { get; set; } = null!;
     [Inject] private ApplicationUserQueryService ApplicationUserQueryService { get; set; } = null!;
     [Inject] private ShippingOrderCommandService OrderCommandService { get; set; } = null!;
     [Inject] private StorageLocationQueryService StorageLocationQueryService { get; set; } = null!;

@@ -8,19 +8,19 @@ using Document = Wms.Integration.OneS.Models.Document_РасходныйОрде
 
 namespace Wms.Integration.OneS.Services;
 
-public class Document_РасходныйОрдерНаТовары_OutboundService(
+internal sealed class Document_РасходныйОрдерНаТовары_OutboundService(
     OneCClient oneCClient,
-    ILogger<Document_РасходныйОрдерНаТовары_OutboundService> logger)
+    ILogger<Document_РасходныйОрдерНаТовары_OutboundService> logger) : IShippingOrderExecutionSink
 {
     private record StatusOrderCommand(string Статус);
 
-    internal Task<OperationResult> SetReadyForPickingAsync(Guid orderId, CancellationToken ct) =>
+    public Task<OperationResult> SetReadyForPickingAsync(Guid orderId, CancellationToken ct) =>
         SwitchStatusAsync("КОтбору", orderId, ct);
 
-    internal Task<OperationResult> SetReadyForShipmentAsync(Guid orderId, CancellationToken ct) =>
+    public Task<OperationResult> SetReadyForShipmentAsync(Guid orderId, CancellationToken ct) =>
         SwitchStatusAsync("КОтгрузке", orderId, ct);
 
-    internal Task<OperationResult> SetShippedAsync(Guid orderId, CancellationToken ct) =>
+    public Task<OperationResult> SetShippedAsync(Guid orderId, CancellationToken ct) =>
         SwitchStatusAsync("Отгружен", orderId, ct);
 
     private async Task<OperationResult> SwitchStatusAsync(string expectedStatus, Guid orderId, CancellationToken ct)
@@ -50,10 +50,10 @@ public class Document_РасходныйОрдерНаТовары_OutboundServi
         return await oneCClient.PostValueAsync(postUri, ct);
     }
 
-    internal async Task<OperationResult> UpdateDocumentItemsAsync(ShippingOrder shippingOrder, CancellationToken ct)
+    public async Task<OperationResult> UpdateItemsAsync(ShippingOrder shippingOrder, CancellationToken ct)
     {
         using var scope = logger.BeginScope("UpdateDocumentItems {OrderId}", shippingOrder.Id);
-        using var activity = AppTracing.StartActivity("Document_РасходныйОрдерНаТовары.UpdateDocumentItems", nameof(ShippingOrderCommandService));
+        using var activity = AppTracing.StartActivity("Document_РасходныйОрдерНаТовары.UpdateItems", nameof(ShippingOrderCommandService));
 
         var freshDocumentResult = await oneCClient.GetValueAsync<RootObject<Document>>(
             Document.GetUri(shippingOrder.Id.ToString()), ct);

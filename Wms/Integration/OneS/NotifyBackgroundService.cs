@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Wms.Application.ReceivingOrders;
+using Wms.Application.ShippingOrders;
 using Wms.Common;
 using Wms.Integration.OneS.Models;
 using Wms.Integration.OneS.Services;
@@ -10,8 +13,11 @@ namespace Wms.Integration.OneS;
 internal class NotifyBackgroundService(
     NotifyChannel notifyChannel,
     IServiceScopeFactory scopeFactory,
+    IOptions<WmsSettings> options,
     ILogger<NotifyBackgroundService> logger) : BackgroundService
 {
+    private readonly WmsSettings _wmsSettings = options.Value;
+
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         await foreach (var notifyRecord in notifyChannel.Reader.ReadAllAsync(ct))
@@ -68,15 +74,54 @@ internal class NotifyBackgroundService(
                 await services.GetRequiredService<Catalog_ФизическиеЛица_Service>()
                     .ImportAsync(notifyRecord.Ref_Key, ct),
             nameof(Document_ПриходныйОрдерНаТовары) =>
-                await services.GetRequiredService<Document_ПриходныйОрдерНаТовары_SynchronizationService>()
-                    .HandleNotificationAsync(notifyRecord.Ref_Key, ct),
+                await ImportReceivingOrderAsync(services, notifyRecord.Ref_Key, ct),
             nameof(Document_РасходныйОрдерНаТовары) =>
-                await services.GetRequiredService<Document_РасходныйОрдерНаТовары_SynchronizationService>()
-                    .HandleNotificationAsync(notifyRecord.Ref_Key, ct),
+                await ImportShippingOrderAsync(services, notifyRecord.Ref_Key, ct),
             nameof(InformationRegister_ШтрихкодыНоменклатуры) =>
                 await services.GetRequiredService<InformationRegister_ШтрихкодыНоменклатуры_Service>()
                     .ImportAsync(notifyRecord.Ref_Key, ct),
             _ => OperationError.Invalid($"Неподдерживаемый тип уведомления 1С: {notifyRecord.Type}.")
         };
+    }
+
+    private async Task<OperationResult> ImportReceivingOrderAsync(
+        IServiceProvider services,
+        string refKey,
+        CancellationToken ct)
+    {
+        OperationResult<Guid> orderIdResult = await ParseDocumentIdAfterDelayAsync(
+            refKey,
+            "приходного",
+            ct);
+        return orderIdResult.IsSuccess
+            ? await services.GetRequiredService<ReceivingOrderSynchronizationService>()
+                .ImportNotificationAsync(orderIdResult.Value, ct)
+            : orderIdResult.Error!;
+    }
+
+    private async Task<OperationResult> ImportShippingOrderAsync(
+        IServiceProvider services,
+        string refKey,
+        CancellationToken ct)
+    {
+        OperationResult<Guid> orderIdResult = await ParseDocumentIdAfterDelayAsync(
+            refKey,
+            "расходного",
+            ct);
+        return orderIdResult.IsSuccess
+            ? await services.GetRequiredService<ShippingOrderSynchronizationService>()
+                .ImportNotificationAsync(orderIdResult.Value, ct)
+            : orderIdResult.Error!;
+    }
+
+    private async Task<OperationResult<Guid>> ParseDocumentIdAfterDelayAsync(
+        string refKey,
+        string orderKind,
+        CancellationToken ct)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(_wmsSettings.ImportDelay), ct);
+        return Guid.TryParse(refKey, out Guid orderId)
+            ? orderId
+            : OperationError.Invalid($"Некорректный идентификатор {orderKind} ордера 1С.");
     }
 }

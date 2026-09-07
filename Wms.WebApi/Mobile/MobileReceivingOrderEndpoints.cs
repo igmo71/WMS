@@ -4,7 +4,7 @@ using Wms.Common;
 using Wms.Contracts.Mobile.V1;
 using Wms.Domain;
 using Wms.Domain.Enums;
-using Wms.Integration.OneS.Services;
+using Wms.Integration.OneS;
 
 namespace Wms.WebApi.Mobile;
 
@@ -70,12 +70,24 @@ internal static class MobileReceivingOrderEndpoints
     private static async Task<IResult> ResolveDocumentAsync(
         MobileResolveReceivingOrderDocumentRequest request,
         MobileReceivingOrderQueryService queryService,
-        Document_ПриходныйОрдерНаТовары_SynchronizationService synchronizationService,
+        ReceivingOrderSynchronizationService synchronizationService,
         CancellationToken ct)
     {
+        if (request.WarehouseId == Guid.Empty)
+        {
+            return MobileEndpointResults.CommandProblem(
+                OperationError.Invalid("Перед сканированием документа необходимо выбрать склад."));
+        }
+
+        OperationResult<Guid> decodeResult = OneSDocumentBarcodeCodec.Decode(request.Barcode);
+        if (!decodeResult.IsSuccess)
+        {
+            return MobileEndpointResults.CommandProblem(decodeResult.Error!);
+        }
+
         var result = await queryService.ResolveDocumentAsync(
             request.WarehouseId,
-            request.Barcode,
+            decodeResult.Value,
             ct);
         if (!result.IsSuccess)
         {
@@ -107,7 +119,7 @@ internal static class MobileReceivingOrderEndpoints
     private static async Task<IResult> GetDetailsAsync(
         Guid orderId,
         MobileReceivingOrderQueryService queryService,
-        Document_ПриходныйОрдерНаТовары_SynchronizationService synchronizationService,
+        ReceivingOrderSynchronizationService synchronizationService,
         CancellationToken ct)
     {
         var result = await queryService.GetDetailsAsync(orderId, ct);

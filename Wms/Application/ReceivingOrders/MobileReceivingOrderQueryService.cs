@@ -4,7 +4,6 @@ using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
 using Wms.Domain.Enums;
-using Wms.Integration.OneS;
 
 namespace Wms.Application.ReceivingOrders;
 
@@ -83,7 +82,7 @@ public sealed class MobileReceivingOrderQueryService(
 
     public async Task<OperationResult<MobileReceivingOrderDetails>> ResolveDocumentAsync(
         Guid warehouseId,
-        string? barcodePayload,
+        Guid orderId,
         CancellationToken ct = default)
     {
         if (warehouseId == Guid.Empty)
@@ -91,13 +90,7 @@ public sealed class MobileReceivingOrderQueryService(
             return OperationError.Invalid("Перед сканированием документа необходимо выбрать склад.");
         }
 
-        var decodeResult = OneSDocumentBarcodeCodec.Decode(barcodePayload);
-        if (!decodeResult.IsSuccess)
-        {
-            return decodeResult.Error!;
-        }
-
-        var detailsResult = await GetDetailsAsync(decodeResult.Value, ct);
+        var detailsResult = await GetDetailsAsync(orderId, ct);
         if (!detailsResult.IsSuccess)
         {
             return detailsResult.Error!;

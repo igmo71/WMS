@@ -58,8 +58,11 @@ Manual 1C synchronization UI
   boundaries do not compose concrete 1C synchronization services.
 - `Integration.OneS` implements those ports and owns OData DTOs, metadata
   names, protocol statuses, notification parsing, and PATCH/POST mechanics.
-  Existing dependencies that point in the opposite direction are accepted
-  follow-up work; do not add a pass-through facade around them.
+  Document notification delay and identifier parsing also remain in this
+  adapter before it invokes the application synchronization operation.
+- A Mobile HTTP endpoint decodes the 1C document barcode before passing its
+  document id to an application query. Application code does not depend on the
+  1C codec merely to resolve an order.
 
 ## Domain model categories
 
@@ -166,6 +169,10 @@ or option objects containing independent rule flags.
   intentionally persists a synchronization checkpoint before later effects,
   name and document that higher-level two-phase operation explicitly rather
   than hiding the checkpoint behind the staging contract.
+- Receiving completion, picking completion, and shipping use such an explicit
+  two-phase operation: persist the fresh synchronization checkpoint first,
+  then stage the local transition, inventory effects, outbound calls, and—on
+  Mobile—the command receipt for the caller's final save.
 - Persistent invariant changes include a migration.
 - Once a migration may have been applied outside the developer's disposable
   local database, keep it immutable: do not edit, rename, or delete it. Fix the

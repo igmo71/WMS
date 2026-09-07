@@ -8,7 +8,6 @@ using Wms.Application.Zones;
 using Wms.Common;
 using Wms.Domain;
 using Wms.Domain.Enums;
-using Wms.Integration.OneS.Services;
 
 namespace Wms.WebApp.Components.Pages.ReceivingOrderPages;
 
@@ -23,7 +22,7 @@ public partial class Details
     [Inject]
     private ReceivingOrderQueryService OrderQueryService { get; set; } = null!;
     [Inject]
-    private Document_ПриходныйОрдерНаТовары_SynchronizationService SynchronizationService { get; set; } = null!;
+    private ReceivingOrderSynchronizationService SynchronizationService { get; set; } = null!;
     [Inject]
     private ApplicationUserQueryService ApplicationUserQueryService { get; set; } = null!;
     [Inject]

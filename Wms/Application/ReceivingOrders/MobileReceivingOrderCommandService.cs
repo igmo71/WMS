@@ -89,7 +89,7 @@ public sealed class MobileReceivingOrderCommandService(
             clientRequestId,
             userId,
             Hash(orderId),
-            (dbContext, token) => receivingOrderCommandService.StageSetReceivedAsync(
+            (dbContext, token) => receivingOrderCommandService.ExecuteCompletionWithSynchronizationCheckpointAsync(
                 dbContext,
                 orderId,
                 userId,
