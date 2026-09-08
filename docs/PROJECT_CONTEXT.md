@@ -174,6 +174,11 @@ operator-decision assessment after a fresh fingerprint check; acknowledgement
 copies source-owned metadata only. Mobile shows the latest assessment but
 cannot acknowledge it.
 
+Mobile receiving, picking, and shipping screens support pull-to-refresh for a
+fresh synchronization check. A rejected completion conflict also refreshes the
+assessment; unresolved or failed verification disables completion. Refresh
+does not acknowledge source changes or replay pending commands.
+
 Starting work rejects a known unresolved assessment. Receiving completion,
 picking completion, and final shipping fetch and persist a fresh checkpoint
 before local effects or outbound mutation. An exact source state, or the exact

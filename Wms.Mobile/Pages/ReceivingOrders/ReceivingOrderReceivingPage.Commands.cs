@@ -216,6 +216,8 @@ public partial class ReceivingOrderReceivingPage
     private async void OnCompleteReceivingClicked(object? sender, EventArgs e)
     {
         if (_busy
+            || !IsActiveReceiving
+            || !IsSynchronizationResolved
             || _mode != ReceivingPageMode.Scanning
             || (HasPendingCommand && !_process.IsCompletionPending))
         {
@@ -266,6 +268,8 @@ public partial class ReceivingOrderReceivingPage
         {
             CompleteReceivingButton.Text = "Завершить приёмку";
             ErrorLabel.Text = exception.Message;
+            if (exception.StatusCode == System.Net.HttpStatusCode.Conflict)
+                await RefreshOrderAsync();
         }
         catch (HttpRequestException)
         {

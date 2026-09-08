@@ -96,7 +96,7 @@ public partial class ShippingOrderShippingPage : ContentPage
 
     private async void OnConfirmShippingClicked(object? sender, EventArgs e)
     {
-        if (_busy || Details.Order.Status != MobileShippingOrderStatus.ReadyForShipment)
+        if (_busy || !IsSynchronizationResolved || Details.Order.Status != MobileShippingOrderStatus.ReadyForShipment)
         {
             return;
         }
@@ -126,6 +126,8 @@ public partial class ShippingOrderShippingPage : ContentPage
             _pendingShippingRequestId = null;
             ConfirmShippingButton.Text = "Отгрузить";
             ErrorLabel.Text = exception.Message;
+            if (exception.StatusCode == System.Net.HttpStatusCode.Conflict)
+                await RefreshOrderAsync();
         }
         catch (HttpRequestException)
         {
@@ -190,9 +192,11 @@ public partial class ShippingOrderShippingPage : ContentPage
     {
         StartShippingButton.IsVisible = _mode == ShippingPageMode.Ready;
         StartShippingButton.IsEnabled = !_busy
+            && Details.Order.Status == MobileShippingOrderStatus.ReadyForShipment
             && _pendingShippingRequestId is null
             && IsSynchronizationResolved;
-        ConfirmShippingButton.IsEnabled = !_busy && IsSynchronizationResolved;
+        ConfirmShippingButton.IsEnabled = !_busy && IsSynchronizationResolved
+            && Details.Order.Status == MobileShippingOrderStatus.ReadyForShipment;
         CancelShippingButton.IsEnabled = !_busy && _pendingShippingRequestId is null;
     }
 

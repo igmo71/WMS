@@ -573,6 +573,8 @@ public partial class ShippingOrderPickingPage : ContentPage
     private async void OnConfirmCompletionClicked(object? sender, EventArgs e)
     {
         if (_busy
+            || !IsEditable
+            || !IsSynchronizationResolved
             || _mode != PickingPageMode.Completion
             || (HasPickingDeviation && !_deviationConfirmed)
             || (HasPendingCommand && _pendingCompletionRequestId is null))
@@ -605,6 +607,8 @@ public partial class ShippingOrderPickingPage : ContentPage
             _pendingCompletionRequestId = null;
             ConfirmCompletionButton.Text = "Завершить";
             ErrorLabel.Text = exception.Message;
+            if (exception.StatusCode == System.Net.HttpStatusCode.Conflict)
+                await RefreshOrderAsync();
         }
         catch (HttpRequestException)
         {
@@ -781,7 +785,7 @@ public partial class ShippingOrderPickingPage : ContentPage
         ConfirmDeviationButton.IsVisible = HasPickingDeviation && !_deviationConfirmed;
         ConfirmDeviationButton.IsEnabled = !_busy && _pendingCompletionRequestId is null;
         DeviationConfirmedLabel.IsVisible = HasPickingDeviation && _deviationConfirmed;
-        ConfirmCompletionButton.IsEnabled = !_busy
+        ConfirmCompletionButton.IsEnabled = !_busy && IsEditable
             && IsSynchronizationResolved
             && (!HasPickingDeviation || _deviationConfirmed);
         CancelCompletionButton.IsEnabled = !_busy && _pendingCompletionRequestId is null;

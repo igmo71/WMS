@@ -6,6 +6,7 @@
     xmlns:contracts="clr-namespace:Wms.Contracts.Mobile.V1;assembly=Wms.Contracts"
     Title="Отгрузка">
 
+    <RefreshView x:Name="OrderRefreshView" Refreshing="OnOrderRefreshing">
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
             <Label x:Name="NumberLabel" FontAttributes="Bold" FontSize="26" />
@@ -91,4 +92,5 @@
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
+    </RefreshView>
 </ContentPage>

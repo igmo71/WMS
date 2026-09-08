@@ -7,6 +7,7 @@
     xmlns:local="clr-namespace:Wms.Mobile"
     Title="Приёмка">
 
+    <RefreshView x:Name="OrderRefreshView" Refreshing="OnOrderRefreshing">
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
             <Label x:Name="NumberLabel" FontAttributes="Bold" FontSize="26" />
@@ -267,4 +268,5 @@
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
+    </RefreshView>
 </ContentPage>
