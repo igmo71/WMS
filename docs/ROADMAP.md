@@ -1,139 +1,53 @@
 # WMS roadmap
 
-This roadmap contains unfinished work only. Completed behavior belongs in
-[`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md), and detailed accepted decisions
-belong in `specs/`.
-
-Only **Next delivery** is recommended immediate work. Later sections are ordered
-by dependency, not by a promised release date.
-
-## Delivery sequence
-
-1. **Accepted architecture follow-up and pilot preparation:** deliver the
-   focused correctness batches first while warehouse users continue evaluating
-   staging; do not delay the pilot for optional broad refactoring.
-2. **Pilot prerequisites:** security boundaries, inventory confidence, and an
-   operator recovery procedure for partial 1C failures.
-3. **Pilot rehearsal:** one documented end-to-end run after its prerequisites
-   exist.
-4. **Product increments:** capacity and optional processes whose inputs and
-   business need are confirmed.
-5. **Production maintenance:** dependency, diagnostics, and administrative
-   concurrency work that does not block staging.
+This file contains unfinished accepted work. Current behavior belongs in
+[`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md); engineering conventions belong in
+[`ARCHITECTURE.md`](ARCHITECTURE.md); detailed decision history belongs in
+`specs/`. Only **Next delivery** is recommended immediate work.
 
 ## Next delivery
 
-Define the verification boundary for 1C webhook and import callers before
-implementing it. Inventory the exposed 1C endpoints and current hosting
-configuration, establish which credentials or request-signing mechanisms the
-deployed 1C installation can actually provide, and specify credential rotation,
-failure behavior, and trusted-network assumptions. Do not select or implement
-an authentication mechanism from an unverified assumption about 1C support.
-
-## Accepted architecture follow-up
-
-Keep Mobile shipping rollback Web-only unless pilot evidence creates a Mobile
-requirement. Leave receiving/shipping aggregate reconciliation extraction
-deferred until a concrete change needs it. The accepted evidence and detailed
-batch boundaries remain in
-[`../specs/2026-09-04-architecture-process-boundary-review/change-plan.md`](../specs/2026-09-04-architecture-process-boundary-review/change-plan.md).
+Review the compacted current documentation and confirm that it retains the
+business and operational facts needed for onboarding and staging. After
+acceptance, operator recovery for partial WMS-to-1C failures is the next pilot
+prerequisite.
 
 ## Pilot prerequisites
 
-### Security and device access
+### 1C access
 
-- Authenticate or otherwise verify 1C webhook and import callers before their
-  endpoints leave a trusted network.
-- Decide when 1C notification URLs can move from the current trusted-network
-  HTTP endpoint to HTTPS and whether 1C will trust the staging CA.
-- Define session lifetime, refresh, and operational revocation for a lost or
-  retired device.
-- Define managed staging-CA distribution and renewal before the device fleet
-  grows beyond manual installation.
-- Keep fine-grained operation permissions and per-warehouse assignments
-  deferred until the pilot demonstrates a concrete need.
+Authentication of 1C callers is deferred. Until it is implemented, unverified
+1C endpoints must remain inside the trusted network.
 
-### Inventory and authorization confidence
+### Operational confidence
 
-- Manually validate the implemented WebApp workflows after the completed
-  domain, authorization, topology, and catalog refactoring.
-- Add focused integration tests for receiving, putaway, picking, shipping,
-  inventory count, and transfer posting: balance deltas, turnovers, invalid
-  transitions, folder rejection, and insufficient balance.
-- Add authorization-boundary tests for web roles and authenticated Mobile V1.
+- Manually validate WebApp and Mobile flows against a representative database:
+  receiving, putaway, picking, shipping, count, and both transfer routes.
+- Confirm backup/restore and migration application on the staging topology.
+- Resolve the operator-recovery procedure described below.
 
-### Operator recovery for partial 1C failures
+### Operator recovery
 
-- Define what an operator does when a WMS-to-1C PATCH or post succeeds but a
-  later external or local save step fails.
-- Record the evidence needed to distinguish safe repeat, already-applied
-  success, and manual escalation.
-- Exercise the procedure under representative staging failures.
+- Map each multi-step WMS-to-1C transition and its observable checkpoints.
+- Distinguish safe retry, already-applied success, and manual escalation.
+- Specify the evidence and operator action for each outcome.
+- Exercise representative failures on staging without changing integration
+  semantics.
 
 ## Pilot rehearsal
 
-Run one documented end-to-end rehearsal only after the staging baseline and
-pilot prerequisites are complete. It must cover backup and restore, migration,
-authentication, the four warehouse processes, 1C exchange, an interrupted
-command, and the operator recovery procedure.
-
-## Further 1C resilience
-
-- Define notification delivery semantics. The current in-memory channel can
-  lose queued notifications on restart and has no retry queue.
-- Decide whether persistent retry or an outbox is justified from evidence
-  gathered during recovery-procedure exercises.
-
-## Product increments
-
-### Source-data fidelity
-
-- Before supporting packaging, capture real line and catalog examples and
-  define the relationship between `Количество`, `КоличествоУпаковок`, and the
-  packaging coefficient.
-- Confirm characteristic identity from real catalog, document-line, and
-  barcode-register examples before changing the SKU or inventory key.
-
-### Capacity
-
-- Display occupied and free location weight and volume.
-- Show incomplete capacity separately from numeric zero.
-- Block known excesses during putaway and direct movement after the
-  missing-data policy and operational exceptions are accepted.
-
-### Optional operator processes
-
-- Define the operator workflow before implementing manual batch import of
-  receiving and shipping documents.
-- Add recounts, reservations, inventory tasks, or assignment queues only after
-  their business rules and pilot need are agreed.
-- Finalize label geometry after printer and label constraints are available.
-- Revisit badge login only after a safe identity and revocation decision.
-- Treat offline commands, mass label printing, fleet management, and broader
-  device certification as separate epics.
-
-### Mobile operator notifications
-
-- Define which warehouse events require an immediate notification and which
-  operator or role receives each event.
-- Add server push delivery, device-token lifecycle, notification privacy, and
-  deep links into the corresponding Mobile order or operation only after the
-  operational event model and recipient rules are stable.
+After the prerequisites, run one documented end-to-end rehearsal covering
+backup and restore, migration, authentication, all four Mobile workflows, 1C
+exchange, an interrupted command, and operator recovery.
 
 ## Production maintenance
 
-- Disable sensitive EF data logging and detailed errors outside approved
-  non-production environments before production rollout.
-- Update or replace the transitive vulnerable `Microsoft.OpenApi 2.0.0`
-  dependency reported by `NU1903` before production rollout.
-- Review .NET SDK and package versions before production rollout.
-- Review non-atomic multi-step Identity role updates and concurrent protection
-  of the last active administrator before relying on them under multiple
-  administrators.
-
-## Inputs needed for later work
-
-- a safe copy or representative snapshot of an existing database;
-- printer model, label size, and print-path constraints;
-- real 1C packaging, characteristic, and shipping-flag examples;
-- a business decision on badge login and any new warehouse process.
+- Upgrade the legacy SQL Server and then remove the weakened
+  `openssl-legacy.cnf` compatibility profile from application containers.
+- Disable sensitive EF logging and detailed errors outside approved
+  non-production environments.
+- Update or replace the vulnerable `Microsoft.OpenApi 2.0.0` dependency reported
+  by `NU1903`.
+- Make multi-step Identity role updates atomic and protect the last active
+  administrator under concurrent administration before relying on that
+  invariant in production.
