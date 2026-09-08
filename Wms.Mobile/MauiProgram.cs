@@ -11,8 +11,14 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
 
-        Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("ExplicitKeyboardInput", (_, view) =>
+        Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("ExplicitKeyboardInput", (handler, view) =>
         {
+#if ANDROID
+            // Native focus restoration must not open the keyboard.
+            handler.PlatformView.ShowSoftInputOnFocus = false;
+            handler.PlatformView.Click -= OnAndroidEntryClicked;
+            handler.PlatformView.Click += OnAndroidEntryClicked;
+#endif
             if (view is Entry entry)
             {
                 entry.Completed -= OnEntryCompleted;
@@ -85,6 +91,21 @@ public static class MauiProgram
 
         return builder.Build();
     }
+
+#if ANDROID
+    private static void OnAndroidEntryClicked(object? sender, EventArgs e)
+    {
+        if (sender is not Android.Widget.EditText { Enabled: true } field
+            || !field.RequestFocus())
+            return;
+
+        if (field.Context?.GetSystemService(Android.Content.Context.InputMethodService)
+            is Android.Views.InputMethods.InputMethodManager keyboard)
+        {
+            keyboard.ShowSoftInput(field, Android.Views.InputMethods.ShowFlags.Implicit);
+        }
+    }
+#endif
 
     private static async void OnEntryCompleted(object? sender, EventArgs e)
     {

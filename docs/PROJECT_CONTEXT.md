@@ -219,6 +219,8 @@ Mobile text fields open the keyboard only on an explicit tap. Scanning,
 opening search, and entering a quantity step never focus an input
 automatically. Completing input or tapping outside the field (including
 confirm/cancel actions) dismisses the keyboard.
+Android fields suppress automatic keyboard display on native focus changes;
+an explicit field click requests the keyboard separately.
 
 Mobile clients and V1 contracts are grouped by business feature over one
 authenticated transport. A feature-specific process may own a multi-call
