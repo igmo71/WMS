@@ -1,11 +1,10 @@
 # Documentation revision
 
-Status: active.
+Status: frozen.
 
-Implementation is ready for review. Redundant deployment notes, historical API
-notes, unaccepted product ideas, and defensive lists of unused patterns were
-removed. The staging configuration was reconciled with the repository. Frozen
-specifications were not changed.
+Accepted on 2026-09-08. Redundant deployment notes, historical API notes,
+unaccepted product ideas, and defensive lists of unused patterns were removed.
+The staging configuration was reconciled with the repository.
 
 ## Outcome
 

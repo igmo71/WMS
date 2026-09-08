@@ -6,7 +6,7 @@ specifications unless a current task explicitly needs their rationale.
 
 ## Active
 
-[`2026-09-08-documentation-revision/spec.md`](2026-09-08-documentation-revision/spec.md)
+None.
 
 ## Lifecycle
 

@@ -7,10 +7,8 @@ This file contains unfinished accepted work. Current behavior belongs in
 
 ## Next delivery
 
-Review the compacted current documentation and confirm that it retains the
-business and operational facts needed for onboarding and staging. After
-acceptance, operator recovery for partial WMS-to-1C failures is the next pilot
-prerequisite.
+Define and rehearse operator recovery for partial WMS-to-1C failures as
+described below.
 
 ## Pilot prerequisites
 
