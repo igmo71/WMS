@@ -279,7 +279,6 @@ public partial class ShippingOrderPickingMovementPage : ContentPage
                 availability.AvailableQuantity);
             QuantityEntry.Text = initialQuantity.ToString("0.###", CultureInfo.InvariantCulture);
             SetMode(MovementPageMode.Quantity);
-            Dispatcher.Dispatch(() => QuantityEntry.Focus());
         }
         catch (MobileApiException exception)
         {

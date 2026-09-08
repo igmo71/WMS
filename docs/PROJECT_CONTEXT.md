@@ -154,6 +154,10 @@ the operation screen for recovery.
 Mobile transit transfers expose pick-to-transit and put-from-transit actions;
 direct movement is offered only for transfers without a transit location.
 Like WebApp, Mobile disables completion while the transit location has stock.
+Before posting, Mobile can clear a selected transfer SKU and quantity and
+return to scanning or search without losing the source location or transit
+cart. Selection cannot be changed while posting or awaiting a repeat-safe
+retry. A SKU with no available source stock does not advance to quantity entry.
 
 Employee-performance reporting attributes receiving to `CompletedBy` and
 picking to `ReadyForShipmentBy`; picking duration ends at ready-for-shipment.
@@ -210,6 +214,11 @@ barcodes accept and normalize leading zeroes.
 
 The API address is packaged per build configuration and is not editable by the
 operator.
+
+Mobile text fields open the keyboard only on an explicit tap. Scanning,
+opening search, and entering a quantity step never focus an input
+automatically. Completing input or tapping outside the field (including
+confirm/cancel actions) dismisses the keyboard.
 
 Mobile clients and V1 contracts are grouped by business feature over one
 authenticated transport. A feature-specific process may own a multi-call

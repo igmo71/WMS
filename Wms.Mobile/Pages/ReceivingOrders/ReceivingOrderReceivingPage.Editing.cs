@@ -17,7 +17,6 @@ public partial class ReceivingOrderReceivingPage
 
         SetMode(ReceivingPageMode.Searching);
         CameraScannerView.Stop();
-        Dispatcher.Dispatch(() => LineSearchEntry.Focus());
     }
 
     private async void OnCancelLineSearchTapped(object? sender, TappedEventArgs e)

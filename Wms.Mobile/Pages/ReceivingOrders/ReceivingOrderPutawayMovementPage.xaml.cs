@@ -218,7 +218,6 @@ public partial class ReceivingOrderPutawayMovementPage : ContentPage
                 "0.###",
                 CultureInfo.InvariantCulture);
             SetMode(MovementPageMode.Quantity);
-            Dispatcher.Dispatch(() => QuantityEntry.Focus());
         }
         catch (MobileApiException exception)
         {
@@ -296,7 +295,6 @@ public partial class ReceivingOrderPutawayMovementPage : ContentPage
         }
 
         SetMode(MovementPageMode.Quantity);
-        Dispatcher.Dispatch(() => QuantityEntry.Focus());
     }
 
     private async void OnConfirmMovementClicked(object? sender, EventArgs e)

@@ -11,6 +11,15 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
 
+        Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("ExplicitKeyboardInput", (_, view) =>
+        {
+            if (view is Entry entry)
+            {
+                entry.Completed -= OnEntryCompleted;
+                entry.Completed += OnEntryCompleted;
+            }
+        });
+
         builder
             .UseMauiApp<App>()
             .UseBarcodeScanning()
@@ -75,5 +84,14 @@ public static class MauiProgram
 #endif
 
         return builder.Build();
+    }
+
+    private static async void OnEntryCompleted(object? sender, EventArgs e)
+    {
+        if (sender is Entry entry)
+        {
+            await entry.HideSoftInputAsync(CancellationToken.None);
+            entry.Unfocus();
+        }
     }
 }

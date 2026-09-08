@@ -356,7 +356,6 @@ public partial class ShippingOrderPickingPage : ContentPage
 
         SetMode(PickingPageMode.Searching);
         CameraScannerView.Stop();
-        Dispatcher.Dispatch(() => LineSearchEntry.Focus());
     }
 
     private async void OnCancelLineSearchTapped(object? sender, TappedEventArgs e)

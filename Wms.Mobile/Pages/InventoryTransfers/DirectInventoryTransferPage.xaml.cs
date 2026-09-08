@@ -21,6 +21,7 @@ public partial class DirectInventoryTransferPage : ContentPage
     private CancellationTokenSource? _skuSearchCancellation;
     private bool _scannerSubscribed;
     private bool _resolving;
+    private bool _busy;
 
     public DirectInventoryTransferPage(
         MobileInventoryTransferClient transferClient,
@@ -139,7 +140,7 @@ public partial class DirectInventoryTransferPage : ContentPage
                     _transfer.Id,
                     _sourceLocation.Id,
                     barcode);
-                ApplySku(sku, focusQuantity: true);
+                ApplySku(sku);
             }
             else
             {
@@ -193,7 +194,6 @@ public partial class DirectInventoryTransferPage : ContentPage
         CameraScannerView.Stop();
         InstructionLabel.Text = "Введите наименование, код или штрихкод.";
         SkuSearchStatusLabel.Text = "Введите не менее двух символов.";
-        Dispatcher.Dispatch(() => SkuSearchEntry.Focus());
     }
 
     private async void OnCancelSkuSearchTapped(object? sender, TappedEventArgs e)
@@ -331,12 +331,17 @@ public partial class DirectInventoryTransferPage : ContentPage
             result.Code,
             result.Name,
             result.UnitOfMeasure,
-            result.AvailableQuantity),
-            focusQuantity: false);
+            result.AvailableQuantity));
     }
 
-    private void ApplySku(MobileDirectTransferSkuResponse sku, bool focusQuantity)
+    private void ApplySku(MobileDirectTransferSkuResponse sku)
     {
+        if (sku.AvailableQuantity <= 0)
+        {
+            ErrorLabel.Text = "В исходной ячейке этого товара нет. Отсканируйте или выберите другой товар.";
+            return;
+        }
+
         _sku = sku;
         CloseSkuSearch(showPrompt: false);
 
@@ -350,10 +355,30 @@ public partial class DirectInventoryTransferPage : ContentPage
         QuantityPanel.IsVisible = true;
         StepLabel.Text = "Количество";
         InstructionLabel.Text = "Введите количество перемещения.";
-        if (focusQuantity)
-        {
-            Dispatcher.Dispatch(() => QuantityEntry.Focus());
-        }
+    }
+
+    private async void OnChangeSkuClicked(object? sender, EventArgs e)
+    {
+        if (_busy || _resolving || _pendingMoveRequestId is not null || _confirmedMovement is not null)
+            return;
+
+        _sku = null;
+        _quantity = null;
+        _destinationLocation = null;
+        QuantityEntry.Unfocus();
+        QuantityEntry.Text = string.Empty;
+        QuantityErrorLabel.Text = string.Empty;
+        ErrorLabel.Text = string.Empty;
+        SkuCard.IsVisible = false;
+        QuantityPanel.IsVisible = false;
+        SelectedQuantityLabel.IsVisible = false;
+        DestinationCard.IsVisible = false;
+        ConfirmButton.IsVisible = false;
+        ConfirmButton.Text = "Переместить";
+        StepLabel.Text = "Товар";
+        CloseSkuSearch(showPrompt: true);
+        SetBusy(false);
+        await UpdateCameraAsync();
     }
 
     private void CloseSkuSearch(bool showPrompt)
@@ -382,6 +407,9 @@ public partial class DirectInventoryTransferPage : ContentPage
 
     private void SetBusy(bool isBusy)
     {
+        _busy = isBusy;
+        ChangeSkuButton.IsEnabled = !isBusy && _pendingMoveRequestId is null
+            && _confirmedMovement is null;
         ProgressIndicator.IsVisible = isBusy;
         ProgressIndicator.IsRunning = isBusy;
         AcceptQuantityButton.IsEnabled = !isBusy && _quantity is null;

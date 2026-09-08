@@ -140,7 +140,6 @@ public partial class InventoryCountDetailsPage : ContentPage
         CameraScannerView.Stop();
         StepLabel.Text = "Ручной выбор товара";
         InstructionLabel.Text = "Введите наименование, код или штрихкод.";
-        Dispatcher.Dispatch(() => SkuSearchEntry.Focus());
     }
 
     private async void OnCancelSkuSearchTapped(object? sender, TappedEventArgs e)

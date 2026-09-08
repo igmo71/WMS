@@ -64,7 +64,7 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
             ShowTransitSkuChoices(transitBalances);
             if (selectedSku is not null)
             {
-                ApplySku(ToSku(selectedSku), focusQuantity: false);
+                ApplySku(ToSku(selectedSku));
             }
         }
     }
@@ -172,7 +172,7 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
                     return;
                 }
 
-                ApplySku(sku, focusQuantity: true);
+                ApplySku(sku);
             }
             else if (_mode == TransitInventoryTransferMovementMode.Put
                 && _storageLocation is null)
@@ -239,7 +239,7 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
 
             var card = new Border { Padding = 12, Content = layout };
             var tap = new TapGestureRecognizer();
-            tap.Tapped += (_, _) => ApplySku(ToSku(balance), focusQuantity: false);
+            tap.Tapped += (_, _) => ApplySku(ToSku(balance));
             card.GestureRecognizers.Add(tap);
             TransitSkuChoices.Children.Add(card);
         }
@@ -255,10 +255,16 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
         balance.UnitOfMeasure,
         balance.Quantity);
 
-    private void ApplySku(MobileDirectTransferSkuResponse sku, bool focusQuantity)
+    private void ApplySku(MobileDirectTransferSkuResponse sku)
     {
         if (_sku is not null)
         {
+            return;
+        }
+
+        if (sku.AvailableQuantity <= 0)
+        {
+            ErrorLabel.Text = "В исходной ячейке этого товара нет. Отсканируйте или выберите другой товар.";
             return;
         }
 
@@ -276,10 +282,6 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
         QuantityPanel.IsVisible = true;
         StepLabel.Text = "Количество";
         InstructionLabel.Text = "Введите количество перемещения.";
-        if (focusQuantity)
-        {
-            Dispatcher.Dispatch(() => QuantityEntry.Focus());
-        }
     }
 
     private async void OnAcceptQuantityClicked(object? sender, EventArgs e)
@@ -401,7 +403,6 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
         CameraScannerView.Stop();
         InstructionLabel.Text = "Введите наименование, код или штрихкод.";
         SkuSearchStatusLabel.Text = "Введите не менее двух символов.";
-        Dispatcher.Dispatch(() => SkuSearchEntry.Focus());
     }
 
     private async void OnCancelSkuSearchTapped(object? sender, TappedEventArgs e)
@@ -536,8 +537,32 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
             result.Code,
             result.Name,
             result.UnitOfMeasure,
-            result.AvailableQuantity),
-            focusQuantity: false);
+            result.AvailableQuantity));
+    }
+
+    private async void OnChangeSkuClicked(object? sender, EventArgs e)
+    {
+        if (_busy || _pendingRequestId is not null)
+            return;
+
+        _sku = null;
+        _quantity = null;
+        if (_mode == TransitInventoryTransferMovementMode.Put)
+        {
+            _storageLocation = null;
+            StorageLocationCard.IsVisible = false;
+        }
+        QuantityEntry.Unfocus();
+        QuantityEntry.Text = string.Empty;
+        QuantityErrorLabel.Text = string.Empty;
+        ErrorLabel.Text = string.Empty;
+        SkuCard.IsVisible = false;
+        QuantityPanel.IsVisible = false;
+        SelectedQuantityLabel.IsVisible = false;
+        ConfirmButton.IsVisible = false;
+        CloseSkuSearch(showPrompt: true);
+        SetBusy(false);
+        await UpdateCameraAsync();
     }
 
     private void CloseSkuSearch(bool showPrompt)
@@ -568,6 +593,7 @@ public partial class TransitInventoryTransferMovementPage : ContentPage
     private void SetBusy(bool isBusy)
     {
         _busy = isBusy;
+        ChangeSkuButton.IsEnabled = !isBusy && _pendingRequestId is null;
         ProgressIndicator.IsVisible = isBusy;
         ProgressIndicator.IsRunning = isBusy;
         AcceptQuantityButton.IsEnabled = !isBusy && _quantity is null;

@@ -153,6 +153,11 @@
                         x:Name="SelectedQuantityLabel"
                         FontSize="18"
                         IsVisible="False" />
+                    <Button
+                        x:Name="ChangeSkuButton"
+                        Text="Сменить товар"
+                        Clicked="OnChangeSkuClicked"
+                        Loaded="OnConfirmButtonLoaded" />
                 </VerticalStackLayout>
             </Border>
 
