@@ -27,7 +27,7 @@
                 x:Name="NewDirectTransferButton"
                 Clicked="OnCreateDirectClicked"
                 HeightRequest="56"
-                Text="+ Напрямую" />
+                Text="Напрямую" />
             <Button
                 x:Name="TransitButton"
                 Grid.Column="1"

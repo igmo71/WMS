@@ -185,7 +185,7 @@ public partial class InventoryTransferPage : ContentPage
     {
         _pendingCreateRequestId = null;
         _pendingCreateWarehouseId = null;
-        NewDirectTransferButton.Text = "+ Напрямую";
+        NewDirectTransferButton.Text = "Напрямую";
     }
 
     private async void OnTransferSelected(object? sender, SelectionChangedEventArgs e)

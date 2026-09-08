@@ -37,7 +37,7 @@
                     Clicked="OnAddMovementClicked"
                     HeightRequest="56"
                     Loaded="OnActionButtonLoaded"
-                    Text="+ Переместить" />
+                    Text="Переместить" />
                 <Button
                     x:Name="PutFromTransitButton"
                     Grid.Column="1"
@@ -46,14 +46,6 @@
                     IsVisible="False"
                     Loaded="OnActionButtonLoaded"
                     Text="Из транзита" />
-                <Button
-                    x:Name="DirectMovementButton"
-                    Grid.Row="1"
-                    Clicked="OnDirectMovementClicked"
-                    HeightRequest="56"
-                    IsVisible="False"
-                    Loaded="OnActionButtonLoaded"
-                    Text="Напрямую" />
                 <Button
                     x:Name="CompleteTransferButton"
                     Grid.Row="1"

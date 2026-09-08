@@ -151,6 +151,10 @@ before completion. Posted movements and completed transfers are immutable; an
 unused draft may be deleted. Rejected or uncertain Mobile commands remain on
 the operation screen for recovery.
 
+Mobile transit transfers expose pick-to-transit and put-from-transit actions;
+direct movement is offered only for transfers without a transit location.
+Like WebApp, Mobile disables completion while the transit location has stock.
+
 Employee-performance reporting attributes receiving to `CompletedBy` and
 picking to `ReadyForShipmentBy`; picking duration ends at ready-for-shipment.
 Weight totals use current SKU data and identify incomplete results.

@@ -16,6 +16,14 @@ public partial class InventoryTransferDetailsPage : ContentPage
     private bool _busy;
     private bool _detailsLoaded;
 
+    private bool CanMove => !_busy && _detailsLoaded
+        && _pendingCompleteRequestId is null
+        && _transfer.Status != MobileInventoryTransferStatus.Completed;
+
+    private bool CanComplete => !_busy && _detailsLoaded
+        && _transfer.Status == MobileInventoryTransferStatus.InProgress
+        && _transitBalances.Count == 0;
+
     public InventoryTransferDetailsPage(
         MobileInventoryTransferClient transferClient,
         MobileReferenceDataClient referenceDataClient,
@@ -39,6 +47,9 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
     private async Task LoadAsync()
     {
+        if (_busy)
+            return;
+
         _detailsLoaded = false;
         SetBusy(true);
         ErrorLabel.Text = string.Empty;
@@ -97,12 +108,9 @@ public partial class InventoryTransferDetailsPage : ContentPage
     private async void OnPutFromTransitClicked(object? sender, EventArgs e) =>
         await OpenTransitMovementAsync(TransitInventoryTransferMovementMode.Put);
 
-    private async void OnDirectMovementClicked(object? sender, EventArgs e) =>
-        await OpenDirectMovementAsync();
-
     private async Task OpenDirectMovementAsync()
     {
-        if (_busy || _transfer.Status == MobileInventoryTransferStatus.Completed)
+        if (!CanMove || _transfer.TransitStorageLocation is not null)
         {
             return;
         }
@@ -120,9 +128,9 @@ public partial class InventoryTransferDetailsPage : ContentPage
         TransitInventoryTransferMovementMode mode,
         MobileInventoryTransferSkuBalanceResponse? selectedSku = null)
     {
-        if (_busy
-            || _transfer.Status == MobileInventoryTransferStatus.Completed
-            || _transfer.TransitStorageLocation is null)
+        if (!CanMove
+            || _transfer.TransitStorageLocation is null
+            || (mode == TransitInventoryTransferMovementMode.Put && _transitBalances.Count == 0))
         {
             return;
         }
@@ -156,7 +164,7 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
     private async void OnCompleteTransferClicked(object? sender, EventArgs e)
     {
-        if (_busy || _transfer.Status != MobileInventoryTransferStatus.InProgress)
+        if (!CanComplete)
         {
             return;
         }
@@ -220,15 +228,9 @@ public partial class InventoryTransferDetailsPage : ContentPage
 
     private void SetAvailableActions()
     {
-        var canMove = !_busy
-            && _detailsLoaded
-            && _transfer.Status != MobileInventoryTransferStatus.Completed;
-        AddMovementButton.IsEnabled = canMove;
-        PutFromTransitButton.IsEnabled = canMove && _transitBalances.Count > 0;
-        DirectMovementButton.IsEnabled = canMove;
-        CompleteTransferButton.IsEnabled = !_busy
-            && _detailsLoaded
-            && _transfer.Status == MobileInventoryTransferStatus.InProgress;
+        AddMovementButton.IsEnabled = CanMove;
+        PutFromTransitButton.IsEnabled = CanMove && _transitBalances.Count > 0;
+        CompleteTransferButton.IsEnabled = CanComplete;
     }
 
     private void ShowTransferHeader()
@@ -240,9 +242,10 @@ public partial class InventoryTransferDetailsPage : ContentPage
         TransitLocationCard.IsVisible = hasTransit;
         TransitContentsSection.IsVisible = hasTransit;
         PutFromTransitButton.IsVisible = hasTransit;
-        DirectMovementButton.IsVisible = hasTransit;
-        AddMovementButton.Text = hasTransit ? "В транзит" : "+ Переместить";
+        AddMovementButton.Text = hasTransit ? "В транзит" : "Переместить";
         Grid.SetRow(CompleteTransferButton, hasTransit ? 1 : 0);
+        Grid.SetColumn(CompleteTransferButton, hasTransit ? 0 : 1);
+        Grid.SetColumnSpan(CompleteTransferButton, hasTransit ? 2 : 1);
 
         if (_transfer.TransitStorageLocation is { } transitLocation)
         {
