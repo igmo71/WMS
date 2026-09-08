@@ -45,6 +45,13 @@ rejection (`400` or `401`), or an authenticated API `401`, clears the session.
 
 ## Storage and inventory
 
+Database maintenance scripts run with WebApp, WebApi, and integration workers
+stopped. `scripts/clear-wms-operational-data.sql` clears warehouse documents,
+inventory, mobile command receipts, and inventory-count locks while preserving
+Identity, catalogs, warehouse topology, and manual locks.
+`scripts/clear-database-except-identity.sql` also clears catalogs, topology, and
+all locks. Both preserve EF migration history and execute in a transaction.
+
 A warehouse contains storage, transit, receiving, and shipping zones. Locations
 form an arbitrary-depth tree within one active warehouse zone.
 
@@ -179,6 +186,10 @@ WMS-to-1C multi-step transitions are not atomic across both systems; pilot
 operation therefore requires the recovery procedure tracked in the roadmap.
 Shipping completion treats an already-applied exact 1C item-table target as
 success, and its target status and posting calls are repeatable.
+
+Receiving line comments are WMS-owned annotations, not warehouse facts. They
+are sent to 1C with receiving item updates, but differences in these comments
+do not affect synchronization assessments or fingerprints and never block work.
 
 ## Mobile boundary
 

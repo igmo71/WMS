@@ -117,11 +117,6 @@ public static class ReceivingOrderSynchronizationComparer
             string quantityKind = expectReceivedTarget ? "фактическое" : "плановое";
             comparison.AddIfDifferent($"{prefix}.quantity", $"Строка {lineNumber}: {quantityKind} количество", expectedQuantity.Value, externalItem.Quantity, OrderSynchronizationLevel.Blocking);
             comparison.AddIfDifferent($"{prefix}.packageQuantity", $"Строка {lineNumber}: {quantityKind} количество упаковок", expectedQuantity.Value, externalItem.PlanQuantity, OrderSynchronizationLevel.Blocking);
-
-            if (expectReceivedTarget && order.HasPlanFactDifference)
-            {
-                comparison.AddIfDifferent($"{prefix}.comment", $"Строка {lineNumber}: комментарий", localItem.Comment, externalItem.Comment, OrderSynchronizationLevel.Blocking);
-            }
         }
     }
 
@@ -164,15 +159,13 @@ public static class ReceivingOrderSynchronizationComparer
                 .OrderBy(x => x.LineNumber)
                 .ThenBy(x => x.StockKeepingUnitId)
                 .ThenBy(x => x.PlanQuantity)
-                .ThenBy(x => x.Quantity)
-                .ThenBy(x => x.Comment))
+                .ThenBy(x => x.Quantity))
             {
                 string prefix = $"items[{index++}]";
                 fingerprint.Add($"{prefix}.line", item.LineNumber);
                 fingerprint.Add($"{prefix}.sku", item.StockKeepingUnitId);
                 fingerprint.Add($"{prefix}.packageQuantity", item.PlanQuantity);
                 fingerprint.Add($"{prefix}.quantity", item.Quantity);
-                fingerprint.Add($"{prefix}.comment", item.Comment);
             }
         }
 
