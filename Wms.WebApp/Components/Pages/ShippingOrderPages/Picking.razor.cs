@@ -296,6 +296,24 @@ public partial class Picking
             OperationResult result = await OrderCommandService.SetReadyForShipmentAsync(Id, userId);
             if (!result.IsSuccess)
             {
+                if (result.Error?.Type == OperationErrorType.Conflict)
+                {
+                    OperationResult<OrderSynchronizationAssessment> latest =
+                        await SynchronizationService.CheckAsync(Id);
+                    if (latest.IsSuccess)
+                    {
+                        _synchronizationAssessment = latest.Value;
+                        _synchronizationErrorMessage = null;
+                        if (_synchronizationAssessment is { Level: not OrderSynchronizationLevel.Synchronized })
+                            return;
+                    }
+                    else
+                    {
+                        _synchronizationErrorMessage = latest.Error?.Message
+                            ?? "Не удалось сверить расходный ордер с 1С.";
+                    }
+                }
+
                 SetError(result.Error?.Message ?? "Не удалось подготовить ордер к отгрузке.");
                 return;
             }

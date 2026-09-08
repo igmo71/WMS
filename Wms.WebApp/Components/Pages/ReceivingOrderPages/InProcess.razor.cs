@@ -92,6 +92,13 @@ public partial class InProcess
         {
             _synchronizationErrorMessage = result.Error?.Message
                 ?? "Не удалось подтвердить расхождения.";
+            if (result.Error?.Type == OperationErrorType.Conflict)
+            {
+                OperationResult<OrderSynchronizationAssessment> latest =
+                    await SynchronizationService.CheckAsync(Id);
+                if (latest.IsSuccess)
+                    _synchronizationAssessment = latest.Value;
+            }
             return;
         }
 
@@ -256,6 +263,24 @@ public partial class InProcess
                 NavigationManager.NavigateTo($"receiving-orders/{Id}");
             else
             {
+                if (result.Error?.Type == OperationErrorType.Conflict)
+                {
+                    OperationResult<OrderSynchronizationAssessment> latest =
+                        await SynchronizationService.CheckAsync(Id);
+                    if (latest.IsSuccess)
+                    {
+                        _synchronizationAssessment = latest.Value;
+                        _synchronizationErrorMessage = null;
+                        if (_synchronizationAssessment is { Level: not OrderSynchronizationLevel.Synchronized })
+                            return;
+                    }
+                    else
+                    {
+                        _synchronizationErrorMessage = latest.Error?.Message
+                            ?? "Не удалось сверить приходный ордер с 1С.";
+                    }
+                }
+
                 _completeFailed = true;
                 _errorMessage = result.Error?.Message ?? "Не удалось завершить приходный ордер.";
             }
