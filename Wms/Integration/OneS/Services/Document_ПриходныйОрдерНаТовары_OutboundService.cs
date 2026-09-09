@@ -21,7 +21,9 @@ internal sealed class Document_ПриходныйОрдерНаТовары_Outb
     private async Task<OperationResult> SwitchStatusAsync(string expectedStatus, Guid orderId, CancellationToken ct)
     {
         using var scope = logger.BeginScope("SwitchStatus {OrderId} {ExpectedStatus}", orderId, expectedStatus);
-        using var activity = AppTracing.StartActivity("Document_ПриходныйОрдерНаТовары.SwitchStatus", nameof(ReceivingOrderCommandService));
+        using var activity = AppTracing.StartActivity(
+            "Document_ПриходныйОрдерНаТовары.SwitchStatus",
+            nameof(Document_ПриходныйОрдерНаТовары_OutboundService));
 
         var patchUri = Document.PatchUri(orderId.ToString());
 
@@ -51,7 +53,9 @@ internal sealed class Document_ПриходныйОрдерНаТовары_Outb
         CancellationToken ct)
     {
         using var scope = logger.BeginScope("UpdateDocumentItems {OrderId}", orderId);
-        using var activity = AppTracing.StartActivity("Document_ПриходныйОрдерНаТовары.UpdateItems", nameof(ReceivingOrderCommandService));
+        using var activity = AppTracing.StartActivity(
+            "Document_ПриходныйОрдерНаТовары.UpdateItems",
+            nameof(Document_ПриходныйОрдерНаТовары_OutboundService));
 
         var patchItems = receivingOrderItems.Select(PatchItem.From).ToList();
         var patchBody = new PatchBody { Товары = patchItems };
