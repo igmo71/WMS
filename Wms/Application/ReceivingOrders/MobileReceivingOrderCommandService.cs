@@ -1,42 +1,20 @@
 using System.Globalization;
-using Wms.Application.MobileCommands;
+using Wms.Application.Commands;
 using Wms.Common;
 
 namespace Wms.Application.ReceivingOrders;
 
 public sealed class MobileReceivingOrderCommandService(
-    MobileCommandExecutor mobileCommandExecutor,
+    CommandExecutor commandExecutor,
     ReceivingOrderCommandService receivingOrderCommandService,
     PutawayCommandService putawayCommandService)
 {
-    private const string StartReceivingCommand = "receiving-order.start-receiving";
     private const string IncrementFactCommand = "receiving-order.increment-fact";
     private const string SetFactCommand = "receiving-order.set-fact";
-    private const string CompleteReceivingCommand = "receiving-order.complete-receiving";
     private const string StartPutawayCommand = "receiving-order.start-putaway";
     private const string AddPutawayMovementCommand = "receiving-order.add-putaway-movement";
     private const string DeletePutawayMovementCommand = "receiving-order.delete-putaway-movement";
     private const string CompletePutawayCommand = "receiving-order.complete-putaway";
-
-    public Task<OperationResult<Guid>> StartReceivingAsync(
-        Guid orderId,
-        Guid receivingLocationId,
-        Guid clientRequestId,
-        string userId,
-        CancellationToken ct = default) =>
-        ExecuteOrderActionAsync(
-            StartReceivingCommand,
-            orderId,
-            clientRequestId,
-            userId,
-            Hash(orderId, receivingLocationId),
-            (dbContext, token) => receivingOrderCommandService.StageStartReceivingAsync(
-                dbContext,
-                orderId,
-                receivingLocationId,
-                userId,
-                token),
-            ct);
 
     public Task<OperationResult<Guid>> IncrementItemFactAsync(
         Guid orderId,
@@ -78,24 +56,6 @@ public sealed class MobileReceivingOrderCommandService(
                 token),
             ct);
 
-    public Task<OperationResult<Guid>> CompleteReceivingAsync(
-        Guid orderId,
-        Guid clientRequestId,
-        string userId,
-        CancellationToken ct = default) =>
-        ExecuteOrderActionAsync(
-            CompleteReceivingCommand,
-            orderId,
-            clientRequestId,
-            userId,
-            Hash(orderId),
-            (dbContext, token) => receivingOrderCommandService.ExecuteCompletionWithSynchronizationCheckpointAsync(
-                dbContext,
-                orderId,
-                userId,
-                token),
-            ct);
-
     public Task<OperationResult<Guid>> StartPutawayAsync(
         Guid orderId,
         Guid clientRequestId,
@@ -122,7 +82,7 @@ public sealed class MobileReceivingOrderCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             AddPutawayMovementCommand,
             clientRequestId,
             Hash(orderId, lineNumber, destinationStorageLocationId, quantity),
@@ -146,7 +106,7 @@ public sealed class MobileReceivingOrderCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             DeletePutawayMovementCommand,
             clientRequestId,
             Hash(orderId, movementId),
@@ -188,7 +148,7 @@ public sealed class MobileReceivingOrderCommandService(
         string requestHash,
         Func<Data.ApplicationDbContext, CancellationToken, Task<OperationResult>> stageAction,
         CancellationToken ct) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             commandType,
             clientRequestId,
             requestHash,
@@ -201,16 +161,16 @@ public sealed class MobileReceivingOrderCommandService(
             ct);
 
     private static string Hash(params Guid[] ids) =>
-        MobileCommandExecutor.ComputeHash(string.Join('|', ids.Select(x => x.ToString("N"))));
+        CommandExecutor.ComputeHash(string.Join('|', ids.Select(x => x.ToString("N"))));
 
     private static string Hash(Guid orderId, int lineNumber) =>
-        MobileCommandExecutor.ComputeHash(string.Join(
+        CommandExecutor.ComputeHash(string.Join(
             '|',
             orderId.ToString("N"),
             lineNumber.ToString(CultureInfo.InvariantCulture)));
 
     private static string Hash(Guid orderId, int lineNumber, decimal quantity) =>
-        MobileCommandExecutor.ComputeHash(string.Join(
+        CommandExecutor.ComputeHash(string.Join(
             '|',
             orderId.ToString("N"),
             lineNumber.ToString(CultureInfo.InvariantCulture),
@@ -221,7 +181,7 @@ public sealed class MobileReceivingOrderCommandService(
         int lineNumber,
         Guid destinationStorageLocationId,
         decimal quantity) =>
-        MobileCommandExecutor.ComputeHash(string.Join(
+        CommandExecutor.ComputeHash(string.Join(
             '|',
             orderId.ToString("N"),
             lineNumber.ToString(CultureInfo.InvariantCulture),

@@ -3,16 +3,16 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Wms.Data.Configurations;
 
-internal sealed class MobileCommandReceiptConfiguration
-    : IEntityTypeConfiguration<MobileCommandReceipt>
+internal sealed class CommandReceiptConfiguration
+    : IEntityTypeConfiguration<CommandReceipt>
 {
-    public void Configure(EntityTypeBuilder<MobileCommandReceipt> builder)
+    public void Configure(EntityTypeBuilder<CommandReceipt> builder)
     {
         builder.HasKey(x => new
         {
             x.UserId,
             x.CommandType,
-            x.ClientRequestId
+            x.RequestId
         });
 
         builder.Property(x => x.UserId)

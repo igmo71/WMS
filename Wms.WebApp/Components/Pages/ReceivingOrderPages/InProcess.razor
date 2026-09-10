@@ -21,10 +21,10 @@ else
             <MudSpacer />
             <MudButton Color="Color.Primary"
                        Variant="Variant.Filled"
-                       Disabled="@(_isCompleting || _receivingLocation is null || _order.UnconfirmedItemCount > 0 || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))"
+                       Disabled="@(_isCompleting || (_pendingCompletion is null && (_receivingLocation is null || _order.UnconfirmedItemCount > 0 || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                        StartIcon="@Icons.Material.Filled.Check"
                        OnClick="SetReceivedAsync">
-                Завершить
+                @(_pendingCompletion is null ? "Завершить" : "Повторить завершение")
             </MudButton>
             <MudButton Href="@($"receiving-orders/{Id}")" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack">
                 К деталям
@@ -84,7 +84,7 @@ else
                                      ValueChanged="OnReceivingZoneChanged"
                                      SearchFunc="SearchReceivingZonesAsync"
                                      ToStringFunc="zone => zone?.Name ?? string.Empty"
-                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving)"
+                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving || _isCompleting || _pendingCompletion is not null)"
                                      Variant="Variant.Text"
                                      Dense="true"
                                      Clearable="true" />
@@ -96,7 +96,7 @@ else
                                      ValueChanged="OnReceivingLocationChanged"
                                      SearchFunc="SearchReceivingLocationsAsync"
                                      ToStringFunc="StorageLocationDisplay.Format"
-                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving || _receivingZone is null)"
+                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving || _receivingZone is null || _isCompleting || _pendingCompletion is not null)"
                                      Variant="Variant.Text"
                                      Dense="true"
                                      Clearable="true" />

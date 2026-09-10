@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Wms.Application.Commands;
 using Wms.Application.ReceivingOrders;
 using Wms.Application.StorageLocations;
 using Wms.Application.Users;
@@ -36,6 +37,7 @@ public partial class InProcess
     [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
+    private PendingReceivingCommand<CompleteReceivingCommand>? _pendingCompletion;
     private ReceivingOrder? _order;
     private Zone? _receivingZone;
     private StorageLocation? _receivingLocation;
@@ -50,6 +52,8 @@ public partial class InProcess
 
     protected override async Task OnParametersSetAsync()
     {
+        if (_pendingCompletion is { } pending && pending.Command.OrderId != Id)
+            _pendingCompletion = null;
         _isLoading = true;
         OperationResult<OrderSynchronizationAssessment> synchronizationResult =
             await SynchronizationService.CheckAsync(Id);
@@ -238,27 +242,31 @@ public partial class InProcess
 
     private async Task SetReceivedAsync()
     {
-        if (_receivingLocation is not StorageLocation receivingLocation)
+        if (_isCompleting || (_pendingCompletion is null && _receivingLocation is null))
             return;
 
         _isCompleting = true;
         _completeFailed = false;
 
-        var userId = await GetCurrentUserIdAsync();
-
-        if (userId is null)
-        {
-            _completeFailed = true;
-            _errorMessage = "Не удалось определить текущего пользователя.";
-            return;
-        }
-
         try
         {
+            var userId = await GetCurrentUserIdAsync();
+
+            if (userId is null)
+            {
+                _completeFailed = true;
+                _errorMessage = "Не удалось определить текущего пользователя.";
+                return;
+            }
+
+            if (_pendingCompletion is { } previous && previous.Context.UserId != userId)
+                _pendingCompletion = null;
+            _pendingCompletion ??= new(new CompleteReceivingCommand(Id, _receivingLocation!.Id),
+                new CommandContext(Guid.NewGuid(), userId));
             var result = await OrderCommandService.CompleteReceivingAsync(
-                Id,
-                receivingLocation.Id,
-                userId);
+                _pendingCompletion.Command, _pendingCompletion.Context);
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
+                _pendingCompletion = null;
             if (result.IsSuccess)
                 NavigationManager.NavigateTo($"receiving-orders/{Id}");
             else

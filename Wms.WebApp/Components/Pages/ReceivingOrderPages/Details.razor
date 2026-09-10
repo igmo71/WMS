@@ -19,16 +19,16 @@ else
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h5">Приходный ордер @_order.Number от @_order.Date.ToString("dd.MM.yyyy HH:mm")</MudText>
             <MudSpacer />
-            @if (_order.Status == ReceivingOrderStatus.ReadyForReceiving)
+            @if (_order.Status == ReceivingOrderStatus.ReadyForReceiving || _pendingStart is not null)
             {
                 <MudTooltip Text="Чтобы взять ордер в работу, выберите зону и место приёмки.">
                     <span>
                         <MudButton Color="Color.Primary"
                                    Variant="Variant.Filled"
-                                   Disabled="@(_isStarting || _receivingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))"
+                                   Disabled="@(_isStarting || (_pendingStart is null && (_receivingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                                    StartIcon="@Icons.Material.Filled.PlayArrow"
                                    OnClick="SetInReceivingAsync">
-                            Взять в работу
+                            @(_pendingStart is null ? "Взять в работу" : "Повторить начало приёмки")
                         </MudButton>
                     </span>
                 </MudTooltip>
@@ -110,6 +110,7 @@ else
                     @if (_order.Status == ReceivingOrderStatus.ReadyForReceiving)
                     {
                         <MudAutocomplete T="Zone"
+                                         Disabled="@(_isStarting || _pendingStart is not null)"
                                          Value="_receivingZone"
                                          ValueChanged="OnReceivingZoneChanged"
                                          SearchFunc="SearchReceivingZonesAsync"
@@ -133,7 +134,7 @@ else
                                          ValueChanged="OnReceivingLocationChanged"
                                          SearchFunc="SearchReceivingLocationsAsync"
                                          ToStringFunc="StorageLocationDisplay.Format"
-                                         Disabled="@(_receivingZone is null)"
+                                         Disabled="@(_receivingZone is null || _isStarting || _pendingStart is not null)"
                                          Variant="Variant.Text"
                                          Dense="true"
                                          Margin="Margin.Dense"

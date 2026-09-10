@@ -18,7 +18,7 @@ BEGIN TRY
     BEGIN TRANSACTION;
 
     -- Старые результаты команд не должны ссылаться на удаленные операции.
-    DELETE FROM [dbo].[MobileCommandReceipts];
+    DELETE FROM [dbo].[CommandReceipts];
 
     -- StorageLocationLockOwnerType.InventoryCount = 1.
     -- Ручные блокировки (OwnerType = 0) сохраняются.

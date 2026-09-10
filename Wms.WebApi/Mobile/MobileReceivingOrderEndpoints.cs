@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Wms.Application.Commands;
 using Wms.Application.ReceivingOrders;
 using Wms.Common;
 using Wms.Contracts.Mobile.V1;
@@ -153,7 +154,7 @@ internal static class MobileReceivingOrderEndpoints
         MobileStartReceivingOrderRequest request,
         ClaimsPrincipal principal,
         MobileReceivingOrderQueryService queryService,
-        MobileReceivingOrderCommandService commandService,
+        ReceivingOrderCommandService commandService,
         CancellationToken ct)
     {
         var userId = GetUserId(principal);
@@ -171,10 +172,8 @@ internal static class MobileReceivingOrderEndpoints
         }
 
         var result = await commandService.StartReceivingAsync(
-            orderId,
-            receivingLocationId,
-            request.ClientRequestId,
-            userId,
+            new StartReceivingCommand(orderId, receivingLocationId),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(result, orderId, queryService, ct);
     }
@@ -276,14 +275,17 @@ internal static class MobileReceivingOrderEndpoints
         Guid orderId,
         MobileReceivingOrderCommandRequest request,
         ClaimsPrincipal principal,
-        MobileReceivingOrderCommandService commandService,
+        ReceivingOrderCommandService commandService,
         MobileReceivingOrderQueryService queryService,
         CancellationToken ct) =>
         ExecuteOrderCommandAsync(
             orderId,
             request.ClientRequestId,
             principal,
-            commandService.CompleteReceivingAsync,
+            (id, requestId, userId, token) => commandService.CompleteReceivingAsync(
+                new CompleteReceivingCommand(id, null),
+                new CommandContext(requestId, userId),
+                token),
             queryService,
             ct);
 

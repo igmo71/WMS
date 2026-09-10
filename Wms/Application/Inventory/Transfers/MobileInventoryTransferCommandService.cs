@@ -1,12 +1,12 @@
 using System.Globalization;
-using Wms.Application.MobileCommands;
+using Wms.Application.Commands;
 using Wms.Common;
 using Wms.Data;
 
 namespace Wms.Application.Inventory.Transfers;
 
 public sealed class MobileInventoryTransferCommandService(
-    MobileCommandExecutor mobileCommandExecutor,
+    CommandExecutor commandExecutor,
     InventoryTransferCommandService transferCommandService)
 {
     private const string CreateDraftCommand = "inventory-transfer.create-draft";
@@ -21,7 +21,7 @@ public sealed class MobileInventoryTransferCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             CreateDraftCommand,
             clientRequestId,
             ComputeCreateDraftHash(warehouseId, transitStorageLocationId),
@@ -47,7 +47,7 @@ public sealed class MobileInventoryTransferCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             MoveDirectCommand,
             clientRequestId,
             ComputeMoveDirectHash(
@@ -115,7 +115,7 @@ public sealed class MobileInventoryTransferCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             CompleteCommand,
             clientRequestId,
             ComputeCompleteHash(transferId),
@@ -141,7 +141,7 @@ public sealed class MobileInventoryTransferCommandService(
         string userId,
         bool isPick,
         CancellationToken ct) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             commandType,
             clientRequestId,
             ComputeTransitMovementHash(
@@ -180,7 +180,7 @@ public sealed class MobileInventoryTransferCommandService(
         var value = transitStorageLocationId is Guid locationId
             ? $"{warehouseId:N}|{locationId:N}"
             : warehouseId.ToString("N");
-        return MobileCommandExecutor.ComputeHash(value);
+        return CommandExecutor.ComputeHash(value);
     }
 
     private static string ComputeMoveDirectHash(
@@ -189,7 +189,7 @@ public sealed class MobileInventoryTransferCommandService(
         Guid destinationStorageLocationId,
         Guid stockKeepingUnitId,
         decimal quantity) =>
-        MobileCommandExecutor.ComputeHash(string.Join(
+        CommandExecutor.ComputeHash(string.Join(
             '|',
             transferId.ToString("N"),
             sourceStorageLocationId.ToString("N"),
@@ -202,7 +202,7 @@ public sealed class MobileInventoryTransferCommandService(
         Guid enteredStorageLocationId,
         Guid stockKeepingUnitId,
         decimal quantity) =>
-        MobileCommandExecutor.ComputeHash(string.Join(
+        CommandExecutor.ComputeHash(string.Join(
             '|',
             transferId.ToString("N"),
             enteredStorageLocationId.ToString("N"),
@@ -210,5 +210,5 @@ public sealed class MobileInventoryTransferCommandService(
             quantity.ToString("G29", CultureInfo.InvariantCulture)));
 
     private static string ComputeCompleteHash(Guid transferId) =>
-        MobileCommandExecutor.ComputeHash(transferId.ToString("N"));
+        CommandExecutor.ComputeHash(transferId.ToString("N"));
 }

@@ -6,7 +6,8 @@ specifications unless a current task explicitly needs their rationale.
 
 ## Active
 
-None.
+- [Unified receiving commands](2026-09-10-unified-receiving-commands/spec.md)
+  — Receiving start/completion pilot implemented; architectural review pending.
 
 ## Lifecycle
 

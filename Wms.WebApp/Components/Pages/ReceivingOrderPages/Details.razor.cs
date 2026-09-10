@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
+using Wms.Application.Commands;
 using Wms.Application.ReceivingOrders;
 using Wms.Application.StorageLocations;
 using Wms.Application.Users;
@@ -38,6 +39,7 @@ public partial class Details
     [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
+    private PendingReceivingCommand<StartReceivingCommand>? _pendingStart;
     private ReceivingOrder? _order;
     private Zone? _receivingZone;
     private StorageLocation? _receivingLocation;
@@ -53,6 +55,8 @@ public partial class Details
 
     protected override async Task OnParametersSetAsync()
     {
+        if (_pendingStart is { } pending && pending.Command.OrderId != Id)
+            _pendingStart = null;
         _isLoading = true;
 
         OperationResult<OrderSynchronizationAssessment> synchronizationResult =
@@ -182,27 +186,31 @@ public partial class Details
 
     private async Task SetInReceivingAsync()
     {
-        if (_receivingLocation is not StorageLocation receivingLocation)
+        if (_isStarting || (_pendingStart is null && _receivingLocation is null))
             return;
 
         _isStarting = true;
         _startOrderFailed = false;
 
-        var userId = await GetCurrentUserIdAsync();
-
-        if (userId is null)
-        {
-            _startOrderFailed = true;
-            _errorMessage = "Не удалось определить текущего пользователя.";
-            return;
-        }
-
         try
         {
+            var userId = await GetCurrentUserIdAsync();
+
+            if (userId is null)
+            {
+                _startOrderFailed = true;
+                _errorMessage = "Не удалось определить текущего пользователя.";
+                return;
+            }
+
+            if (_pendingStart is { } previous && previous.Context.UserId != userId)
+                _pendingStart = null;
+            _pendingStart ??= new(new StartReceivingCommand(Id, _receivingLocation!.Id),
+                new CommandContext(Guid.NewGuid(), userId));
             var result = await OrderCommandService.StartReceivingAsync(
-                Id,
-                receivingLocation.Id,
-                userId);
+                _pendingStart.Command, _pendingStart.Context);
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
+                _pendingStart = null;
             if (!result.IsSuccess)
             {
                 _startOrderFailed = true;

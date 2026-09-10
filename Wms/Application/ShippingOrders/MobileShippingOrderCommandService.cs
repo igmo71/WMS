@@ -1,12 +1,12 @@
 using System.Globalization;
-using Wms.Application.MobileCommands;
+using Wms.Application.Commands;
 using Wms.Common;
 using Wms.Domain;
 
 namespace Wms.Application.ShippingOrders;
 
 public sealed class MobileShippingOrderCommandService(
-    MobileCommandExecutor mobileCommandExecutor,
+    CommandExecutor commandExecutor,
     ShippingOrderCommandService shippingOrderCommandService,
     PickingCommandService pickingCommandService)
 {
@@ -29,7 +29,7 @@ public sealed class MobileShippingOrderCommandService(
                 OperationError.Invalid("Некорректный QR-код ячейки."));
         }
 
-        return mobileCommandExecutor.ExecuteAsync(
+        return commandExecutor.ExecuteAsync(
             StartPickingCommand,
             clientRequestId,
             Hash(orderId, shippingLocationId),
@@ -62,7 +62,7 @@ public sealed class MobileShippingOrderCommandService(
                 OperationError.Invalid("Некорректный QR-код ячейки."));
         }
 
-        return mobileCommandExecutor.ExecuteAsync(
+        return commandExecutor.ExecuteAsync(
             AddPickingMovementCommand,
             clientRequestId,
             Hash(orderId, lineNumber, sourceStorageLocationId, quantity),
@@ -87,7 +87,7 @@ public sealed class MobileShippingOrderCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             DeletePickingMovementCommand,
             clientRequestId,
             Hash(orderId, movementId),
@@ -108,7 +108,7 @@ public sealed class MobileShippingOrderCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             CompletePickingCommand,
             clientRequestId,
             Hash(orderId),
@@ -130,7 +130,7 @@ public sealed class MobileShippingOrderCommandService(
         string userId,
         CancellationToken ct = default)
     {
-        return mobileCommandExecutor.ExecuteAsync(
+        return commandExecutor.ExecuteAsync(
             ShipCommand,
             clientRequestId,
             Hash(orderId),
@@ -148,10 +148,10 @@ public sealed class MobileShippingOrderCommandService(
     }
 
     private static string Hash(Guid orderId) =>
-        MobileCommandExecutor.ComputeHash(orderId.ToString("N"));
+        CommandExecutor.ComputeHash(orderId.ToString("N"));
 
     private static string Hash(Guid orderId, Guid shippingLocationId) =>
-        MobileCommandExecutor.ComputeHash(string.Join(
+        CommandExecutor.ComputeHash(string.Join(
             '|',
             orderId.ToString("N"),
             shippingLocationId.ToString("N")));
@@ -161,7 +161,7 @@ public sealed class MobileShippingOrderCommandService(
         int lineNumber,
         Guid sourceStorageLocationId,
         decimal quantity) =>
-        MobileCommandExecutor.ComputeHash(string.Join(
+        CommandExecutor.ComputeHash(string.Join(
             '|',
             orderId.ToString("N"),
             lineNumber.ToString(CultureInfo.InvariantCulture),

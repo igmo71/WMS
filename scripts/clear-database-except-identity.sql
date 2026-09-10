@@ -18,8 +18,8 @@ SET XACT_ABORT ON;
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    -- Квитанции повторных мобильных команд относятся к удаляемым операциям.
-    DELETE FROM [dbo].[MobileCommandReceipts];
+    -- Квитанции повторных команд относятся к удаляемым операциям.
+    DELETE FROM [dbo].[CommandReceipts];
 
     -- Все блокировки удаляются вместе с топологией склада.
     DELETE FROM [dbo].[StorageLocationLocks];

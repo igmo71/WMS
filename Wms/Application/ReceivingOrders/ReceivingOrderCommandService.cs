@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Wms.Application.Commands;
 using Wms.Application.Inventory.Movements;
 using Wms.Application.Persistence;
 using Wms.Common;
@@ -11,37 +12,39 @@ namespace Wms.Application.ReceivingOrders;
 
 public class ReceivingOrderCommandService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    CommandExecutor commandExecutor,
     InventoryPostingService inventoryPostingService,
     ReceivingOrderSynchronizationService synchronizationService,
     IReceivingOrderExecutionSink executionSink,
     ILogger<ReceivingOrderCommandService> logger)
 {
-    public async Task<OperationResult> StartReceivingAsync(
-        Guid orderId,
-        Guid receivingLocationId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        OperationResult result = await StageStartReceivingAsync(
-            dbContext,
-            orderId,
-            receivingLocationId,
-            userId,
+    // Persisted protocol identifiers: do not derive these from CLR type names.
+    private const string StartReceivingCommandType = "receiving-order.start-receiving";
+    private const string CompleteReceivingCommandType = "receiving-order.complete-receiving";
+
+    public Task<OperationResult<Guid>> StartReceivingAsync(
+        StartReceivingCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            StartReceivingCommandType,
+            context.RequestId,
+            CommandExecutor.ComputeHash($"{command.OrderId:N}|{command.ReceivingLocationId:N}"),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await StartReceivingCoreAsync(dbContext, command, context.UserId, token);
+                return result.IsSuccess ? command.OrderId : result.Error!;
+            },
             ct);
 
-        return result.IsSuccess
-            ? await ApplicationPersistence.SaveChangesAsync(dbContext, ct)
-            : result;
-    }
-
-    internal async Task<OperationResult> StageStartReceivingAsync(
+    private async Task<OperationResult> StartReceivingCoreAsync(
         ApplicationDbContext dbContext,
-        Guid orderId,
-        Guid receivingLocationId,
+        StartReceivingCommand command,
         string userId,
         CancellationToken ct)
     {
+        var (orderId, receivingLocationId) = command;
         using var scope = logger.BeginScope("ReceivingOrder Start {OrderId}", orderId);
         using var activity = AppTracing.StartActivity(
             "ReceivingOrder.Start",
@@ -58,7 +61,7 @@ public class ReceivingOrderCommandService(
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
-        var locationResult = await StageSetReceivingLocationAsync(
+        var locationResult = await SetReceivingLocationAsync(
             dbContext,
             order,
             receivingLocationId,
@@ -68,14 +71,6 @@ public class ReceivingOrderCommandService(
             return locationResult;
         }
 
-        return await StageSetInReceivingAsync(order, userId, ct);
-    }
-
-    private async Task<OperationResult> StageSetInReceivingAsync(
-        ReceivingOrder order,
-        string userId,
-        CancellationToken ct)
-    {
         var transitionResult = order.SetInReceiving(DateTimeOffset.UtcNow, userId);
         if (!transitionResult.IsSuccess)
         {
@@ -94,43 +89,33 @@ public class ReceivingOrderCommandService(
         return OperationResult.Success();
     }
 
-    public async Task<OperationResult> CompleteReceivingAsync(
-        Guid orderId,
-        Guid receivingLocationId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        OperationResult result = await ExecuteCompletionWithSynchronizationCheckpointAsync(
-            dbContext,
-            orderId,
-            receivingLocationId,
-            userId,
-            ct);
-        return result.IsSuccess
-            ? await ApplicationPersistence.SaveChangesAsync(dbContext, ct)
-            : result;
-    }
-
-    internal Task<OperationResult> ExecuteCompletionWithSynchronizationCheckpointAsync(
-        ApplicationDbContext dbContext,
-        Guid orderId,
-        string userId,
-        CancellationToken ct) =>
-        ExecuteCompletionWithSynchronizationCheckpointAsync(
-            dbContext,
-            orderId,
-            receivingLocationId: null,
-            userId,
+    public Task<OperationResult<Guid>> CompleteReceivingAsync(
+        CompleteReceivingCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            CompleteReceivingCommandType,
+            context.RequestId,
+            // Null keeps the original Mobile completion hash, independent of DB state.
+            CommandExecutor.ComputeHash(command.ReceivingLocationId is Guid locationId
+                ? $"{command.OrderId:N}|{locationId:N}"
+                : command.OrderId.ToString("N")),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await CompleteReceivingWithCheckpointAsync(
+                    dbContext, command, context.UserId, token);
+                return result.IsSuccess ? command.OrderId : result.Error!;
+            },
             ct);
 
-    private async Task<OperationResult> ExecuteCompletionWithSynchronizationCheckpointAsync(
+    private async Task<OperationResult> CompleteReceivingWithCheckpointAsync(
         ApplicationDbContext dbContext,
-        Guid orderId,
-        Guid? receivingLocationId,
+        CompleteReceivingCommand command,
         string userId,
         CancellationToken ct)
     {
+        var (orderId, receivingLocationId) = command;
         using var scope = logger.BeginScope("ReceivingOrder SetReceived {OrderId}", orderId);
         using var activity = AppTracing.StartActivity(
             "ReceivingOrder.SetReceived",
@@ -143,6 +128,7 @@ public class ReceivingOrderCommandService(
             return OperationError.NotFound($"Приходный ордер '{orderId}' не найден.");
         }
 
+        // Explicit independent checkpoint, after receipt lookup and before final effects.
         OperationResult synchronizationResult = await synchronizationService.PersistCompletionCheckpointAsync(
             dbContext,
             order,
@@ -150,10 +136,10 @@ public class ReceivingOrderCommandService(
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
-        return await StageSetReceivedAsync(dbContext, order, receivingLocationId, userId, ct);
+        return await CompleteReceivingCoreAsync(dbContext, order, receivingLocationId, userId, ct);
     }
 
-    private async Task<OperationResult> StageSetReceivedAsync(
+    private async Task<OperationResult> CompleteReceivingCoreAsync(
         ApplicationDbContext dbContext,
         ReceivingOrder order,
         Guid? receivingLocationId,
@@ -162,7 +148,7 @@ public class ReceivingOrderCommandService(
     {
         if (receivingLocationId is Guid selectedLocationId)
         {
-            var setLocationResult = await StageSetReceivingLocationAsync(
+            var setLocationResult = await SetReceivingLocationAsync(
                 dbContext,
                 order,
                 selectedLocationId,
@@ -345,7 +331,7 @@ public class ReceivingOrderCommandService(
         return order.UpdateItemComment(lineNumber, comment);
     }
 
-    private static async Task<OperationResult> StageSetReceivingLocationAsync(
+    private static async Task<OperationResult> SetReceivingLocationAsync(
         ApplicationDbContext dbContext,
         ReceivingOrder order,
         Guid receivingLocationId,

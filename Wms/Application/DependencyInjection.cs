@@ -7,7 +7,7 @@ using Wms.Application.Inventory.Counts;
 using Wms.Application.Inventory.Movements;
 using Wms.Application.Inventory.Transfers;
 using Wms.Application.Inventory.Turnovers;
-using Wms.Application.MobileCommands;
+using Wms.Application.Commands;
 using Wms.Application.OrganizationalUnits;
 using Wms.Application.Parties;
 using Wms.Application.Partners;
@@ -40,7 +40,7 @@ public static class DependencyInjection
         services.AddScoped<InventoryBalanceQueryService>();
         services.AddScoped<InventoryMovementQueryService>();
         services.AddScoped<InventoryTurnoverQueryService>();
-        services.AddScoped<MobileCommandExecutor>();
+        services.AddScoped<CommandExecutor>();
         services.AddScoped<OrganizationalUnitService>();
         services.AddScoped<PickingCommandService>();
         services.AddScoped<PartyQueryService>();

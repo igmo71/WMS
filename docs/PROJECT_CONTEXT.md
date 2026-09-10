@@ -47,7 +47,7 @@ rejection (`400` or `401`), or an authenticated API `401`, clears the session.
 
 Database maintenance scripts run with WebApp, WebApi, and integration workers
 stopped. `scripts/clear-wms-operational-data.sql` clears warehouse documents,
-inventory, mobile command receipts, and inventory-count locks while preserving
+inventory, command receipts, and inventory-count locks while preserving
 Identity, catalogs, warehouse topology, and manual locks.
 `scripts/clear-database-except-identity.sql` also clears catalogs, topology, and
 all locks. Both preserve EF migration history and execute in a transaction.
@@ -112,12 +112,26 @@ line, while manual input sets an absolute nonnegative fact without overwriting
 a Web comment. Every line requires a fact before completion.
 
 Starting receiving and selecting its scanned receiving location form one save.
-Completion first persists a fresh 1C synchronization checkpoint, then stages
+Completion first persists a fresh 1C synchronization checkpoint, then applies
 the selected location, transition, and positive inventory receipt for the final
 save. Putaway supports split draft movements from receiving to ordinary storage
 and posts them together on completion. `ReceivingOrder.OperationalRevision`
 protects reconciliation, facts, transitions, and draft movements from stale
 saves.
+
+Starting and completing receiving share the same application commands in WebApp
+and Mobile. Command receipt lookup precedes mutable validation and 1C access;
+successful replay returns the recorded resource id without executing the command
+again. The synchronization checkpoint remains independently persisted, while the
+final WMS effects and receipt commit atomically. An explicit completion location
+selects that location; an omitted location uses the order's assigned location
+after receipt lookup. Hashes describe the original input, never resolved DB state.
+
+Web retains the request id and original receiving command together during the
+Interactive Server component lifetime. Uncertain failures retain the attempt;
+success and definitive rejection release it. Pending attempts do not survive
+page reload or component recreation. Fact entry and putaway are outside this
+receiving execution pilot.
 
 ### Picking and shipping
 
@@ -235,3 +249,8 @@ response, the client retains the same id and semantic retry target; a definitive
 business/client `4xx` releases it. Stable Mobile error codes are
 `invalid_command`, `resource_not_found`, `request_conflict`, and
 `command_failed`.
+
+Receipts are shared application persistence (`CommandReceipts`), also used by
+Web receiving start/completion. Mobile V1 retains the `ClientRequestId` transport
+name. The receipt schema rename preserves existing keys, command types, hashes,
+and result ids, so previously completed Mobile attempts remain replayable.

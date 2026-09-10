@@ -1,6 +1,6 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using Wms.Application.MobileCommands;
+using Wms.Application.Commands;
 using Wms.Application.StockKeepingUnits;
 using Wms.Common;
 using Wms.Domain.Enums;
@@ -8,7 +8,7 @@ using Wms.Domain.Enums;
 namespace Wms.Application.Inventory.Counts;
 
 public sealed class MobileInventoryCountCommandService(
-    MobileCommandExecutor mobileCommandExecutor,
+    CommandExecutor commandExecutor,
     InventoryCountCommandService inventoryCountCommandService,
     StockKeepingUnitService stockKeepingUnitService)
 {
@@ -27,7 +27,7 @@ public sealed class MobileInventoryCountCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             StartCommand,
             clientRequestId,
             Hash(warehouseId, storageLocationId),
@@ -63,10 +63,10 @@ public sealed class MobileInventoryCountCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             IncrementCommand,
             clientRequestId,
-            MobileCommandExecutor.ComputeHash($"{inventoryCountId:N}|{barcode}"),
+            CommandExecutor.ComputeHash($"{inventoryCountId:N}|{barcode}"),
             userId,
             async (dbContext, token) =>
             {
@@ -94,10 +94,10 @@ public sealed class MobileInventoryCountCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             SetQuantityCommand,
             clientRequestId,
-            MobileCommandExecutor.ComputeHash(string.Join(
+            CommandExecutor.ComputeHash(string.Join(
                 '|',
                 inventoryCountId.ToString("N"),
                 itemId.ToString("N"),
@@ -143,10 +143,10 @@ public sealed class MobileInventoryCountCommandService(
         Guid clientRequestId,
         string userId,
         CancellationToken ct = default) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             SetSkuQuantityCommand,
             clientRequestId,
-            MobileCommandExecutor.ComputeHash(string.Join(
+            CommandExecutor.ComputeHash(string.Join(
                 '|',
                 inventoryCountId.ToString("N"),
                 stockKeepingUnitId.ToString("N"),
@@ -209,7 +209,7 @@ public sealed class MobileInventoryCountCommandService(
         string userId,
         Func<Data.ApplicationDbContext, CancellationToken, Task<OperationResult>> stageAction,
         CancellationToken ct) =>
-        mobileCommandExecutor.ExecuteAsync(
+        commandExecutor.ExecuteAsync(
             commandType,
             clientRequestId,
             itemId is Guid id ? Hash(inventoryCountId, id) : Hash(inventoryCountId),
@@ -224,6 +224,6 @@ public sealed class MobileInventoryCountCommandService(
             ct);
 
     private static string Hash(params Guid[] ids) =>
-        MobileCommandExecutor.ComputeHash(string.Join('|', ids.Select(x => x.ToString("N"))));
+        CommandExecutor.ComputeHash(string.Join('|', ids.Select(x => x.ToString("N"))));
 
 }

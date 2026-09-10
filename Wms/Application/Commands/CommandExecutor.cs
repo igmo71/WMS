@@ -5,20 +5,20 @@ using Wms.Application.Persistence;
 using Wms.Common;
 using Wms.Data;
 
-namespace Wms.Application.MobileCommands;
+namespace Wms.Application.Commands;
 
-public sealed class MobileCommandExecutor(
+public sealed class CommandExecutor(
     IDbContextFactory<ApplicationDbContext> dbContextFactory)
 {
     public async Task<OperationResult<Guid>> ExecuteAsync(
         string commandType,
-        Guid clientRequestId,
+        Guid requestId,
         string requestHash,
         string userId,
-        Func<ApplicationDbContext, CancellationToken, Task<OperationResult<Guid>>> stageAction,
+        Func<ApplicationDbContext, CancellationToken, Task<OperationResult<Guid>>> operation,
         CancellationToken ct)
     {
-        if (clientRequestId == Guid.Empty)
+        if (requestId == Guid.Empty)
             return OperationError.Invalid("Идентификатор запроса обязателен.");
         if (string.IsNullOrWhiteSpace(userId))
             return OperationError.Invalid("Пользователь команды не определён.");
@@ -28,20 +28,20 @@ public sealed class MobileCommandExecutor(
             dbContext,
             userId,
             commandType,
-            clientRequestId,
+            requestId,
             ct);
         if (existingReceipt is not null)
             return ResolveReceipt(existingReceipt, requestHash);
 
-        var result = await stageAction(dbContext, ct);
+        var result = await operation(dbContext, ct);
         if (!result.IsSuccess)
             return result.Error!;
 
-        dbContext.MobileCommandReceipts.Add(new MobileCommandReceipt
+        dbContext.CommandReceipts.Add(new CommandReceipt
         {
             UserId = userId,
             CommandType = commandType,
-            ClientRequestId = clientRequestId,
+            RequestId = requestId,
             RequestHash = requestHash,
             ResultResourceId = result.Value,
             CompletedAtUtc = DateTimeOffset.UtcNow
@@ -59,7 +59,7 @@ public sealed class MobileCommandExecutor(
                 retryContext,
                 userId,
                 commandType,
-                clientRequestId,
+                requestId,
                 ct);
             if (winningReceipt is not null)
                 return ResolveReceipt(winningReceipt, requestHash);
@@ -72,21 +72,21 @@ public sealed class MobileCommandExecutor(
     public static string ComputeHash(string value) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
-    private static Task<MobileCommandReceipt?> FindReceiptAsync(
+    private static Task<CommandReceipt?> FindReceiptAsync(
         ApplicationDbContext dbContext,
         string userId,
         string commandType,
-        Guid clientRequestId,
+        Guid requestId,
         CancellationToken ct) =>
-        dbContext.MobileCommandReceipts
+        dbContext.CommandReceipts
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.UserId == userId
                 && x.CommandType == commandType
-                && x.ClientRequestId == clientRequestId,
+                && x.RequestId == requestId,
                 ct);
 
     private static OperationResult<Guid> ResolveReceipt(
-        MobileCommandReceipt receipt,
+        CommandReceipt receipt,
         string requestHash) =>
         receipt.RequestHash == requestHash
             ? receipt.ResultResourceId
