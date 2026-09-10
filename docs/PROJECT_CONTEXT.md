@@ -162,6 +162,17 @@ draft movements, and rollback from stale saves.
 
 ### Inventory count
 
+WebApp and Mobile share InventoryCountCommandService and CommandExecutor for
+start/resume, barcode increment, absolute quantity by item or SKU, unexpected
+item removal, posting and draft deletion. Start returns an existing draft for
+the requested location and warehouse; otherwise it creates one. Barcode resolution
+and mutable checks run after receipt lookup. The original barcode and invariant
+quantity hashes remain compatible with Mobile receipts. Changes, lock, inventory
+effects and receipt commit atomically, without intermediate saves.
+Web retains original inputs and request/user ids for explicit uncertain retries
+within the component lifetime, disabling inputs and other mutations until the
+attempt resolves. Page reload/component recreation does not retain attempts.
+
 A count covers one ordinary storage location. Draft creation atomically locks
 the location and snapshots positive balances as expected rows. Nullable counted
 quantity means uncounted; zero is explicit. Scan adds one, and manual input may
@@ -272,7 +283,8 @@ business/client `4xx` releases it. Stable Mobile error codes are
 `command_failed`.
 
 Receipts are shared application persistence (`CommandReceipts`), also used by
-Web receiving start/completion and shipping transitions. Mobile V1 retains the
+Web receiving start/completion, shipping transitions, transfers and inventory
+counts. Mobile V1 retains the
 `ClientRequestId` transport name. The receipt schema rename preserves existing
 keys, command types, hashes,
 and result ids, so previously completed Mobile attempts remain replayable.

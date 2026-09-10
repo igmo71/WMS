@@ -10,6 +10,8 @@ None.
 
 ## Frozen
 
+- [Unified inventory count commands](2026-09-10-unified-count-commands/spec.md)
+  — Shared start, facts, posting and draft deletion implemented on 2026-09-10.
 - [Unified inventory transfer commands](2026-09-10-unified-transfer-commands/spec.md)
   — Shared creation, movements, completion and draft deletion implemented on 2026-09-10.
 - [Unified shipping transitions](2026-09-10-unified-shipping-commands/spec.md)

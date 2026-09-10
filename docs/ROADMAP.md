@@ -41,11 +41,12 @@ exchange, an interrupted command, and operator recovery.
 ## Shared command execution
 
 The receiving start/completion pilot is accepted. Extend the shared application
-use case and CommandExecutor pattern in separately scoped changes to inventory
-counts and putaway/picking mutations. Receiving fact entry
+use case and CommandExecutor pattern in separately scoped changes to
+putaway/picking mutations. Receiving fact entry
 and Web shipping rollback also remain to be migrated. Shipping start-picking,
 complete-picking, and ship transitions now use the shared path, as do transfer
-creation, movements, completion and draft deletion. Preserve semantic
+creation, movements, completion and draft deletion, and all inventory-count
+mutations. Preserve semantic
 retry inputs, receipt compatibility, and documented synchronization checkpoints
 throughout.
 

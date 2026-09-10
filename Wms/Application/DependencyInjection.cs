@@ -35,7 +35,6 @@ public static class DependencyInjection
         services.AddScoped<EmployeePerformanceReportService>();
         services.AddScoped<IndividualService>();
         services.AddScoped<InventoryCountCommandService>();
-        services.AddScoped<MobileInventoryCountCommandService>();
         services.AddScoped<InventoryCountQueryService>();
         services.AddScoped<InventoryBalanceQueryService>();
         services.AddScoped<InventoryMovementQueryService>();

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Wms.Application.Commands;
 using Wms.Application.Inventory.Counts;
 using Wms.Common;
 using Wms.Contracts.Mobile.V1;
@@ -69,7 +70,7 @@ internal static class MobileInventoryCountEndpoints
         MobileStartInventoryCountRequest request,
         ClaimsPrincipal principal,
         InventoryCountQueryService queryService,
-        MobileInventoryCountCommandService commandService,
+        InventoryCountCommandService commandService,
         CancellationToken ct)
     {
         var userId = GetUserId(principal);
@@ -79,10 +80,8 @@ internal static class MobileInventoryCountEndpoints
             return MobileEndpointResults.CommandProblem(OperationError.Invalid("Некорректный QR-код ячейки."));
 
         var result = await commandService.StartAsync(
-            request.WarehouseId,
-            locationId,
-            request.ClientRequestId,
-            userId,
+            new StartInventoryCountCommand(request.WarehouseId, locationId),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await DetailsResultAsync(result, queryService, ct);
     }
@@ -91,7 +90,7 @@ internal static class MobileInventoryCountEndpoints
         Guid inventoryCountId,
         MobileIncrementInventoryCountSkuRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryCountCommandService commandService,
+        InventoryCountCommandService commandService,
         InventoryCountQueryService queryService,
         CancellationToken ct)
     {
@@ -100,10 +99,8 @@ internal static class MobileInventoryCountEndpoints
             return TypedResults.Unauthorized();
 
         var result = await commandService.IncrementSkuAsync(
-            inventoryCountId,
-            request.Barcode,
-            request.ClientRequestId,
-            userId,
+            new IncrementInventoryCountSkuCommand(inventoryCountId, request.Barcode),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         if (!result.IsSuccess)
             return MobileEndpointResults.CommandProblem(result.Error!);
@@ -141,7 +138,7 @@ internal static class MobileInventoryCountEndpoints
         Guid inventoryCountId,
         MobileSetInventoryCountSkuQuantityRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryCountCommandService commandService,
+        InventoryCountCommandService commandService,
         InventoryCountQueryService queryService,
         CancellationToken ct)
     {
@@ -149,11 +146,8 @@ internal static class MobileInventoryCountEndpoints
         if (userId is null)
             return TypedResults.Unauthorized();
         var result = await commandService.SetSkuCountedQuantityAsync(
-            inventoryCountId,
-            request.StockKeepingUnitId,
-            request.CountedQuantity,
-            request.ClientRequestId,
-            userId,
+            new SetInventoryCountSkuQuantityCommand(inventoryCountId, request.StockKeepingUnitId, request.CountedQuantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await DetailsResultAsync(result, queryService, ct, inventoryCountId);
     }
@@ -163,7 +157,7 @@ internal static class MobileInventoryCountEndpoints
         Guid itemId,
         MobileSetInventoryCountItemQuantityRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryCountCommandService commandService,
+        InventoryCountCommandService commandService,
         InventoryCountQueryService queryService,
         CancellationToken ct)
     {
@@ -171,11 +165,8 @@ internal static class MobileInventoryCountEndpoints
         if (userId is null)
             return TypedResults.Unauthorized();
         var result = await commandService.SetCountedQuantityAsync(
-            inventoryCountId,
-            itemId,
-            request.CountedQuantity,
-            request.ClientRequestId,
-            userId,
+            new SetInventoryCountQuantityCommand(inventoryCountId, itemId, request.CountedQuantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await DetailsResultAsync(result, queryService, ct, inventoryCountId);
     }
@@ -185,7 +176,7 @@ internal static class MobileInventoryCountEndpoints
         Guid itemId,
         MobileInventoryCountCommandRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryCountCommandService commandService,
+        InventoryCountCommandService commandService,
         InventoryCountQueryService queryService,
         CancellationToken ct)
     {
@@ -193,10 +184,8 @@ internal static class MobileInventoryCountEndpoints
         if (userId is null)
             return TypedResults.Unauthorized();
         var result = await commandService.RemoveUnexpectedItemAsync(
-            inventoryCountId,
-            itemId,
-            request.ClientRequestId,
-            userId,
+            new RemoveInventoryCountItemCommand(inventoryCountId, itemId),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await DetailsResultAsync(result, queryService, ct, inventoryCountId);
     }
@@ -205,7 +194,7 @@ internal static class MobileInventoryCountEndpoints
         Guid inventoryCountId,
         MobileInventoryCountCommandRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryCountCommandService commandService,
+        InventoryCountCommandService commandService,
         InventoryCountQueryService queryService,
         CancellationToken ct)
     {
@@ -214,8 +203,7 @@ internal static class MobileInventoryCountEndpoints
             return TypedResults.Unauthorized();
         var result = await commandService.PostAsync(
             inventoryCountId,
-            request.ClientRequestId,
-            userId,
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await DetailsResultAsync(result, queryService, ct, inventoryCountId);
     }
@@ -224,7 +212,7 @@ internal static class MobileInventoryCountEndpoints
         Guid inventoryCountId,
         MobileInventoryCountCommandRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryCountCommandService commandService,
+        InventoryCountCommandService commandService,
         CancellationToken ct)
     {
         var userId = GetUserId(principal);
@@ -232,8 +220,7 @@ internal static class MobileInventoryCountEndpoints
             return TypedResults.Unauthorized();
         var result = await commandService.DeleteDraftAsync(
             inventoryCountId,
-            request.ClientRequestId,
-            userId,
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return result.IsSuccess
             ? TypedResults.Ok(new MobileInventoryCountDeletedResponse(inventoryCountId))

@@ -1,6 +1,8 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Wms.Application.Commands;
 using Wms.Application.Inventory.Movements;
-using Wms.Application.Persistence;
+using Wms.Application.StockKeepingUnits;
 using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
@@ -9,25 +11,207 @@ using Wms.Domain.Enums;
 namespace Wms.Application.Inventory.Counts;
 
 public sealed class InventoryCountCommandService(
-    IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    InventoryPostingService inventoryPostingService)
+    CommandExecutor commandExecutor,
+    InventoryPostingService inventoryPostingService,
+    StockKeepingUnitService stockKeepingUnitService)
 {
-    public async Task<OperationResult<InventoryCount>> CreateAsync(
-        Guid warehouseId,
-        Guid storageLocationId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageCreateAsync(dbContext, warehouseId, storageLocationId, userId, ct);
-        if (!result.IsSuccess)
-            return result.Error!;
+    // Keep the persisted command type stable for receipts created by earlier versions.
+    private const string StartCommand = "inventory-count.create";
+    private const string IncrementCommand = "inventory-count.increment-sku";
+    private const string SetQuantityCommand = "inventory-count.set-quantity";
+    private const string SetSkuQuantityCommand = "inventory-count.set-sku-quantity";
+    private const string RemoveItemCommand = "inventory-count.remove-item";
+    private const string PostCommand = "inventory-count.post";
+    private const string DeleteDraftCommand = "inventory-count.delete-draft";
 
-        var saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-        return saveResult.IsSuccess ? result.Value! : saveResult.Error!;
-    }
+    public Task<OperationResult<Guid>> StartAsync(
+        StartInventoryCountCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            StartCommand,
+            context.RequestId,
+            Hash(command.WarehouseId, command.StorageLocationId),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var existing = await dbContext.InventoryCounts
+                    .AsNoTracking()
+                    .Where(x => x.StorageLocationId == command.StorageLocationId
+                        && x.Status == InventoryCountStatus.Draft)
+                    .Select(x => new { x.Id, x.WarehouseId })
+                    .SingleOrDefaultAsync(token);
+                if (existing is not null)
+                {
+                    return existing.WarehouseId == command.WarehouseId
+                        ? existing.Id
+                        : OperationError.Invalid("Ячейка принадлежит другому складу.");
+                }
 
-    internal async Task<OperationResult<InventoryCount>> StageCreateAsync(
+                var result = await CreateCoreAsync(
+                    dbContext,
+                    command.WarehouseId,
+                    command.StorageLocationId,
+                    context.UserId,
+                    token);
+                return result.IsSuccess ? result.Value!.Id : result.Error!;
+            },
+            ct);
+
+    public Task<OperationResult<Guid>> IncrementSkuAsync(
+        IncrementInventoryCountSkuCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            IncrementCommand,
+            context.RequestId,
+            CommandExecutor.ComputeHash($"{command.InventoryCountId:N}|{command.Barcode}"),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var skuResult = await stockKeepingUnitService.ResolveByBarcodeAsync(
+                    dbContext,
+                    command.Barcode,
+                    token);
+                if (!skuResult.IsSuccess)
+                    return skuResult.Error!;
+
+                var result = await IncrementSkuCoreAsync(
+                    dbContext,
+                    command.InventoryCountId,
+                    skuResult.Value!.Id,
+                    context.UserId,
+                    token);
+                return result.IsSuccess ? result.Value!.Id : result.Error!;
+            },
+            ct);
+
+    public Task<OperationResult<Guid>> SetCountedQuantityAsync(
+        SetInventoryCountQuantityCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            SetQuantityCommand,
+            context.RequestId,
+            CommandExecutor.ComputeHash(string.Join(
+                '|',
+                command.InventoryCountId.ToString("N"),
+                command.ItemId.ToString("N"),
+                command.CountedQuantity.ToString("G29", CultureInfo.InvariantCulture))),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await SetCountedQuantityCoreAsync(
+                    dbContext,
+                    command.InventoryCountId,
+                    command.ItemId,
+                    command.CountedQuantity,
+                    context.UserId,
+                    token);
+                return result.IsSuccess ? command.ItemId : result.Error!;
+            },
+            ct);
+
+    public Task<OperationResult<Guid>> RemoveUnexpectedItemAsync(
+        RemoveInventoryCountItemCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        ExecuteDocumentActionAsync(
+            RemoveItemCommand,
+            command.InventoryCountId,
+            command.ItemId,
+            context,
+            (dbContext, token) => RemoveUnexpectedItemCoreAsync(
+                dbContext,
+                command.InventoryCountId,
+                command.ItemId,
+                context.UserId,
+                token),
+            ct);
+
+    public Task<OperationResult<Guid>> SetSkuCountedQuantityAsync(
+        SetInventoryCountSkuQuantityCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            SetSkuQuantityCommand,
+            context.RequestId,
+            CommandExecutor.ComputeHash(string.Join(
+                '|',
+                command.InventoryCountId.ToString("N"),
+                command.StockKeepingUnitId.ToString("N"),
+                command.CountedQuantity.ToString("G29", CultureInfo.InvariantCulture))),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await SetSkuCountedQuantityCoreAsync(
+                    dbContext,
+                    command.InventoryCountId,
+                    command.StockKeepingUnitId,
+                    command.CountedQuantity,
+                    context.UserId,
+                    token);
+                return result.IsSuccess ? result.Value!.Id : result.Error!;
+            },
+            ct);
+
+    public Task<OperationResult<Guid>> PostAsync(
+        Guid inventoryCountId,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        ExecuteDocumentActionAsync(
+            PostCommand,
+            inventoryCountId,
+            null,
+            context,
+            (dbContext, token) => PostCoreAsync(
+                dbContext,
+                inventoryCountId,
+                context.UserId,
+                token),
+            ct);
+
+    public Task<OperationResult<Guid>> DeleteDraftAsync(
+        Guid inventoryCountId,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        ExecuteDocumentActionAsync(
+            DeleteDraftCommand,
+            inventoryCountId,
+            null,
+            context,
+            (dbContext, token) => DeleteDraftCoreAsync(
+                dbContext,
+                inventoryCountId,
+                context.UserId,
+                token),
+            ct);
+
+    private Task<OperationResult<Guid>> ExecuteDocumentActionAsync(
+        string commandType,
+        Guid inventoryCountId,
+        Guid? itemId,
+        CommandContext context,
+        Func<ApplicationDbContext, CancellationToken, Task<OperationResult>> action,
+        CancellationToken ct) =>
+        commandExecutor.ExecuteAsync(
+            commandType,
+            context.RequestId,
+            itemId is Guid id ? Hash(inventoryCountId, id) : Hash(inventoryCountId),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await action(dbContext, token);
+                return result.IsSuccess
+                    ? itemId ?? inventoryCountId
+                    : result.Error!;
+            },
+            ct);
+
+    private static string Hash(params Guid[] ids) =>
+        CommandExecutor.ComputeHash(string.Join('|', ids.Select(x => x.ToString("N"))));
+
+    private async Task<OperationResult<InventoryCount>> CreateCoreAsync(
         ApplicationDbContext dbContext,
         Guid warehouseId,
         Guid storageLocationId,
@@ -98,27 +282,7 @@ public sealed class InventoryCountCommandService(
         return inventoryCount;
     }
 
-    public async Task<OperationResult<InventoryCountItem>> IncrementSkuAsync(
-        Guid inventoryCountId,
-        Guid stockKeepingUnitId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageIncrementSkuAsync(
-            dbContext,
-            inventoryCountId,
-            stockKeepingUnitId,
-            userId,
-            ct);
-        if (!result.IsSuccess)
-            return result.Error!;
-
-        var saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-        return saveResult.IsSuccess ? result.Value! : saveResult.Error!;
-    }
-
-    internal async Task<OperationResult<InventoryCountItem>> StageIncrementSkuAsync(
+    private async Task<OperationResult<InventoryCountItem>> IncrementSkuCoreAsync(
         ApplicationDbContext dbContext,
         Guid inventoryCountId,
         Guid stockKeepingUnitId,
@@ -144,27 +308,7 @@ public sealed class InventoryCountCommandService(
         return result;
     }
 
-    public async Task<OperationResult> SetCountedQuantityAsync(
-        Guid inventoryCountId,
-        Guid itemId,
-        decimal countedQuantity,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageSetCountedQuantityAsync(
-            dbContext,
-            inventoryCountId,
-            itemId,
-            countedQuantity,
-            userId,
-            ct);
-        if (!result.IsSuccess)
-            return result;
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    internal async Task<OperationResult> StageSetCountedQuantityAsync(
+    private async Task<OperationResult> SetCountedQuantityCoreAsync(
         ApplicationDbContext dbContext,
         Guid inventoryCountId,
         Guid itemId,
@@ -178,29 +322,7 @@ public sealed class InventoryCountCommandService(
             : countResult.Error!;
     }
 
-    public async Task<OperationResult<InventoryCountItem>> SetSkuCountedQuantityAsync(
-        Guid inventoryCountId,
-        Guid stockKeepingUnitId,
-        decimal countedQuantity,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageSetSkuCountedQuantityAsync(
-            dbContext,
-            inventoryCountId,
-            stockKeepingUnitId,
-            countedQuantity,
-            userId,
-            ct);
-        if (!result.IsSuccess)
-            return result.Error!;
-
-        var saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-        return saveResult.IsSuccess ? result.Value! : saveResult.Error!;
-    }
-
-    internal async Task<OperationResult<InventoryCountItem>> StageSetSkuCountedQuantityAsync(
+    private async Task<OperationResult<InventoryCountItem>> SetSkuCountedQuantityCoreAsync(
         ApplicationDbContext dbContext,
         Guid inventoryCountId,
         Guid stockKeepingUnitId,
@@ -228,25 +350,7 @@ public sealed class InventoryCountCommandService(
         return result;
     }
 
-    public async Task<OperationResult> RemoveUnexpectedItemAsync(
-        Guid inventoryCountId,
-        Guid itemId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageRemoveUnexpectedItemAsync(
-            dbContext,
-            inventoryCountId,
-            itemId,
-            userId,
-            ct);
-        if (!result.IsSuccess)
-            return result;
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    internal async Task<OperationResult> StageRemoveUnexpectedItemAsync(
+    private async Task<OperationResult> RemoveUnexpectedItemCoreAsync(
         ApplicationDbContext dbContext,
         Guid inventoryCountId,
         Guid itemId,
@@ -264,19 +368,7 @@ public sealed class InventoryCountCommandService(
         return result;
     }
 
-    public async Task<OperationResult> DeleteDraftAsync(
-        Guid inventoryCountId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageDeleteDraftAsync(dbContext, inventoryCountId, userId, ct);
-        if (!result.IsSuccess)
-            return result;
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    internal async Task<OperationResult> StageDeleteDraftAsync(
+    private async Task<OperationResult> DeleteDraftCoreAsync(
         ApplicationDbContext dbContext,
         Guid inventoryCountId,
         string userId,
@@ -297,19 +389,7 @@ public sealed class InventoryCountCommandService(
         return OperationResult.Success();
     }
 
-    public async Task<OperationResult> PostAsync(
-        Guid inventoryCountId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StagePostAsync(dbContext, inventoryCountId, userId, ct);
-        if (!result.IsSuccess)
-            return result;
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    internal async Task<OperationResult> StagePostAsync(
+    private async Task<OperationResult> PostCoreAsync(
         ApplicationDbContext dbContext,
         Guid inventoryCountId,
         string userId,

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
 using Wms.Application.Inventory.Counts;
+using Wms.Application.Commands;
 using Wms.Application.StorageLocations;
 using Wms.Application.Users;
 using Wms.Application.Warehouses;
@@ -26,6 +27,8 @@ public partial class Index
     private Warehouse? _warehouse;
     private StorageLocation? _storageLocation;
     private bool _isCreating;
+    private (StartInventoryCountCommand Command, CommandContext Context)? _pendingStart;
+    private bool InputsLocked => _isCreating || _pendingStart is not null;
     private bool _createFailed;
     private string? _errorMessage;
     private IReadOnlyDictionary<string, string> _userNames = new Dictionary<string, string>();
@@ -104,46 +107,63 @@ public partial class Index
 
     private async Task CreateAsync()
     {
-        if (_warehouse is not Warehouse warehouse || _storageLocation is not StorageLocation location)
+        if (InputsLocked || _warehouse is not Warehouse warehouse || _storageLocation is not StorageLocation location)
             return;
-
+        var command = new StartInventoryCountCommand(warehouse.Id, location.Id);
         _isCreating = true;
         _createFailed = false;
-
         try
         {
             var userId = await GetCurrentUserIdAsync();
             if (userId is null)
             {
-                _createFailed = true;
-                _errorMessage = "Не удалось определить текущего пользователя.";
+                SetError("Не удалось определить текущего пользователя.");
                 return;
             }
-
-            var result = await InventoryCountCommandService.CreateAsync(
-                warehouse.Id,
-                location.Id,
-                userId);
-            if (!result.IsSuccess || result.Value is null)
-            {
-                _createFailed = true;
-                _errorMessage = result.Error?.Message ?? "Не удалось создать инвентаризацию.";
-                return;
-            }
-
-            NavigationManager.NavigateTo($"inventory-counts/{result.Value.Id}");
+            _pendingStart = (command, new(Guid.NewGuid(), userId));
         }
         catch (Exception exception)
         {
-            Logger.LogError(exception, "Failed to create inventory count for storage location {StorageLocationId}.", location.Id);
-            _createFailed = true;
-            _errorMessage = "Не удалось создать инвентаризацию.";
+            Logger.LogError(exception, "Failed to identify inventory count user.");
+            SetError("Не удалось определить текущего пользователя.");
         }
-        finally
-        {
-            _isCreating = false;
-        }
+        finally { _isCreating = false; }
+        if (_pendingStart is not null)
+            await RetryAsync();
     }
+
+    private async Task RetryAsync()
+    {
+        if (_isCreating || _pendingStart is not { } pending)
+            return;
+        _isCreating = true;
+        _createFailed = false;
+        try
+        {
+            if (await GetCurrentUserIdAsync() != pending.Context.UserId)
+            {
+                SetError("Повторите операцию под пользователем, который её начал.");
+                return;
+            }
+            var result = await InventoryCountCommandService.StartAsync(pending.Command, pending.Context);
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
+                _pendingStart = null;
+            if (!result.IsSuccess)
+            {
+                SetError(result.Error?.Message ?? "Не удалось создать инвентаризацию.");
+                return;
+            }
+            NavigationManager.NavigateTo($"inventory-counts/{result.Value}");
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to start inventory count for {StorageLocationId}.", pending.Command.StorageLocationId);
+            SetError("Не удалось создать инвентаризацию.");
+        }
+        finally { _isCreating = false; }
+    }
+
+    private void SetError(string message) { _createFailed = true; _errorMessage = message; }
 
     private async Task<string?> GetCurrentUserIdAsync()
     {
