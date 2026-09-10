@@ -6,55 +6,12 @@ namespace Wms.Application.ReceivingOrders;
 
 public sealed class MobileReceivingOrderCommandService(
     CommandExecutor commandExecutor,
-    ReceivingOrderCommandService receivingOrderCommandService,
     PutawayCommandService putawayCommandService)
 {
-    private const string IncrementFactCommand = "receiving-order.increment-fact";
-    private const string SetFactCommand = "receiving-order.set-fact";
     private const string StartPutawayCommand = "receiving-order.start-putaway";
     private const string AddPutawayMovementCommand = "receiving-order.add-putaway-movement";
     private const string DeletePutawayMovementCommand = "receiving-order.delete-putaway-movement";
     private const string CompletePutawayCommand = "receiving-order.complete-putaway";
-
-    public Task<OperationResult<Guid>> IncrementItemFactAsync(
-        Guid orderId,
-        int lineNumber,
-        Guid clientRequestId,
-        string userId,
-        CancellationToken ct = default) =>
-        ExecuteOrderActionAsync(
-            IncrementFactCommand,
-            orderId,
-            clientRequestId,
-            userId,
-            Hash(orderId, lineNumber),
-            (dbContext, token) => receivingOrderCommandService.StageIncrementItemFactAsync(
-                dbContext,
-                orderId,
-                lineNumber,
-                token),
-            ct);
-
-    public Task<OperationResult<Guid>> SetItemFactQuantityAsync(
-        Guid orderId,
-        int lineNumber,
-        decimal factQuantity,
-        Guid clientRequestId,
-        string userId,
-        CancellationToken ct = default) =>
-        ExecuteOrderActionAsync(
-            SetFactCommand,
-            orderId,
-            clientRequestId,
-            userId,
-            Hash(orderId, lineNumber, factQuantity),
-            (dbContext, token) => receivingOrderCommandService.StageSetItemFactQuantityAsync(
-                dbContext,
-                orderId,
-                lineNumber,
-                factQuantity,
-                token),
-            ct);
 
     public Task<OperationResult<Guid>> StartPutawayAsync(
         Guid orderId,
@@ -162,19 +119,6 @@ public sealed class MobileReceivingOrderCommandService(
 
     private static string Hash(params Guid[] ids) =>
         CommandExecutor.ComputeHash(string.Join('|', ids.Select(x => x.ToString("N"))));
-
-    private static string Hash(Guid orderId, int lineNumber) =>
-        CommandExecutor.ComputeHash(string.Join(
-            '|',
-            orderId.ToString("N"),
-            lineNumber.ToString(CultureInfo.InvariantCulture)));
-
-    private static string Hash(Guid orderId, int lineNumber, decimal quantity) =>
-        CommandExecutor.ComputeHash(string.Join(
-            '|',
-            orderId.ToString("N"),
-            lineNumber.ToString(CultureInfo.InvariantCulture),
-            quantity.ToString("G29", CultureInfo.InvariantCulture)));
 
     private static string Hash(
         Guid orderId,

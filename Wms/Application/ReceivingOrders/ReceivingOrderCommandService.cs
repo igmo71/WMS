@@ -2,7 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Wms.Application.Commands;
 using Wms.Application.Inventory.Movements;
-using Wms.Application.Persistence;
+using System.Globalization;
+using System.Text.Json;
 using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
@@ -11,7 +12,6 @@ using Wms.Domain.Enums;
 namespace Wms.Application.ReceivingOrders;
 
 public class ReceivingOrderCommandService(
-    IDbContextFactory<ApplicationDbContext> dbContextFactory,
     CommandExecutor commandExecutor,
     InventoryPostingService inventoryPostingService,
     ReceivingOrderSynchronizationService synchronizationService,
@@ -223,113 +223,41 @@ public class ReceivingOrderCommandService(
                 "Работа с приходным ордером заблокирована из-за расхождений с 1С.")
         };
 
-    public async Task<OperationResult> UpdateOrderItemFactQuantityAsync(
-        Guid receivingOrderId,
-        int lineNumber,
-        decimal factQuantity,
-        string? comment,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageUpdateItemFactQuantityAsync(
-            dbContext,
-            receivingOrderId,
-            lineNumber,
-            factQuantity,
-            comment,
-            ct);
-        if (!result.IsSuccess)
-        {
-            return result;
-        }
+    private const string IncrementFactCommandType = "receiving-order.increment-fact";
+    private const string SetFactCommandType = "receiving-order.set-fact";
+    private const string SetItemCommentCommandType = "receiving-order.set-item-comment";
 
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
+    public Task<OperationResult<Guid>> IncrementItemFactAsync(
+        IncrementReceivingFactCommand command, CommandContext context, CancellationToken ct = default) =>
+        ExecuteItemActionAsync(IncrementFactCommandType, command.OrderId, context,
+            CommandExecutor.ComputeHash($"{command.OrderId:N}|{command.LineNumber.ToString(CultureInfo.InvariantCulture)}"),
+            order => order.IncrementItemFact(command.LineNumber), ct);
 
-    internal async Task<OperationResult> StageUpdateItemFactQuantityAsync(
-        ApplicationDbContext dbContext,
-        Guid orderId,
-        int lineNumber,
-        decimal factQuantity,
-        string? comment,
-        CancellationToken ct)
-    {
-        var order = await LoadOrderAsync(dbContext, orderId, ct);
-        if (order is null)
-        {
-            return OperationError.NotFound($"Приходный ордер '{orderId}' не найден.");
-        }
+    public Task<OperationResult<Guid>> SetItemFactQuantityAsync(
+        SetReceivingFactCommand command, CommandContext context, CancellationToken ct = default) =>
+        ExecuteItemActionAsync(SetFactCommandType, command.OrderId, context,
+            CommandExecutor.ComputeHash($"{command.OrderId:N}|{command.LineNumber.ToString(CultureInfo.InvariantCulture)}|{command.FactQuantity.ToString("G29", CultureInfo.InvariantCulture)}"),
+            order => order.UpdateItemFactQuantity(command.LineNumber, command.FactQuantity), ct);
 
-        return order.UpdateItemFact(lineNumber, factQuantity, comment);
-    }
+    public Task<OperationResult<Guid>> SetItemCommentAsync(
+        SetReceivingItemCommentCommand command, CommandContext context, CancellationToken ct = default) =>
+        ExecuteItemActionAsync(SetItemCommentCommandType, command.OrderId, context,
+            // JSON distinguishes null/empty and escapes arbitrary separators in original input.
+            CommandExecutor.ComputeHash($"{command.OrderId:N}|{command.LineNumber.ToString(CultureInfo.InvariantCulture)}|{JsonSerializer.Serialize(command.Comment)}"),
+            order => order.UpdateItemComment(command.LineNumber, command.Comment), ct);
 
-    internal async Task<OperationResult> StageIncrementItemFactAsync(
-        ApplicationDbContext dbContext,
-        Guid orderId,
-        int lineNumber,
-        CancellationToken ct)
-    {
-        var order = await LoadOrderAsync(dbContext, orderId, ct);
-        if (order is null)
-        {
-            return OperationError.NotFound($"Приходный ордер '{orderId}' не найден.");
-        }
-
-        return order.IncrementItemFact(lineNumber);
-    }
-
-    internal async Task<OperationResult> StageSetItemFactQuantityAsync(
-        ApplicationDbContext dbContext,
-        Guid orderId,
-        int lineNumber,
-        decimal factQuantity,
-        CancellationToken ct)
-    {
-        var order = await LoadOrderAsync(dbContext, orderId, ct);
-        if (order is null)
-        {
-            return OperationError.NotFound($"Приходный ордер '{orderId}' не найден.");
-        }
-
-        return order.UpdateItemFactQuantity(lineNumber, factQuantity);
-    }
-
-    public async Task<OperationResult> UpdateOrderItemCommentAsync(
-        Guid receivingOrderId,
-        int lineNumber,
-        string? comment,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var result = await StageUpdateItemCommentAsync(
-            dbContext,
-            receivingOrderId,
-            lineNumber,
-            comment,
-            ct);
-        if (!result.IsSuccess)
-        {
-            return result;
-        }
-
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    internal async Task<OperationResult> StageUpdateItemCommentAsync(
-        ApplicationDbContext dbContext,
-        Guid orderId,
-        int lineNumber,
-        string? comment,
-        CancellationToken ct)
-    {
-        var order = await LoadOrderAsync(dbContext, orderId, ct);
-        if (order is null)
-        {
-            return OperationError.NotFound($"Приходный ордер '{orderId}' не найден.");
-        }
-
-        return order.UpdateItemComment(lineNumber, comment);
-    }
+    private Task<OperationResult<Guid>> ExecuteItemActionAsync(
+        string commandType, Guid orderId, CommandContext context, string requestHash,
+        Func<ReceivingOrder, OperationResult> action, CancellationToken ct) =>
+        commandExecutor.ExecuteAsync(commandType, context.RequestId, requestHash, context.UserId,
+            async (dbContext, token) =>
+            {
+                var order = await LoadOrderAsync(dbContext, orderId, token);
+                if (order is null)
+                    return OperationError.NotFound($"Приходный ордер '{orderId}' не найден.");
+                var result = action(order);
+                return result.IsSuccess ? orderId : result.Error!;
+            }, ct);
 
     private static async Task<OperationResult> SetReceivingLocationAsync(
         ApplicationDbContext dbContext,

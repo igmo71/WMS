@@ -10,6 +10,8 @@ None.
 
 ## Frozen
 
+- [Unified receiving facts](2026-09-10-unified-receiving-facts/spec.md)
+  — Shared facts and line comments implemented on 2026-09-10.
 - [Unified inventory count commands](2026-09-10-unified-count-commands/spec.md)
   — Shared start, facts, posting and draft deletion implemented on 2026-09-10.
 - [Unified inventory transfer commands](2026-09-10-unified-transfer-commands/spec.md)

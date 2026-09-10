@@ -32,7 +32,7 @@ try
     var source = new Source();
     var sink = new Sink();
     var executor = new CommandExecutor(factory);
-    var service = new ReceivingOrderCommandService(factory, executor,
+    var service = new ReceivingOrderCommandService(executor,
         new InventoryPostingService(NullLogger<InventoryPostingService>.Instance),
         new ReceivingOrderSynchronizationService(factory, source, NullLogger<ReceivingOrderSynchronizationService>.Instance),
         sink, NullLogger<ReceivingOrderCommandService>.Instance);

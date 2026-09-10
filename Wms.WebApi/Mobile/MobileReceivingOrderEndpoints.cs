@@ -217,7 +217,7 @@ internal static class MobileReceivingOrderEndpoints
         int lineNumber,
         MobileReceivingOrderCommandRequest request,
         ClaimsPrincipal principal,
-        MobileReceivingOrderCommandService commandService,
+        ReceivingOrderCommandService commandService,
         MobileReceivingOrderQueryService queryService,
         CancellationToken ct)
     {
@@ -228,10 +228,8 @@ internal static class MobileReceivingOrderEndpoints
         }
 
         var result = await commandService.IncrementItemFactAsync(
-            orderId,
-            lineNumber,
-            request.ClientRequestId,
-            userId,
+            new IncrementReceivingFactCommand(orderId, lineNumber),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(
             result,
@@ -246,7 +244,7 @@ internal static class MobileReceivingOrderEndpoints
         int lineNumber,
         MobileSetReceivingOrderLineQuantityRequest request,
         ClaimsPrincipal principal,
-        MobileReceivingOrderCommandService commandService,
+        ReceivingOrderCommandService commandService,
         MobileReceivingOrderQueryService queryService,
         CancellationToken ct)
     {
@@ -257,11 +255,8 @@ internal static class MobileReceivingOrderEndpoints
         }
 
         var result = await commandService.SetItemFactQuantityAsync(
-            orderId,
-            lineNumber,
-            request.Quantity,
-            request.ClientRequestId,
-            userId,
+            new SetReceivingFactCommand(orderId, lineNumber, request.Quantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(
             result,

@@ -131,8 +131,14 @@ Web retains the request id and original receiving command together during the
 Interactive Server component lifetime. Uncertain failures retain the attempt;
 success and definitive rejection release it. Pending attempts do not survive
 page reload or component recreation. Shared execution for receiving start and
-completion is accepted; fact entry and putaway retain their existing execution
-paths pending separately scoped migration.
+completion is accepted. Fact increment, absolute quantity and line comment edits
+also use the shared executor. Quantity changes in both clients preserve the
+persisted comment; comment edits preserve the nullable fact. Facts/comments and
+order revision commit with the receipt without 1C calls or inventory posting.
+Original Mobile fact hashes remain compatible. Web snapshots each line edit for
+explicit retry and blocks other edits, completion, location selection and
+synchronization acknowledgement while an attempt is active or pending. Putaway
+retains its existing execution path pending separately scoped migration.
 
 ### Picking and shipping
 
@@ -283,8 +289,8 @@ business/client `4xx` releases it. Stable Mobile error codes are
 `command_failed`.
 
 Receipts are shared application persistence (`CommandReceipts`), also used by
-Web receiving start/completion, shipping transitions, transfers and inventory
-counts. Mobile V1 retains the
+Web receiving start/completion and line edits, shipping transitions, transfers
+and inventory counts. Mobile V1 retains the
 `ClientRequestId` transport name. The receipt schema rename preserves existing
 keys, command types, hashes,
 and result ids, so previously completed Mobile attempts remain replayable.

@@ -5,6 +5,18 @@
 
 <PageTitle>Приёмка приходного ордера</PageTitle>
 
+@if (_pendingItem is { } pending)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-3">
+        Операция «@pending.Label» ожидает подтверждения результата.
+        <MudButton OnClick="RetryItemAsync" Disabled="@_isSavingItem" Color="Color.Primary">Повторить</MudButton>
+    </MudAlert>
+}
+@if (_completeFailed)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-3">@_errorMessage</MudAlert>
+}
+
 @if (_isLoading)
 {
     <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -21,7 +33,7 @@ else
             <MudSpacer />
             <MudButton Color="Color.Primary"
                        Variant="Variant.Filled"
-                       Disabled="@(_isCompleting || (_pendingCompletion is null && (_receivingLocation is null || _order.UnconfirmedItemCount > 0 || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
+                       Disabled="@(_isSavingItem || _pendingItem is not null || _isAcknowledgingSynchronization || _isCompleting || (_pendingCompletion is null && (_receivingLocation is null || _order.UnconfirmedItemCount > 0 || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                        StartIcon="@Icons.Material.Filled.Check"
                        OnClick="SetReceivedAsync">
                 @(_pendingCompletion is null ? "Завершить" : "Повторить завершение")
@@ -37,10 +49,6 @@ else
             <MudText Typo="Typo.caption">Отправляется запрос в 1С…</MudText>
         }
 
-        @if (_completeFailed)
-        {
-            <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
-        }
 
         @if (!string.IsNullOrWhiteSpace(_synchronizationErrorMessage))
         {
@@ -48,7 +56,7 @@ else
         }
 
         <OrderSynchronizationPanel Assessment="_synchronizationAssessment"
-                                   IsAcknowledging="_isAcknowledgingSynchronization"
+                                   IsAcknowledging="InputsLocked"
                                    OnAcknowledge="AcknowledgeSynchronizationAsync"
                                    AcknowledgedBy="@GetUserName(_order.SynchronizationAcknowledgedBy)"
                                    AcknowledgedAtUtc="_order.SynchronizationAcknowledgedAtUtc" />
@@ -84,7 +92,7 @@ else
                                      ValueChanged="OnReceivingZoneChanged"
                                      SearchFunc="SearchReceivingZonesAsync"
                                      ToStringFunc="zone => zone?.Name ?? string.Empty"
-                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving || _isCompleting || _pendingCompletion is not null)"
+                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving || InputsLocked)"
                                      Variant="Variant.Text"
                                      Dense="true"
                                      Clearable="true" />
@@ -96,7 +104,7 @@ else
                                      ValueChanged="OnReceivingLocationChanged"
                                      SearchFunc="SearchReceivingLocationsAsync"
                                      ToStringFunc="StorageLocationDisplay.Format"
-                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving || _receivingZone is null || _isCompleting || _pendingCompletion is not null)"
+                                     Disabled="@(_order.Status != ReceivingOrderStatus.InReceiving || _receivingZone is null || InputsLocked)"
                                      Variant="Variant.Text"
                                      Dense="true"
                                      Clearable="true" />
@@ -131,6 +139,7 @@ else
                     <CellTemplate>
                         <MudNumericField T="decimal?"
                                          Value="context.Item.FactQuantity"
+                                         Disabled="@InputsLocked"
                                          ValueChanged="value => UpdateFactQuantityAsync(context.Item, value)"
                                          Placeholder="Не проверено"
                                          Variant="Variant.Text"
@@ -145,6 +154,7 @@ else
                     <CellTemplate>
                         <MudTextField T="string"
                                       Value="context.Item.Comment"
+                                      Disabled="@InputsLocked"
                                       ValueChanged="value => UpdateCommentAsync(context.Item, value)"
                                       Variant="Variant.Text" />
                     </CellTemplate>
