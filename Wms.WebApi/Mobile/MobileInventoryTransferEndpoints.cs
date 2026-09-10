@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Wms.Application.Commands;
 using Wms.Application.Inventory.Transfers;
 using Wms.Application.StockKeepingUnits;
 using Wms.Application.Warehouses;
@@ -115,7 +116,7 @@ internal static class MobileInventoryTransferEndpoints
     private static async Task<IResult> CreateTransferAsync(
         MobileCreateInventoryTransferRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryTransferCommandService commandService,
+        InventoryTransferCommandService commandService,
         InventoryTransferQueryService queryService,
         CancellationToken ct)
     {
@@ -125,11 +126,9 @@ internal static class MobileInventoryTransferEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await commandService.CreateDraftAsync(
-            request.WarehouseId,
-            request.TransitStorageLocationId,
-            request.ClientRequestId,
-            userId,
+        var result = await commandService.CreateAsync(
+            new CreateInventoryTransferCommand(request.WarehouseId, request.TransitStorageLocationId),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         if (!result.IsSuccess)
         {
@@ -334,7 +333,7 @@ internal static class MobileInventoryTransferEndpoints
         Guid transferId,
         MobileMoveDirectInventoryTransferRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryTransferCommandService commandService,
+        InventoryTransferCommandService commandService,
         InventoryTransferQueryService queryService,
         CancellationToken ct)
     {
@@ -345,13 +344,9 @@ internal static class MobileInventoryTransferEndpoints
         }
 
         var result = await commandService.MoveDirectAsync(
-            transferId,
-            request.SourceStorageLocationId,
-            request.DestinationStorageLocationId,
-            request.StockKeepingUnitId,
-            request.Quantity,
-            request.ClientRequestId,
-            userId,
+            new MoveDirectInventoryTransferCommand(transferId, request.SourceStorageLocationId,
+                request.DestinationStorageLocationId, request.StockKeepingUnitId, request.Quantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         if (!result.IsSuccess)
         {
@@ -390,7 +385,7 @@ internal static class MobileInventoryTransferEndpoints
         Guid transferId,
         MobilePickToTransitRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryTransferCommandService commandService,
+        InventoryTransferCommandService commandService,
         InventoryTransferQueryService queryService,
         CancellationToken ct)
     {
@@ -400,13 +395,10 @@ internal static class MobileInventoryTransferEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await commandService.PickToTransitAsync(
-            transferId,
-            request.SourceStorageLocationId,
-            request.StockKeepingUnitId,
-            request.Quantity,
-            request.ClientRequestId,
-            userId,
+        var result = await commandService.PickAsync(
+            new PickInventoryTransferCommand(transferId, request.SourceStorageLocationId,
+                request.StockKeepingUnitId, request.Quantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await TransitMovementResultAsync(result, transferId, queryService, ct);
     }
@@ -415,7 +407,7 @@ internal static class MobileInventoryTransferEndpoints
         Guid transferId,
         MobilePutFromTransitRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryTransferCommandService commandService,
+        InventoryTransferCommandService commandService,
         InventoryTransferQueryService queryService,
         CancellationToken ct)
     {
@@ -425,13 +417,10 @@ internal static class MobileInventoryTransferEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await commandService.PutFromTransitAsync(
-            transferId,
-            request.DestinationStorageLocationId,
-            request.StockKeepingUnitId,
-            request.Quantity,
-            request.ClientRequestId,
-            userId,
+        var result = await commandService.PutAsync(
+            new PutInventoryTransferCommand(transferId, request.DestinationStorageLocationId,
+                request.StockKeepingUnitId, request.Quantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await TransitMovementResultAsync(result, transferId, queryService, ct);
     }
@@ -470,7 +459,7 @@ internal static class MobileInventoryTransferEndpoints
         Guid transferId,
         MobileCompleteInventoryTransferRequest request,
         ClaimsPrincipal principal,
-        MobileInventoryTransferCommandService commandService,
+        InventoryTransferCommandService commandService,
         InventoryTransferQueryService queryService,
         CancellationToken ct)
     {
@@ -482,8 +471,7 @@ internal static class MobileInventoryTransferEndpoints
 
         var result = await commandService.CompleteAsync(
             transferId,
-            request.ClientRequestId,
-            userId,
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         if (!result.IsSuccess)
         {

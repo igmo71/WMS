@@ -15,7 +15,7 @@
             <MudTooltip Text="@CompleteTooltip">
                 <MudButton Color="Color.Success"
                            Variant="Variant.Filled"
-                           Disabled="@(!CanComplete || _isSaving)"
+                           Disabled="@(!CanComplete || InputsLocked)"
                            StartIcon="@Icons.Material.Filled.Check"
                            OnClick="CompleteAsync">
                     Завершить
@@ -26,7 +26,7 @@
         {
             <MudButton Color="Color.Error"
                        Variant="Variant.Outlined"
-                       Disabled="@_isSaving"
+                       Disabled="@InputsLocked"
                        StartIcon="@Icons.Material.Filled.DeleteOutline"
                        OnClick="DeleteAsync">
                 Удалить
@@ -36,6 +36,14 @@
             К списку
         </MudButton>
     </MudStack>
+
+    @if (_pendingOperation is { } pending)
+    {
+        <MudAlert Severity="Severity.Info">
+            Операция «@pending.Label» ожидает подтверждения результата.
+            <MudButton OnClick="RetryAsync" Disabled="@_isSaving" Color="Color.Primary">Повторить</MudButton>
+        </MudAlert>
+    }
 
     @if (_operationFailed)
     {
@@ -63,7 +71,7 @@
                                      Label="Склад"
                                      Clearable="true"
                                      Margin="Margin.Dense"
-                                     Disabled="@IsStarted"
+                                     Disabled="@(IsStarted || InputsLocked)"
                                      Required="true" />
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
@@ -74,7 +82,7 @@
                                      Label="Тележка"
                                      Clearable="true"
                                      Margin="Margin.Dense"
-                                     Disabled="@(IsStarted || _warehouse is null)" />
+                                     Disabled="@(IsStarted || _warehouse is null || InputsLocked)" />
                     @if (!IsStarted && _noAvailableTransitStorageLocations)
                     {
                         <MudText Typo="Typo.caption" Color="Color.Warning">Свободных пустых тележек нет.</MudText>
@@ -87,7 +95,7 @@
                         <MudText>Новый</MudText>
                         <MudButton Color="Color.Primary"
                                    Variant="Variant.Filled"
-                                   Disabled="@(_warehouse is null || _isSaving)"
+                                   Disabled="@(_warehouse is null || InputsLocked)"
                                    StartIcon="@Icons.Material.Filled.PlayArrow"
                                    Size="Size.Small"
                                    OnClick="StartAsync">
@@ -129,9 +137,9 @@
                                                      Label="Из ячейки"
                                                      Clearable="true"
                                                      Margin="Margin.Dense"
-                                                     Disabled="@(!CanUseTransit || _isSaving)" />
+                                                     Disabled="@(!CanUseTransit || InputsLocked)" />
                                     <MudSelect T="Guid?" @bind-Value="_pickSkuId" Label="Номенклатура"
-                                               Disabled="@(!CanUseTransit || _isSaving || _pickSource is null)" Clearable="true" Margin="Margin.Dense">
+                                               Disabled="@(!CanUseTransit || InputsLocked || _pickSource is null)" Clearable="true" Margin="Margin.Dense">
                                         @foreach (var balance in _pickSourceBalances)
                                         {
                                             <MudSelectItem T="Guid?" Value="@((Guid?)balance.StockKeepingUnit.Id)">
@@ -141,10 +149,10 @@
                                         }
                                     </MudSelect>
                                     <MudNumericField T="decimal" @bind-Value="_pickQuantity" Label="Количество" Min="0" HideSpinButtons="true"
-                                                     Disabled="@(!CanUseTransit || _isSaving)" Margin="Margin.Dense" />
+                                                     Disabled="@(!CanUseTransit || InputsLocked)" Margin="Margin.Dense" />
                                     <MudText Typo="Typo.caption">Вес: @WeightDisplay.Format(GetPickWeightKg())</MudText>
                                     <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddShoppingCart"
-                                               Disabled="@(!CanPick || _isSaving)" OnClick="PickAsync">
+                                               Disabled="@(!CanPick || InputsLocked)" OnClick="PickAsync">
                                         Отобрать
                                     </MudButton>
                                 </MudStack>
@@ -156,7 +164,7 @@
                                 <MudText Typo="Typo.h6">Разместить с тележки</MudText>
                                 <MudStack Spacing="2" Class="mt-3">
                                     <MudSelect T="Guid?" @bind-Value="_putSkuId" Label="Номенклатура"
-                                               Disabled="@(!CanPutAnything || _isSaving)" Clearable="true" Margin="Margin.Dense">
+                                               Disabled="@(!CanPutAnything || InputsLocked)" Clearable="true" Margin="Margin.Dense">
                                         @foreach (var balance in _transitBalances)
                                         {
                                             <MudSelectItem T="Guid?" Value="@((Guid?)balance.StockKeepingUnit.Id)">
@@ -172,12 +180,12 @@
                                                      Label="В ячейку"
                                                      Clearable="true"
                                                      Margin="Margin.Dense"
-                                                     Disabled="@(!CanPutAnything || _isSaving)" />
+                                                     Disabled="@(!CanPutAnything || InputsLocked)" />
                                     <MudNumericField T="decimal" @bind-Value="_putQuantity" Label="Количество" Min="0" HideSpinButtons="true"
-                                                     Disabled="@(!CanPutAnything || _isSaving)" Margin="Margin.Dense" />
+                                                     Disabled="@(!CanPutAnything || InputsLocked)" Margin="Margin.Dense" />
                                     <MudText Typo="Typo.caption">Вес: @WeightDisplay.Format(GetPutWeightKg())</MudText>
                                     <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Unarchive"
-                                               Disabled="@(!CanPut || _isSaving)" OnClick="PutAsync">
+                                               Disabled="@(!CanPut || InputsLocked)" OnClick="PutAsync">
                                         Разместить
                                     </MudButton>
                                 </MudStack>
@@ -213,13 +221,13 @@
                                     <MudAutocomplete T="StorageLocation" Value="_directSource" ValueChanged="SetDirectSourceAsync" SearchFunc="SearchStorageLocationsAsync"
                                                    ToStringFunc="StorageLocationDisplay.Format" Label="Из ячейки"
                                                      Clearable="true" Margin="Margin.Dense"
-                                                     Disabled="@(!CanEdit || _isSaving)" />
+                                                     Disabled="@(!CanEdit || InputsLocked)" />
                                     <MudAutocomplete T="StorageLocation" @bind-Value="_directDestination" SearchFunc="SearchStorageLocationsAsync"
                                                    ToStringFunc="StorageLocationDisplay.Format" Label="В ячейку"
                                                      Clearable="true" Margin="Margin.Dense"
-                                                     Disabled="@(!CanEdit || _isSaving)" />
+                                                     Disabled="@(!CanEdit || InputsLocked)" />
                                     <MudSelect T="Guid?" @bind-Value="_directSkuId" Label="Номенклатура"
-                                               Disabled="@(!CanEdit || _isSaving || _directSource is null)" Clearable="true" Margin="Margin.Dense">
+                                               Disabled="@(!CanEdit || InputsLocked || _directSource is null)" Clearable="true" Margin="Margin.Dense">
                                         @foreach (var balance in _directSourceBalances)
                                         {
                                             <MudSelectItem T="Guid?" Value="@((Guid?)balance.StockKeepingUnit.Id)">
@@ -229,10 +237,10 @@
                                         }
                                     </MudSelect>
                                     <MudNumericField T="decimal" @bind-Value="_directQuantity" Label="Количество" Min="0" HideSpinButtons="true"
-                                                     Disabled="@(!CanEdit || _isSaving)" Margin="Margin.Dense" />
+                                                     Disabled="@(!CanEdit || InputsLocked)" Margin="Margin.Dense" />
                                     <MudText Typo="Typo.caption">Вес: @WeightDisplay.Format(GetDirectWeightKg())</MudText>
                                     <MudButton Color="Color.Info" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.SwapHoriz"
-                                               Disabled="@(!CanMoveDirect || _isSaving)" OnClick="MoveDirectAsync">
+                                               Disabled="@(!CanMoveDirect || InputsLocked)" OnClick="MoveDirectAsync">
                                         Переместить
                                     </MudButton>
                                 </MudStack>
@@ -252,13 +260,13 @@
                             <MudAutocomplete T="StorageLocation" Value="_directSource" ValueChanged="SetDirectSourceAsync" SearchFunc="SearchStorageLocationsAsync"
                                              ToStringFunc="StorageLocationDisplay.Format" Label="Из ячейки"
                                              Clearable="true" Margin="Margin.Dense"
-                                             Disabled="@(!CanEdit || _isSaving)" />
+                                             Disabled="@(!CanEdit || InputsLocked)" />
                             <MudAutocomplete T="StorageLocation" @bind-Value="_directDestination" SearchFunc="SearchStorageLocationsAsync"
                                              ToStringFunc="StorageLocationDisplay.Format" Label="В ячейку"
                                              Clearable="true" Margin="Margin.Dense"
-                                             Disabled="@(!CanEdit || _isSaving)" />
+                                             Disabled="@(!CanEdit || InputsLocked)" />
                             <MudSelect T="Guid?" @bind-Value="_directSkuId" Label="Номенклатура"
-                                       Disabled="@(!CanEdit || _isSaving || _directSource is null)" Clearable="true" Margin="Margin.Dense">
+                                       Disabled="@(!CanEdit || InputsLocked || _directSource is null)" Clearable="true" Margin="Margin.Dense">
                                 @foreach (var balance in _directSourceBalances)
                                 {
                                     <MudSelectItem T="Guid?" Value="@((Guid?)balance.StockKeepingUnit.Id)">
@@ -268,10 +276,10 @@
                                 }
                             </MudSelect>
                             <MudNumericField T="decimal" @bind-Value="_directQuantity" Label="Количество" Min="0" HideSpinButtons="true"
-                                             Disabled="@(!CanEdit || _isSaving)" Margin="Margin.Dense" />
+                                             Disabled="@(!CanEdit || InputsLocked)" Margin="Margin.Dense" />
                             <MudText Typo="Typo.caption">Вес: @WeightDisplay.Format(GetDirectWeightKg())</MudText>
                             <MudButton Color="Color.Info" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.SwapHoriz"
-                                       Disabled="@(!CanMoveDirect || _isSaving)" OnClick="MoveDirectAsync">
+                                       Disabled="@(!CanMoveDirect || InputsLocked)" OnClick="MoveDirectAsync">
                                 Переместить
                             </MudButton>
                         </MudStack>

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Wms.Application.Commands;
 using Wms.Application.Inventory.Transfers;
 using Wms.Application.StockKeepingUnits;
 using Wms.Application.StorageLocations;
@@ -45,6 +46,8 @@ public partial class Work
 
     private bool _isLoading = true;
     private bool _isSaving;
+    private PendingTransferOperation? _pendingOperation;
+    private bool InputsLocked => _isSaving || _pendingOperation is not null;
     private bool _operationFailed;
     private bool _noAvailableTransitStorageLocations;
     private string? _errorMessage;
@@ -73,6 +76,8 @@ public partial class Work
 
     protected override async Task OnParametersSetAsync()
     {
+        if (_pendingOperation is { } pending && pending.PageId != Id)
+            _pendingOperation = null;
         await ReloadAsync();
     }
 
@@ -190,112 +195,156 @@ public partial class Work
             : await InventoryTransferQueryService.GetStorageLocationBalancesAsync(location.Id);
     }
 
-    private async Task StartAsync()
+    private Task StartAsync()
     {
-        if (_warehouse is null)
-            return;
-
-        await RunAsync(async userId =>
-        {
-            var result = await InventoryTransferCommandService.CreateAsync(
-                _warehouse.Id, _transitStorageLocation?.Id, userId);
-            if (!result.IsSuccess || result.Value is null)
+        if (InputsLocked || _warehouse is null)
+            return Task.CompletedTask;
+        var command = new CreateInventoryTransferCommand(_warehouse.Id, _transitStorageLocation?.Id);
+        return RunAsync("Создать перемещение",
+            context => InventoryTransferCommandService.CreateAsync(command, context),
+            transferId =>
             {
-                SetError(result.Error?.Message ?? "Не удалось создать перемещение.");
-                return;
-            }
-
-            NavigationManager.NavigateTo($"inventory-transfers/{result.Value.Id}/work");
-        });
+                NavigationManager.NavigateTo($"inventory-transfers/{transferId}/work");
+                return Task.CompletedTask;
+            });
     }
 
-    private Task PickAsync() => RunAsync(async userId =>
+    private Task PickAsync()
     {
-        var result = await InventoryTransferCommandService.PickAsync(
-            _transfer!.Id, _pickSource!.Id, _pickSkuId!.Value, _pickQuantity, userId);
-        if (!result.IsSuccess)
-        {
-            SetError(result.Error?.Message ?? "Не удалось выполнить отбор.");
-            return;
-        }
-        _pickSkuId = null;
-        _pickSourceBalances = await InventoryTransferQueryService.GetStorageLocationBalancesAsync(_pickSource.Id);
-        _pickQuantity = 0;
-        await ReloadAsync();
-    });
-
-    private Task PutAsync() => RunAsync(async userId =>
-    {
-        var result = await InventoryTransferCommandService.PutAsync(
-            _transfer!.Id, _putDestination!.Id, _putSkuId!.Value, _putQuantity, userId);
-        if (!result.IsSuccess)
-        {
-            SetError(result.Error?.Message ?? "Не удалось выполнить размещение.");
-            return;
-        }
-        _putDestination = null;
-        _putQuantity = 0;
-        await ReloadAsync();
-    });
-
-    private Task MoveDirectAsync() => RunAsync(async userId =>
-    {
-        var result = await InventoryTransferCommandService.MoveDirectAsync(
-            _transfer!.Id, _directSource!.Id, _directDestination!.Id, _directSkuId!.Value, _directQuantity, userId);
-        if (!result.IsSuccess)
-        {
-            SetError(result.Error?.Message ?? "Не удалось выполнить прямое перемещение.");
-            return;
-        }
-        _directDestination = null;
-        _directSkuId = null;
-        _directSourceBalances = await InventoryTransferQueryService.GetStorageLocationBalancesAsync(_directSource.Id);
-        _directQuantity = 0;
-        await ReloadAsync();
-    });
-
-    private Task CompleteAsync() => RunAsync(async userId =>
-    {
-        var result = await InventoryTransferCommandService.CompleteAsync(_transfer!.Id, userId);
-        if (!result.IsSuccess)
-        {
-            SetError(result.Error?.Message ?? "Не удалось завершить перемещение.");
-            return;
-        }
-        NavigationManager.NavigateTo($"inventory-transfers/{_transfer.Id}");
-    });
-
-    private async Task DeleteAsync()
-    {
-        if (_transfer is null)
-            return;
-
-        await RunAsync(async _ =>
-        {
-            var result = await InventoryTransferCommandService.DeleteDraftAsync(_transfer.Id);
-            if (!result.IsSuccess)
+        if (InputsLocked || !CanPick)
+            return Task.CompletedTask;
+        var command = new PickInventoryTransferCommand(_transfer!.Id, _pickSource!.Id, _pickSkuId!.Value, _pickQuantity);
+        return RunAsync("Отобрать на тележку",
+            context => InventoryTransferCommandService.PickAsync(command, context),
+            async _ =>
             {
-                SetError(result.Error?.Message ?? "Не удалось удалить перемещение.");
-                return;
-            }
-            NavigationManager.NavigateTo("inventory-transfers");
-        }, requiresUser: false);
+                _pickSkuId = null;
+                _pickQuantity = 0;
+                _pickSourceBalances = await InventoryTransferQueryService.GetStorageLocationBalancesAsync(command.SourceStorageLocationId);
+                await ReloadAsync();
+            });
     }
 
-    private async Task RunAsync(Func<string, Task> action, bool requiresUser = true)
+    private Task PutAsync()
     {
+        if (InputsLocked || !CanPut)
+            return Task.CompletedTask;
+        var command = new PutInventoryTransferCommand(_transfer!.Id, _putDestination!.Id, _putSkuId!.Value, _putQuantity);
+        return RunAsync("Разместить с тележки",
+            context => InventoryTransferCommandService.PutAsync(command, context),
+            async _ =>
+            {
+                _putDestination = null;
+                _putQuantity = 0;
+                await ReloadAsync();
+            });
+    }
+
+    private Task MoveDirectAsync()
+    {
+        if (InputsLocked || !CanMoveDirect)
+            return Task.CompletedTask;
+        var command = new MoveDirectInventoryTransferCommand(_transfer!.Id, _directSource!.Id,
+            _directDestination!.Id, _directSkuId!.Value, _directQuantity);
+        return RunAsync("Выполнить прямое перемещение",
+            context => InventoryTransferCommandService.MoveDirectAsync(command, context),
+            async _ =>
+            {
+                _directDestination = null;
+                _directSkuId = null;
+                _directQuantity = 0;
+                _directSourceBalances = await InventoryTransferQueryService.GetStorageLocationBalancesAsync(command.SourceStorageLocationId);
+                await ReloadAsync();
+            });
+    }
+
+    private Task CompleteAsync()
+    {
+        if (InputsLocked || !CanComplete)
+            return Task.CompletedTask;
+        var transferId = _transfer!.Id;
+        return RunAsync("Завершить перемещение",
+            context => InventoryTransferCommandService.CompleteAsync(transferId, context),
+            completedId =>
+            {
+                NavigationManager.NavigateTo($"inventory-transfers/{completedId}");
+                return Task.CompletedTask;
+            });
+    }
+
+    private Task DeleteAsync()
+    {
+        if (InputsLocked || !CanDelete)
+            return Task.CompletedTask;
+        var transferId = _transfer!.Id;
+        return RunAsync("Удалить черновик",
+            context => InventoryTransferCommandService.DeleteDraftAsync(transferId, context),
+            _ =>
+            {
+                NavigationManager.NavigateTo("inventory-transfers");
+                return Task.CompletedTask;
+            });
+    }
+
+    private async Task RunAsync(
+        string label,
+        Func<CommandContext, Task<OperationResult<Guid>>> execute,
+        Func<Guid, Task> onSuccess)
+    {
+        if (InputsLocked)
+            return;
+        var pageId = Id;
         _isSaving = true;
         _operationFailed = false;
-
         try
         {
-            var userId = requiresUser ? await GetCurrentUserIdAsync() : string.Empty;
-            if (requiresUser && userId is null)
+            var userId = await GetCurrentUserIdAsync();
+            if (userId is null)
             {
                 SetError("Не удалось определить текущего пользователя.");
                 return;
             }
-            await action(userId ?? string.Empty);
+            if (Id != pageId)
+                return;
+            // Each delegate captures an immutable command (or transfer id), never editable fields.
+            _pendingOperation = new(pageId, label, new CommandContext(Guid.NewGuid(), userId), execute, onSuccess);
+        }
+        catch
+        {
+            SetError("Не удалось определить текущего пользователя.");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+        if (_pendingOperation is not null)
+            await RetryAsync();
+    }
+
+    private async Task RetryAsync()
+    {
+        if (_isSaving || _pendingOperation is not { } pending)
+            return;
+        _isSaving = true;
+        _operationFailed = false;
+        try
+        {
+            if (await GetCurrentUserIdAsync() != pending.Context.UserId)
+            {
+                SetError("Повторите операцию под пользователем, который её начал.");
+                return;
+            }
+            var result = await pending.Execute(pending.Context);
+            if (_pendingOperation != pending)
+                return;
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
+                _pendingOperation = null;
+            if (!result.IsSuccess)
+            {
+                SetError(result.Error?.Message ?? "Не удалось выполнить операцию перемещения.");
+                return;
+            }
+            await pending.OnSuccess(result.Value);
         }
         catch
         {
@@ -306,6 +355,13 @@ public partial class Work
             _isSaving = false;
         }
     }
+
+    private sealed record PendingTransferOperation(
+        Guid? PageId,
+        string Label,
+        CommandContext Context,
+        Func<CommandContext, Task<OperationResult<Guid>>> Execute,
+        Func<Guid, Task> OnSuccess);
 
     private async Task<string?> GetCurrentUserIdAsync()
     {

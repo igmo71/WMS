@@ -171,6 +171,15 @@ screen retains the draft; explicit deletion removes it and releases the lock.
 
 ### Intra-warehouse transfer
 
+WebApp and Mobile call the same InventoryTransferCommandService methods through
+CommandExecutor for creation, direct movement, pick, put and completion. Web
+draft deletion also uses this boundary. All state, movements, balances, turnover
+and the receipt commit together; these commands need no intermediate save.
+Existing Mobile command identifiers and invariant input hashes remain compatible.
+Web retains immutable inputs and the request id for an explicit retry after an
+uncertain result, with other mutations and inputs disabled until resolution. This
+recovery is limited to the current component lifetime.
+
 Direct, pick-to-transit, and put-from-transit movements post immediately. One
 transit location belongs exclusively to one active transfer and must be empty
 before completion. Posted movements and completed transfers are immutable; an

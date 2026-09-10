@@ -1,6 +1,7 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Wms.Application.Commands;
 using Wms.Application.Inventory.Movements;
-using Wms.Application.Persistence;
 using Wms.Application.StorageLocations;
 using Wms.Common;
 using Wms.Data;
@@ -10,32 +11,82 @@ using Wms.Domain.Enums;
 namespace Wms.Application.Inventory.Transfers;
 
 public class InventoryTransferCommandService(
-    IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    CommandExecutor commandExecutor,
     InventoryPostingService inventoryPostingService)
 {
-    public async Task<OperationResult<InventoryTransfer>> CreateAsync(
-        Guid warehouseId,
-        Guid? transitStorageLocationId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var transferResult = await StageCreateAsync(
-            dbContext,
-            warehouseId,
-            transitStorageLocationId,
-            userId,
+    // Persisted protocol identifiers and input hashes remain compatible with Mobile.
+    private const string CreateCommandType = "inventory-transfer.create-draft";
+    private const string DirectCommandType = "inventory-transfer.move-direct";
+    private const string PickCommandType = "inventory-transfer.pick-to-transit";
+    private const string PutCommandType = "inventory-transfer.put-from-transit";
+    private const string CompleteCommandType = "inventory-transfer.complete";
+    private const string DeleteCommandType = "inventory-transfer.delete-draft";
+
+    public Task<OperationResult<Guid>> CreateAsync(
+        CreateInventoryTransferCommand command, CommandContext context, CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            CreateCommandType, context.RequestId,
+            CommandExecutor.ComputeHash(command.TransitStorageLocationId is Guid transitId
+                ? $"{command.WarehouseId:N}|{transitId:N}" : command.WarehouseId.ToString("N")),
+            context.UserId,
+            (db, token) => CreateCoreAsync(db, command.WarehouseId, command.TransitStorageLocationId, context.UserId, token),
             ct);
-        if (!transferResult.IsSuccess)
-        {
-            return transferResult.Error!;
-        }
 
-        var saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-        return saveResult.IsSuccess ? transferResult.Value! : saveResult.Error!;
-    }
+    public Task<OperationResult<Guid>> MoveDirectAsync(
+        MoveDirectInventoryTransferCommand command, CommandContext context, CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            DirectCommandType, context.RequestId,
+            CommandExecutor.ComputeHash($"{command.TransferId:N}|{command.SourceStorageLocationId:N}|{command.DestinationStorageLocationId:N}|{command.StockKeepingUnitId:N}|{command.Quantity.ToString("G29", CultureInfo.InvariantCulture)}"),
+            context.UserId,
+            (db, token) => PostMovementAsync(db, command.TransferId, MovementMode.Direct,
+                command.SourceStorageLocationId, command.DestinationStorageLocationId,
+                command.StockKeepingUnitId, command.Quantity, context.UserId, token),
+            ct);
 
-    internal async Task<OperationResult<InventoryTransfer>> StageCreateAsync(
+    public Task<OperationResult<Guid>> PickAsync(
+        PickInventoryTransferCommand command, CommandContext context, CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            PickCommandType, context.RequestId,
+            CommandExecutor.ComputeHash($"{command.TransferId:N}|{command.SourceStorageLocationId:N}|{command.StockKeepingUnitId:N}|{command.Quantity.ToString("G29", CultureInfo.InvariantCulture)}"),
+            context.UserId,
+            (db, token) => PostMovementAsync(db, command.TransferId, MovementMode.Pick,
+                command.SourceStorageLocationId, null, command.StockKeepingUnitId, command.Quantity, context.UserId, token),
+            ct);
+
+    public Task<OperationResult<Guid>> PutAsync(
+        PutInventoryTransferCommand command, CommandContext context, CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            PutCommandType, context.RequestId,
+            CommandExecutor.ComputeHash($"{command.TransferId:N}|{command.DestinationStorageLocationId:N}|{command.StockKeepingUnitId:N}|{command.Quantity.ToString("G29", CultureInfo.InvariantCulture)}"),
+            context.UserId,
+            (db, token) => PostMovementAsync(db, command.TransferId, MovementMode.Put,
+                null, command.DestinationStorageLocationId, command.StockKeepingUnitId, command.Quantity, context.UserId, token),
+            ct);
+
+    public Task<OperationResult<Guid>> CompleteAsync(
+        Guid transferId, CommandContext context, CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            CompleteCommandType, context.RequestId, CommandExecutor.ComputeHash(transferId.ToString("N")),
+            context.UserId, (db, token) => CompleteCoreAsync(db, transferId, context.UserId, token), ct);
+
+    public Task<OperationResult<Guid>> DeleteDraftAsync(
+        Guid transferId, CommandContext context, CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            DeleteCommandType, context.RequestId, CommandExecutor.ComputeHash(transferId.ToString("N")),
+            context.UserId,
+            async (db, token) =>
+            {
+                var transfer = await db.InventoryTransfers.FirstOrDefaultAsync(x => x.Id == transferId, token);
+                if (transfer is null)
+                    return OperationError.NotFound($"Перемещение '{transferId}' не найдено.");
+                var deletionResult = transfer.ValidateDeletion();
+                if (!deletionResult.IsSuccess)
+                    return deletionResult.Error!;
+                db.InventoryTransfers.Remove(transfer);
+                return transferId;
+            }, ct);
+
+    private async Task<OperationResult<Guid>> CreateCoreAsync(
         ApplicationDbContext dbContext,
         Guid warehouseId,
         Guid? transitStorageLocationId,
@@ -68,154 +119,10 @@ public class InventoryTransferCommandService(
 
         var transfer = transferResult.Value!;
         dbContext.InventoryTransfers.Add(transfer);
-        return transfer;
+        return transfer.Id;
     }
 
-    public async Task<OperationResult> DeleteDraftAsync(Guid transferId, CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var transfer = await dbContext.InventoryTransfers.FirstOrDefaultAsync(x => x.Id == transferId, ct);
-        if (transfer is null)
-        {
-            return OperationError.NotFound($"Перемещение '{transferId}' не найдено.");
-        }
-
-        var deletionResult = transfer.ValidateDeletion();
-        if (!deletionResult.IsSuccess)
-        {
-            return deletionResult;
-        }
-
-        dbContext.InventoryTransfers.Remove(transfer);
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    public Task<OperationResult> PickAsync(
-        Guid transferId,
-        Guid sourceStorageLocationId,
-        Guid stockKeepingUnitId,
-        decimal quantity,
-        string userId,
-        CancellationToken ct = default) =>
-        PostMovementAsync(
-            transferId,
-            MovementMode.Pick,
-            sourceStorageLocationId,
-            null,
-            stockKeepingUnitId,
-            quantity,
-            userId,
-            ct);
-
-    public Task<OperationResult> PutAsync(
-        Guid transferId,
-        Guid destinationStorageLocationId,
-        Guid stockKeepingUnitId,
-        decimal quantity,
-        string userId,
-        CancellationToken ct = default) =>
-        PostMovementAsync(
-            transferId,
-            MovementMode.Put,
-            null,
-            destinationStorageLocationId,
-            stockKeepingUnitId,
-            quantity,
-            userId,
-            ct);
-
-    public Task<OperationResult> MoveDirectAsync(
-        Guid transferId,
-        Guid sourceStorageLocationId,
-        Guid destinationStorageLocationId,
-        Guid stockKeepingUnitId,
-        decimal quantity,
-        string userId,
-        CancellationToken ct = default) =>
-        PostMovementAsync(
-            transferId,
-            MovementMode.Direct,
-            sourceStorageLocationId,
-            destinationStorageLocationId,
-            stockKeepingUnitId,
-            quantity,
-            userId,
-            ct);
-
-    internal Task<OperationResult<InventoryMovement>> StageDirectMovementAsync(
-        ApplicationDbContext dbContext,
-        Guid transferId,
-        Guid sourceStorageLocationId,
-        Guid destinationStorageLocationId,
-        Guid stockKeepingUnitId,
-        decimal quantity,
-        string userId,
-        CancellationToken ct) =>
-        StageMovementAsync(
-            dbContext,
-            transferId,
-            MovementMode.Direct,
-            sourceStorageLocationId,
-            destinationStorageLocationId,
-            stockKeepingUnitId,
-            quantity,
-            userId,
-            ct);
-
-    internal Task<OperationResult<InventoryMovement>> StagePickMovementAsync(
-        ApplicationDbContext dbContext,
-        Guid transferId,
-        Guid sourceStorageLocationId,
-        Guid stockKeepingUnitId,
-        decimal quantity,
-        string userId,
-        CancellationToken ct) =>
-        StageMovementAsync(
-            dbContext,
-            transferId,
-            MovementMode.Pick,
-            sourceStorageLocationId,
-            null,
-            stockKeepingUnitId,
-            quantity,
-            userId,
-            ct);
-
-    internal Task<OperationResult<InventoryMovement>> StagePutMovementAsync(
-        ApplicationDbContext dbContext,
-        Guid transferId,
-        Guid destinationStorageLocationId,
-        Guid stockKeepingUnitId,
-        decimal quantity,
-        string userId,
-        CancellationToken ct) =>
-        StageMovementAsync(
-            dbContext,
-            transferId,
-            MovementMode.Put,
-            null,
-            destinationStorageLocationId,
-            stockKeepingUnitId,
-            quantity,
-            userId,
-            ct);
-
-    public async Task<OperationResult> CompleteAsync(
-        Guid transferId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var completionResult = await StageCompleteAsync(dbContext, transferId, userId, ct);
-        if (!completionResult.IsSuccess)
-        {
-            return completionResult.Error!;
-        }
-
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    internal async Task<OperationResult<InventoryTransfer>> StageCompleteAsync(
+    private async Task<OperationResult<Guid>> CompleteCoreAsync(
         ApplicationDbContext dbContext,
         Guid transferId,
         string userId,
@@ -243,39 +150,10 @@ public class InventoryTransferCommandService(
             return completionResult.Error!;
         }
 
-        return transfer;
+        return transfer.Id;
     }
 
-    private async Task<OperationResult> PostMovementAsync(
-        Guid transferId,
-        MovementMode mode,
-        Guid? enteredSourceStorageLocationId,
-        Guid? enteredDestinationStorageLocationId,
-        Guid stockKeepingUnitId,
-        decimal quantity,
-        string userId,
-        CancellationToken ct)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var movementResult = await StageMovementAsync(
-            dbContext,
-            transferId,
-            mode,
-            enteredSourceStorageLocationId,
-            enteredDestinationStorageLocationId,
-            stockKeepingUnitId,
-            quantity,
-            userId,
-            ct);
-        if (!movementResult.IsSuccess)
-        {
-            return movementResult.Error!;
-        }
-
-        return await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-    }
-
-    private async Task<OperationResult<InventoryMovement>> StageMovementAsync(
+    private async Task<OperationResult<Guid>> PostMovementAsync(
         ApplicationDbContext dbContext,
         Guid transferId,
         MovementMode mode,
@@ -363,7 +241,7 @@ public class InventoryTransferCommandService(
             return postingResult.Error!;
         }
 
-        return movement;
+        return movement.Id;
     }
 
     private static OperationResult<InventoryTransferRoute> CreateRoute(
