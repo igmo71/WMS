@@ -66,21 +66,24 @@ application ports use WMS terminology.
 Application services use `ApplicationDbContext` directly, and one operation
 normally has one explicit save boundary.
 
-Receiving start and completion enter the shared `CommandExecutor` from their
-public application methods. The executor owns receipt lookup/replay, winning
-receipt recovery after final-save races, and the atomic final save of business
+Receiving start/completion and shipping start-picking/complete-picking/ship enter
+the shared `CommandExecutor` from their public application methods. The executor
+owns receipt lookup/replay, winning receipt recovery after final-save races,
+and the atomic final save of business
 state plus receipt. Callers supply `CommandContext` with request and user ids.
 Persisted command types are stable strings, not CLR type names. Hashes use only
 deterministic semantic input; Mobile V1 hash compatibility is preserved.
 
-Receiving completion calls the explicitly named `PersistCompletionCheckpointAsync`
-inside orchestration after receipt lookup and before final effects. This is an
-independent synchronization commit and survives a failed final phase. Other
+Receiving completion calls `PersistCompletionCheckpointAsync`; shipping uses
+`PersistReadyForShipmentCheckpointAsync` and `PersistShippedCheckpointAsync`.
+These explicitly named operations run after receipt lookup and before final
+effects. Each is an independent synchronization commit and survives a failed
+final phase. Other
 intermediate saves require explicit documented application semantics. Business
 completion helpers do not save. SQL and 1C remain separate boundaries; receipt
 uniqueness does not prevent concurrent external calls before final persistence.
 
-Existing `Stage...Async` methods in features outside this pilot still mutate a
+Existing `Stage...Async` methods in features not yet migrated still mutate a
 caller-owned context without saving for Mobile receipt orchestration. They are
 not a required layer for new shared commands. Use business-named private helpers
 only where they clarify substantial logic; do not add a dispatcher or pipeline.

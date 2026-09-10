@@ -19,8 +19,8 @@ else
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h5">Расходный ордер №@_order.Number от @_order.Date.ToString("dd.MM.yyyy HH:mm")</MudText>
             <MudSpacer />
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_isCompleting || !CanCompletePicking)" StartIcon="@Icons.Material.Filled.Check" OnClick="SetReadyForShipmentAsync">
-                Готов к отгрузке
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))" StartIcon="@Icons.Material.Filled.Check" OnClick="SetReadyForShipmentAsync">
+                @(_pendingCompletion is null ? "Готов к отгрузке" : "Повторить завершение отбора")
             </MudButton>
             @if (CanRollback)
             {
@@ -28,7 +28,7 @@ else
                     <span>
                         <MudButton Color="Color.Error"
                                    Variant="Variant.Outlined"
-                                   Disabled="_isRollingBack"
+                                   Disabled="@(_isRollingBack || _isCompleting || _pendingCompletion is not null)"
                                    StartIcon="@Icons.Material.Filled.Undo"
                                    OnClick="ShowRollbackDialogAsync">
                             Откатить

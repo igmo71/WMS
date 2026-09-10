@@ -38,6 +38,16 @@ After the prerequisites, run one documented end-to-end rehearsal covering
 backup and restore, migration, authentication, all four Mobile workflows, 1C
 exchange, an interrupted command, and operator recovery.
 
+## Shared command execution
+
+The receiving start/completion pilot is accepted. Extend the shared application
+use case and CommandExecutor pattern in separately scoped changes to inventory
+transfers, inventory counts, and putaway/picking mutations. Receiving fact entry
+and Web shipping rollback also remain to be migrated. Shipping start-picking,
+complete-picking, and ship transitions now use the shared path. Preserve semantic
+retry inputs, receipt compatibility, and documented synchronization checkpoints
+throughout.
+
 ## Production maintenance
 
 - Upgrade the legacy SQL Server and then remove the weakened

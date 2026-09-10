@@ -1,12 +1,12 @@
 # Unified receiving commands
 
-Status: Active — pilot implemented; architectural review pending.
+Status: Frozen — pilot accepted by the user on 2026-09-10.
 
 ## Outcome and scope
 
 WebApp and Mobile execute StartReceiving and CompleteReceiving through the same
-public ReceivingOrderCommandService methods and CommandExecutor. The pilot stops
-for architectural evaluation before extending the pattern. Fact entry, comments,
+public ReceivingOrderCommandService methods and CommandExecutor. Architectural
+evaluation is complete; the shared execution approach is accepted. Fact entry, comments,
 putaway, shipping, transfers, and counts retain their existing use cases.
 
 ## Agreed contract
@@ -48,8 +48,8 @@ putaway, shipping, transfers, and counts retain their existing use cases.
 
 ## Open questions
 
-None blocking implementation. Evaluate resulting receiving code before accepting
-the pilot and extending the pattern to other features.
+None within the accepted pilot. Further feature migrations are separate scopes
+tracked in docs/ROADMAP.md.
 
 ## Pilot verification
 
@@ -66,5 +66,5 @@ the pilot and extending the pattern to other features.
   limited to the component lifetime as agreed.
 
 Lasting behavior is documented in docs/PROJECT_CONTEXT.md and docs/ARCHITECTURE.md.
-Keep this scope active until architectural evaluation; do not extend the pilot
-to other features automatically.
+This frozen specification records the accepted pilot. Future feature migrations
+require their own scope and do not extend this specification.

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
+using Wms.Application.Commands;
 using Wms.Application.ShippingOrders;
 using Wms.Application.StorageLocations;
 using Wms.Application.Users;
@@ -26,6 +27,10 @@ public partial class Details
     [Inject] private NavigationManager NavigationManager { get; set; } = null!;
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
+    private PendingShippingCommand<StartPickingCommand>? _pendingStart;
+    private PendingShippingCommand<Guid>? _pendingShipment;
+    private bool HasPendingTransition => _isStarting || _isShipping
+        || _pendingStart is not null || _pendingShipment is not null;
     private ShippingOrder? _order;
     private Zone? _shippingZone;
     private StorageLocation? _shippingLocation;
@@ -48,6 +53,10 @@ public partial class Details
 
     protected override async Task OnParametersSetAsync()
     {
+        if (_pendingStart is { } start && start.Input.OrderId != Id)
+            _pendingStart = null;
+        if (_pendingShipment is { } shipment && shipment.Input != Id)
+            _pendingShipment = null;
         await ReloadAsync(checkSynchronization: true);
     }
 
@@ -177,7 +186,8 @@ public partial class Details
 
     private async Task SetReadyForPickingAsync()
     {
-        if (_shippingLocation is not StorageLocation shippingLocation)
+        if (_isStarting || _isShipping || _isRollingBack || _pendingShipment is not null
+            || (_pendingStart is null && _shippingLocation is null))
             return;
 
         _isStarting = true;
@@ -193,10 +203,15 @@ public partial class Details
                 return;
             }
 
-            var result = await OrderCommandService.StartPickingAsync(
-                Id,
-                shippingLocation.Id,
-                userId);
+            if (_pendingStart is { } previous && previous.Context.UserId != userId)
+                _pendingStart = null;
+            if (_pendingStart is null && _shippingLocation is null)
+                return;
+            _pendingStart ??= new(new StartPickingCommand(Id, _shippingLocation!.Id),
+                new CommandContext(Guid.NewGuid(), userId));
+            var result = await OrderCommandService.StartPickingAsync(_pendingStart.Input, _pendingStart.Context);
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
+                _pendingStart = null;
             if (!result.IsSuccess)
             {
                 _startOrderFailed = true;
@@ -219,10 +234,12 @@ public partial class Details
 
     private async Task ShowRollbackDialogAsync()
     {
+        if (HasPendingTransition || _isRollingBack)
+            return;
         var dialog = await DialogService.ShowAsync<RollbackDialog>("Откатить расходный ордер");
         var dialogResult = await dialog.Result;
 
-        if (dialogResult is null || dialogResult.Canceled || dialogResult.Data is not string reason)
+        if (HasPendingTransition || dialogResult is null || dialogResult.Canceled || dialogResult.Data is not string reason)
             return;
 
         _isRollingBack = true;
@@ -261,6 +278,8 @@ public partial class Details
 
     private async Task SetShippedAsync()
     {
+        if (_isShipping || _isStarting || _isRollingBack || _pendingStart is not null)
+            return;
         _isShipping = true;
         _startOrderFailed = false;
 
@@ -274,7 +293,12 @@ public partial class Details
                 return;
             }
 
-            var result = await OrderCommandService.SetShippedAsync(Id, userId);
+            if (_pendingShipment is { } previous && previous.Context.UserId != userId)
+                _pendingShipment = null;
+            _pendingShipment ??= new(Id, new CommandContext(Guid.NewGuid(), userId));
+            var result = await OrderCommandService.SetShippedAsync(_pendingShipment.Input, _pendingShipment.Context);
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
+                _pendingShipment = null;
             if (!result.IsSuccess)
             {
                 _startOrderFailed = true;

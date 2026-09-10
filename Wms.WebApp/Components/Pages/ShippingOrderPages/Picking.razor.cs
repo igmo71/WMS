@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
+using Wms.Application.Commands;
 using Wms.Application.ShippingOrders;
 using Wms.Application.Users;
 using Wms.Common;
@@ -24,6 +25,7 @@ public partial class Picking
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
     [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
+    private PendingShippingCommand<Guid>? _pendingCompletion;
     private ShippingOrder? _order;
     private MudDataGrid<ShippingOrderItem> _orderItemsGrid = null!;
     private ShippingOrderItem? _selectedLine;
@@ -43,10 +45,11 @@ public partial class Picking
     private OrderSynchronizationAssessment? _synchronizationAssessment;
     private IReadOnlyDictionary<string, string> _userNames = new Dictionary<string, string>();
 
-    private bool IsPickingEditable => _order?.Status is ShippingOrderStatus.ReadyForPicking
+    private bool IsPickingEditable => !_isCompleting && _pendingCompletion is null
+        && (_order?.Status is ShippingOrderStatus.ReadyForPicking
         or ShippingOrderStatus.ReadyForVerification
         or ShippingOrderStatus.InVerification
-        or ShippingOrderStatus.Verified;
+        or ShippingOrderStatus.Verified);
 
     private bool CanRollback => _order?.Status is ShippingOrderStatus.ReadyForPicking
         or ShippingOrderStatus.ReadyForVerification
@@ -74,12 +77,14 @@ public partial class Picking
 
     private decimal MaximumPickingQuantity => Math.Min(SelectedSourceAvailableQuantity, RemainingPlanQuantity);
 
-    private bool CanSaveMovement => _selectedSourceLocation is not null
+    private bool CanSaveMovement => IsPickingEditable && _selectedSourceLocation is not null
         && _movementQuantity > 0
         && _movementQuantity <= MaximumPickingQuantity;
 
     protected override async Task OnParametersSetAsync()
     {
+        if (_pendingCompletion is { } pending && pending.Input != Id)
+            _pendingCompletion = null;
         _isLoading = true;
         OperationResult<OrderSynchronizationAssessment> synchronizationResult =
             await SynchronizationService.CheckAsync(Id);
@@ -193,6 +198,8 @@ public partial class Picking
 
     private void BeginEditing(InventoryMovement movement)
     {
+        if (!IsPickingEditable)
+            return;
         _editingMovement = movement;
         _selectedSourceLocation = movement.SourceStorageLocation;
         _movementQuantity = movement.Quantity;
@@ -221,7 +228,7 @@ public partial class Picking
 
     private async Task SaveMovementAsync()
     {
-        if (_selectedLine is null || _selectedSourceLocation is null)
+        if (!IsPickingEditable || _selectedLine is null || _selectedSourceLocation is null)
         {
             return;
         }
@@ -243,6 +250,8 @@ public partial class Picking
 
     private async Task DeleteMovementAsync(InventoryMovement movement)
     {
+        if (!IsPickingEditable)
+            return;
         _operationFailed = false;
         OperationResult result = await PickingCommandService.DeletePickingMovementAsync(movement.Id);
         if (!result.IsSuccess)
@@ -281,6 +290,8 @@ public partial class Picking
 
     private async Task SetReadyForShipmentAsync()
     {
+        if (_isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))
+            return;
         _isCompleting = true;
         _operationFailed = false;
 
@@ -293,7 +304,13 @@ public partial class Picking
                 return;
             }
 
-            OperationResult result = await OrderCommandService.SetReadyForShipmentAsync(Id, userId);
+            if (_pendingCompletion is { } previous && previous.Context.UserId != userId)
+                _pendingCompletion = null;
+            _pendingCompletion ??= new(Id, new CommandContext(Guid.NewGuid(), userId));
+            OperationResult result = await OrderCommandService.SetReadyForShipmentAsync(
+                _pendingCompletion.Input, _pendingCompletion.Context);
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
+                _pendingCompletion = null;
             if (!result.IsSuccess)
             {
                 if (result.Error?.Type == OperationErrorType.Conflict)
@@ -332,10 +349,13 @@ public partial class Picking
 
     private async Task ShowRollbackDialogAsync()
     {
+        if (_isCompleting || _pendingCompletion is not null || _isRollingBack)
+            return;
         IDialogReference dialog = await DialogService.ShowAsync<RollbackDialog>("Откатить расходный ордер");
         DialogResult? dialogResult = await dialog.Result;
 
-        if (dialogResult is null || dialogResult.Canceled || dialogResult.Data is not string reason)
+        if (_isCompleting || _pendingCompletion is not null
+            || dialogResult is null || dialogResult.Canceled || dialogResult.Data is not string reason)
         {
             return;
         }

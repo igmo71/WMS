@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Wms.Application.Commands;
 using Wms.Application.ShippingOrders;
 using Wms.Common;
 using Wms.Contracts.Mobile.V1;
@@ -156,7 +157,7 @@ internal static class MobileShippingOrderEndpoints
         MobileStartShippingOrderPickingRequest request,
         ClaimsPrincipal principal,
         MobileShippingOrderQueryService queryService,
-        MobileShippingOrderCommandService commandService,
+        ShippingOrderCommandService commandService,
         CancellationToken ct)
     {
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -165,11 +166,15 @@ internal static class MobileShippingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
+        if (!StorageLocation.TryParseBarcode(request.ShippingLocationBarcode, out var shippingLocationId))
+        {
+            return MobileEndpointResults.CommandProblem(
+                OperationError.Invalid("Некорректный QR-код ячейки."));
+        }
+
         var result = await commandService.StartPickingAsync(
-            orderId,
-            request.ShippingLocationBarcode,
-            request.ClientRequestId,
-            userId,
+            new StartPickingCommand(orderId, shippingLocationId),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(result, orderId, queryService, ct);
     }
@@ -239,7 +244,7 @@ internal static class MobileShippingOrderEndpoints
         MobileShippingOrderCommandRequest request,
         ClaimsPrincipal principal,
         MobileShippingOrderQueryService queryService,
-        MobileShippingOrderCommandService commandService,
+        ShippingOrderCommandService commandService,
         CancellationToken ct)
     {
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -248,10 +253,9 @@ internal static class MobileShippingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await commandService.CompletePickingAsync(
+        var result = await commandService.SetReadyForShipmentAsync(
             orderId,
-            request.ClientRequestId,
-            userId,
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(result, orderId, queryService, ct);
     }
@@ -261,7 +265,7 @@ internal static class MobileShippingOrderEndpoints
         MobileShippingOrderCommandRequest request,
         ClaimsPrincipal principal,
         MobileShippingOrderQueryService queryService,
-        MobileShippingOrderCommandService commandService,
+        ShippingOrderCommandService commandService,
         CancellationToken ct)
     {
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -270,10 +274,9 @@ internal static class MobileShippingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await commandService.ShipAsync(
+        var result = await commandService.SetShippedAsync(
             orderId,
-            request.ClientRequestId,
-            userId,
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(result, orderId, queryService, ct);
     }

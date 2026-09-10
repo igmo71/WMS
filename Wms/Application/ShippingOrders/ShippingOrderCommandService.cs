@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Wms.Application.Commands;
 using Wms.Application.Inventory.Movements;
 using Wms.Application.Persistence;
 using Wms.Common;
@@ -12,37 +13,40 @@ namespace Wms.Application.ShippingOrders;
 
 public class ShippingOrderCommandService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    CommandExecutor commandExecutor,
     InventoryPostingService inventoryPostingService,
     ShippingOrderSynchronizationService synchronizationService,
     IShippingOrderExecutionSink executionSink,
     ILogger<ShippingOrderCommandService> logger)
 {
-    public async Task<OperationResult> StartPickingAsync(
-        Guid orderId,
-        Guid shippingLocationId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        OperationResult result = await StageStartPickingAsync(
-            dbContext,
-            orderId,
-            shippingLocationId,
-            userId,
+    // Persisted protocol identifiers and hashes remain compatible with Mobile receipts.
+    private const string StartPickingCommandType = "shipping-order.start-picking";
+    private const string CompletePickingCommandType = "shipping-order.complete-picking";
+    private const string ShipCommandType = "shipping-order.ship";
+
+    public Task<OperationResult<Guid>> StartPickingAsync(
+        StartPickingCommand command,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            StartPickingCommandType,
+            context.RequestId,
+            CommandExecutor.ComputeHash($"{command.OrderId:N}|{command.ShippingLocationId:N}"),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await StartPickingCoreAsync(dbContext, command, context.UserId, token);
+                return result.IsSuccess ? command.OrderId : result.Error!;
+            },
             ct);
 
-        return result.IsSuccess
-            ? await ApplicationPersistence.SaveChangesAsync(dbContext, ct)
-            : result;
-    }
-
-    internal async Task<OperationResult> StageStartPickingAsync(
+    private async Task<OperationResult> StartPickingCoreAsync(
         ApplicationDbContext dbContext,
-        Guid orderId,
-        Guid shippingLocationId,
+        StartPickingCommand command,
         string userId,
         CancellationToken ct)
     {
+        var (orderId, shippingLocationId) = command;
         using IDisposable? scope = logger.BeginScope("ShippingOrder StartPicking {OrderId}", orderId);
         using Activity? activity = AppTracing.StartActivity("ShippingOrder.StartPicking", nameof(ShippingOrderCommandService));
 
@@ -59,7 +63,7 @@ public class ShippingOrderCommandService(
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
-        OperationResult locationResult = await StageSetShippingLocationAsync(
+        OperationResult locationResult = await SetShippingLocationAsync(
             dbContext,
             order,
             shippingLocationId,
@@ -69,14 +73,6 @@ public class ShippingOrderCommandService(
             return locationResult;
         }
 
-        return await StageSetReadyForPickingAsync(order, userId, ct);
-    }
-
-    private async Task<OperationResult> StageSetReadyForPickingAsync(
-        ShippingOrder order,
-        string userId,
-        CancellationToken ct)
-    {
         OperationResult transitionResult = order.SetReadyForPicking(DateTimeOffset.UtcNow, userId);
         if (!transitionResult.IsSuccess)
         {
@@ -95,21 +91,24 @@ public class ShippingOrderCommandService(
         return OperationResult.Success();
     }
 
-    public async Task<OperationResult> SetReadyForShipmentAsync(Guid orderId, string userId, CancellationToken ct = default)
-    {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        OperationResult result = await ExecuteReadyForShipmentWithSynchronizationCheckpointAsync(
-            dbContext,
-            orderId,
-            userId,
+    public Task<OperationResult<Guid>> SetReadyForShipmentAsync(
+        Guid orderId,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            CompletePickingCommandType,
+            context.RequestId,
+            CommandExecutor.ComputeHash(orderId.ToString("N")),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await CompletePickingWithCheckpointAsync(
+                    dbContext, orderId, context.UserId, token);
+                return result.IsSuccess ? orderId : result.Error!;
+            },
             ct);
 
-        return result.IsSuccess
-            ? await ApplicationPersistence.SaveChangesAsync(dbContext, ct)
-            : result;
-    }
-
-    internal async Task<OperationResult> ExecuteReadyForShipmentWithSynchronizationCheckpointAsync(
+    private async Task<OperationResult> CompletePickingWithCheckpointAsync(
         ApplicationDbContext dbContext,
         Guid orderId,
         string userId,
@@ -129,6 +128,7 @@ public class ShippingOrderCommandService(
             return OperationError.NotFound($"Расходный ордер '{orderId}' не найден.");
         }
 
+        // Independent checkpoint after receipt lookup and before final effects.
         OperationResult synchronizationResult = await synchronizationService.PersistReadyForShipmentCheckpointAsync(
             dbContext,
             existingOrder,
@@ -136,10 +136,10 @@ public class ShippingOrderCommandService(
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
-        return await StageSetReadyForShipmentAsync(dbContext, existingOrder, userId, ct);
+        return await CompletePickingCoreAsync(dbContext, existingOrder, userId, ct);
     }
 
-    private async Task<OperationResult> StageSetReadyForShipmentAsync(
+    private async Task<OperationResult> CompletePickingCoreAsync(
         ApplicationDbContext dbContext,
         ShippingOrder existingOrder,
         string userId,
@@ -211,21 +211,24 @@ public class ShippingOrderCommandService(
         return OperationResult.Success();
     }
 
-    public async Task<OperationResult> SetShippedAsync(Guid orderId, string userId, CancellationToken ct = default)
-    {
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        OperationResult result = await ExecuteShipmentWithSynchronizationCheckpointAsync(
-            dbContext,
-            orderId,
-            userId,
-            ct: ct);
+    public Task<OperationResult<Guid>> SetShippedAsync(
+        Guid orderId,
+        CommandContext context,
+        CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(
+            ShipCommandType,
+            context.RequestId,
+            CommandExecutor.ComputeHash(orderId.ToString("N")),
+            context.UserId,
+            async (dbContext, token) =>
+            {
+                var result = await ShipWithCheckpointAsync(
+                    dbContext, orderId, context.UserId, token);
+                return result.IsSuccess ? orderId : result.Error!;
+            },
+            ct);
 
-        return result.IsSuccess
-            ? await ApplicationPersistence.SaveChangesAsync(dbContext, ct)
-            : result;
-    }
-
-    internal async Task<OperationResult> ExecuteShipmentWithSynchronizationCheckpointAsync(
+    private async Task<OperationResult> ShipWithCheckpointAsync(
         ApplicationDbContext dbContext,
         Guid orderId,
         string userId,
@@ -245,6 +248,7 @@ public class ShippingOrderCommandService(
             return OperationError.NotFound($"Расходный ордер '{orderId}' не найден.");
         }
 
+        // Independent checkpoint after receipt lookup and before final effects.
         OperationResult synchronizationResult = await synchronizationService.PersistShippedCheckpointAsync(
             dbContext,
             existingOrder,
@@ -252,10 +256,10 @@ public class ShippingOrderCommandService(
         if (!synchronizationResult.IsSuccess)
             return synchronizationResult;
 
-        return await StageSetShippedAsync(dbContext, existingOrder, userId, ct);
+        return await ShipCoreAsync(dbContext, existingOrder, userId, ct);
     }
 
-    private async Task<OperationResult> StageSetShippedAsync(
+    private async Task<OperationResult> ShipCoreAsync(
         ApplicationDbContext dbContext,
         ShippingOrder existingOrder,
         string userId,
@@ -320,7 +324,7 @@ public class ShippingOrderCommandService(
                 "Работа с расходным ордером заблокирована из-за расхождений с 1С.")
         };
 
-    private static async Task<OperationResult> StageSetShippingLocationAsync(
+    private static async Task<OperationResult> SetShippingLocationAsync(
         ApplicationDbContext dbContext,
         ShippingOrder order,
         Guid shippingLocationId,

@@ -130,8 +130,9 @@ after receipt lookup. Hashes describe the original input, never resolved DB stat
 Web retains the request id and original receiving command together during the
 Interactive Server component lifetime. Uncertain failures retain the attempt;
 success and definitive rejection release it. Pending attempts do not survive
-page reload or component recreation. Fact entry and putaway are outside this
-receiving execution pilot.
+page reload or component recreation. Shared execution for receiving start and
+completion is accepted; fact entry and putaway retain their existing execution
+paths pending separately scoped migration.
 
 ### Picking and shipping
 
@@ -140,6 +141,17 @@ movements from ordinary storage. Source availability is only a hint; Mobile
 still requires the physical source scan. Completing picking reconciles the
 fresh 1C plan, updates its item table, and posts drafts. Final shipping posts the
 issue from the location already assigned to the order.
+
+Starting picking, completing picking, and final shipping use the same public
+application commands and CommandExecutor in WebApp and Mobile. Existing Mobile
+receipt types and hashes are preserved. Receipt lookup precedes order/location
+validation and external access; picking completion and shipment each persist
+their synchronization checkpoint before final effects and receipt are saved
+atomically. Successful replay does not repeat synchronization or target calls.
+Web retains each pending transition's original input and request id for the
+component lifetime, including uncertain retries. Local movement editing and
+rollback are unavailable while a transition is in flight or pending recovery.
+Picking movement mutations and Web rollback retain their existing execution paths.
 
 A shortage requires explicit operator acknowledgement. An unfinished cycle may
 be rolled back in WebApp: drafts are removed, posted work is offset by reverse
@@ -251,6 +263,7 @@ business/client `4xx` releases it. Stable Mobile error codes are
 `command_failed`.
 
 Receipts are shared application persistence (`CommandReceipts`), also used by
-Web receiving start/completion. Mobile V1 retains the `ClientRequestId` transport
-name. The receipt schema rename preserves existing keys, command types, hashes,
+Web receiving start/completion and shipping transitions. Mobile V1 retains the
+`ClientRequestId` transport name. The receipt schema rename preserves existing
+keys, command types, hashes,
 and result ids, so previously completed Mobile attempts remain replayable.

@@ -19,13 +19,13 @@ else
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h5">Расходный ордер №@_order.Number от @_order.Date.ToString("dd.MM.yyyy HH:mm")</MudText>
             <MudSpacer />
-            @if (_order.Status == ShippingOrderStatus.Prepared)
+            @if (_order.Status == ShippingOrderStatus.Prepared || _pendingStart is not null)
             {
                 <MudTooltip Text="Чтобы взять ордер в отбор, выберите зону и место отгрузки.">
                     <span>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_isStarting || _shippingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))"
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_isStarting || _isShipping || _isRollingBack || (_pendingStart is null && (_shippingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                                    StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="SetReadyForPickingAsync">
-                            Взять в отбор
+                            @(_pendingStart is null ? "Взять в отбор" : "Повторить начало отбора")
                         </MudButton>
                     </span>
                 </MudTooltip>
@@ -42,14 +42,14 @@ else
                     Отбор
                 </MudButton>
             }
-            else if (_order.Status == ShippingOrderStatus.ReadyForShipment)
+            else if (_order.Status == ShippingOrderStatus.ReadyForShipment || _pendingShipment is not null)
             {
                 <MudButton Color="Color.Primary"
                            Variant="Variant.Filled"
-                           Disabled="@(_isShipping || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))"
+                           Disabled="@(_isShipping || _isStarting || _isRollingBack || (_pendingShipment is null && (_synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                            StartIcon="@Icons.Material.Filled.LocalShipping"
                            OnClick="SetShippedAsync">
-                    Отгрузить
+                    @(_pendingShipment is null ? "Отгрузить" : "Повторить отгрузку")
                 </MudButton>
             }
             @if (CanRollback)
@@ -58,7 +58,7 @@ else
                     <span>
                         <MudButton Color="Color.Error"
                                    Variant="Variant.Outlined"
-                                   Disabled="_isRollingBack"
+                                   Disabled="@(_isRollingBack || HasPendingTransition)"
                                    StartIcon="@Icons.Material.Filled.Undo"
                                    OnClick="ShowRollbackDialogAsync">
                             Откатить
@@ -118,7 +118,7 @@ else
                     <MudText Typo="Typo.caption">Зона отгрузки</MudText>
                     @if (_order.Status == ShippingOrderStatus.Prepared)
                     {
-                        <MudAutocomplete T="Zone" Value="_shippingZone" ValueChanged="OnShippingZoneChanged" SearchFunc="SearchShippingZonesAsync"
+                        <MudAutocomplete T="Zone" Disabled="@(HasPendingTransition || _isRollingBack)" Value="_shippingZone" ValueChanged="OnShippingZoneChanged" SearchFunc="SearchShippingZonesAsync"
                                          ToStringFunc="zone => zone?.Name ?? string.Empty" Variant="Variant.Text" Dense="true" Clearable="true" Margin="Margin.Dense" />
                     }
                     else
@@ -131,7 +131,7 @@ else
                     @if (_order.Status == ShippingOrderStatus.Prepared)
                     {
                         <MudAutocomplete T="StorageLocation" Value="_shippingLocation" ValueChanged="OnShippingLocationChanged" SearchFunc="SearchShippingLocationsAsync"
-                                         ToStringFunc="StorageLocationDisplay.Format" Disabled="@(_shippingZone is null)"
+                                         ToStringFunc="StorageLocationDisplay.Format" Disabled="@(_shippingZone is null || HasPendingTransition || _isRollingBack)"
                                          Variant="Variant.Text" Dense="true" Clearable="true" Margin="Margin.Dense" />
                     }
                     else

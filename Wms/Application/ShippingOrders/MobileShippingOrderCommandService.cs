@@ -7,45 +7,10 @@ namespace Wms.Application.ShippingOrders;
 
 public sealed class MobileShippingOrderCommandService(
     CommandExecutor commandExecutor,
-    ShippingOrderCommandService shippingOrderCommandService,
     PickingCommandService pickingCommandService)
 {
-    private const string StartPickingCommand = "shipping-order.start-picking";
     private const string AddPickingMovementCommand = "shipping-order.add-picking-movement";
     private const string DeletePickingMovementCommand = "shipping-order.delete-picking-movement";
-    private const string CompletePickingCommand = "shipping-order.complete-picking";
-    private const string ShipCommand = "shipping-order.ship";
-
-    public Task<OperationResult<Guid>> StartPickingAsync(
-        Guid orderId,
-        string? shippingLocationBarcode,
-        Guid clientRequestId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        if (!StorageLocation.TryParseBarcode(shippingLocationBarcode, out var shippingLocationId))
-        {
-            return Task.FromResult<OperationResult<Guid>>(
-                OperationError.Invalid("Некорректный QR-код ячейки."));
-        }
-
-        return commandExecutor.ExecuteAsync(
-            StartPickingCommand,
-            clientRequestId,
-            Hash(orderId, shippingLocationId),
-            userId,
-            async (dbContext, token) =>
-            {
-                var result = await shippingOrderCommandService.StageStartPickingAsync(
-                    dbContext,
-                    orderId,
-                    shippingLocationId,
-                    userId,
-                    token);
-                return result.IsSuccess ? orderId : result.Error!;
-            },
-            ct);
-    }
 
     public Task<OperationResult<Guid>> AddPickingMovementAsync(
         Guid orderId,
@@ -103,58 +68,11 @@ public sealed class MobileShippingOrderCommandService(
             },
             ct);
 
-    public Task<OperationResult<Guid>> CompletePickingAsync(
-        Guid orderId,
-        Guid clientRequestId,
-        string userId,
-        CancellationToken ct = default) =>
-        commandExecutor.ExecuteAsync(
-            CompletePickingCommand,
-            clientRequestId,
-            Hash(orderId),
-            userId,
-            async (dbContext, token) =>
-            {
-                var result = await shippingOrderCommandService.ExecuteReadyForShipmentWithSynchronizationCheckpointAsync(
-                    dbContext,
-                    orderId,
-                    userId,
-                    token);
-                return result.IsSuccess ? orderId : result.Error!;
-            },
-            ct);
-
-    public Task<OperationResult<Guid>> ShipAsync(
-        Guid orderId,
-        Guid clientRequestId,
-        string userId,
-        CancellationToken ct = default)
-    {
-        return commandExecutor.ExecuteAsync(
-            ShipCommand,
-            clientRequestId,
-            Hash(orderId),
-            userId,
-            async (dbContext, token) =>
-            {
-                var result = await shippingOrderCommandService.ExecuteShipmentWithSynchronizationCheckpointAsync(
-                    dbContext,
-                    orderId,
-                    userId,
-                    token);
-                return result.IsSuccess ? orderId : result.Error!;
-            },
-            ct);
-    }
-
-    private static string Hash(Guid orderId) =>
-        CommandExecutor.ComputeHash(orderId.ToString("N"));
-
-    private static string Hash(Guid orderId, Guid shippingLocationId) =>
+    private static string Hash(Guid orderId, Guid movementId) =>
         CommandExecutor.ComputeHash(string.Join(
             '|',
             orderId.ToString("N"),
-            shippingLocationId.ToString("N")));
+            movementId.ToString("N")));
 
     private static string Hash(
         Guid orderId,

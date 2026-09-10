@@ -6,8 +6,14 @@ specifications unless a current task explicitly needs their rationale.
 
 ## Active
 
+None.
+
+## Frozen
+
+- [Unified shipping transitions](2026-09-10-unified-shipping-commands/spec.md)
+  — Shared start-picking, complete-picking, and ship implemented on 2026-09-10.
 - [Unified receiving commands](2026-09-10-unified-receiving-commands/spec.md)
-  — Receiving start/completion pilot implemented; architectural review pending.
+  — Receiving start/completion pilot accepted on 2026-09-10.
 
 ## Lifecycle
 
