@@ -176,7 +176,13 @@ for explicit uncertain retry during component lifetime. Other edits, completion,
 acknowledgement and rollback are blocked while pending. Concurrent deletion of an
 originally unposted picking movement is a shipping conflict, including when SQL
 reports the disappeared movement before the owning order's revision check.
-Web rollback retains its existing execution path.
+Web rollback also uses ShippingOrderCommandService and CommandExecutor. The
+original order/reason and request/user ids are retained for explicit retry without
+reopening the reason dialog. Other mutations are blocked while choosing a reason
+or awaiting a result. Receipt lookup precedes state validation; draft deletion,
+current-cycle compensation, audit reset and the receipt commit together without
+1C access or a synchronization checkpoint. Replay leaves later picking cycles
+untouched. The hash preserves the original reason; the audit stores it trimmed.
 
 A shortage requires explicit operator acknowledgement. An unfinished cycle may
 be rolled back in WebApp: drafts are removed, posted work is offset by reverse
@@ -309,7 +315,7 @@ business/client `4xx` releases it. Stable Mobile error codes are
 
 Receipts are shared application persistence (`CommandReceipts`), also used by
 Web receiving start/completion and line edits, putaway, picking movements,
-shipping transitions, transfers and inventory counts. Mobile V1 retains the
+shipping transitions and rollback, transfers and inventory counts. Mobile V1 retains the
 `ClientRequestId` transport name. The receipt schema rename preserves existing
 keys, command types, hashes,
 and result ids, so previously completed Mobile attempts remain replayable.

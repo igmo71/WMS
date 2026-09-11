@@ -5,6 +5,14 @@
 
 <PageTitle>Отбор расходного ордера</PageTitle>
 
+@if (_pendingRollback is { } rollback)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-3">
+        Откат ожидает подтверждения результата. Причина: @rollback.Input.Reason
+        <MudButton OnClick="RetryRollbackAsync" Disabled="@_isRollingBack" Color="Color.Primary">Повторить откат</MudButton>
+    </MudAlert>
+}
+
 @if (_pendingMovement is { } pending)
 {
     <MudAlert Severity="Severity.Info" Class="mb-3">
@@ -16,7 +24,6 @@
 {
     <MudAlert Severity="Severity.Error" Class="mb-3">@_errorMessage</MudAlert>
 }
-
 
 @if (_isLoading)
 {
@@ -32,7 +39,7 @@ else
         <MudStack Row="true" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h5">Расходный ордер №@_order.Number от @_order.Date.ToString("dd.MM.yyyy HH:mm")</MudText>
             <MudSpacer />
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_isSavingMovement || _pendingMovement is not null || _isAcknowledgingSynchronization || _isChoosingRollback || _isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))" StartIcon="@Icons.Material.Filled.Check" OnClick="SetReadyForShipmentAsync">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_pendingRollback is not null || _isSavingMovement || _pendingMovement is not null || _isAcknowledgingSynchronization || _isChoosingRollback || _isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))" StartIcon="@Icons.Material.Filled.Check" OnClick="SetReadyForShipmentAsync">
                 @(_pendingCompletion is null ? "Готов к отгрузке" : "Повторить завершение отбора")
             </MudButton>
             @if (CanRollback)

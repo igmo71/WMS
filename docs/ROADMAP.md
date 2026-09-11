@@ -38,16 +38,6 @@ After the prerequisites, run one documented end-to-end rehearsal covering
 backup and restore, migration, authentication, all four Mobile workflows, 1C
 exchange, an interrupted command, and operator recovery.
 
-## Shared command execution
-
-The receiving start/completion pilot is accepted. Web shipping rollback is the
-remaining migration to the shared application use case and CommandExecutor
-pattern, in its own scope.
-
-Receiving facts/comments, putaway, picking movements, shipping transitions,
-transfers and inventory counts now use the shared path. Preserve semantic retry
-inputs, receipt compatibility and documented synchronization checkpoints throughout.
-
 ## Production maintenance
 
 - Upgrade the legacy SQL Server and then remove the weakened

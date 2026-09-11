@@ -1,9 +1,9 @@
+using System.Text.Json;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Wms.Application.Commands;
 using Wms.Application.Inventory.Movements;
-using Wms.Application.Persistence;
 using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
@@ -12,7 +12,6 @@ using Wms.Domain.Enums;
 namespace Wms.Application.ShippingOrders;
 
 public class ShippingOrderCommandService(
-    IDbContextFactory<ApplicationDbContext> dbContextFactory,
     CommandExecutor commandExecutor,
     InventoryPostingService inventoryPostingService,
     ShippingOrderSynchronizationService synchronizationService,
@@ -343,16 +342,23 @@ public class ShippingOrderCommandService(
         return order.SetShippingLocation(shippingLocationId);
     }
 
-    public async Task<OperationResult> RollbackAsync(
-        Guid orderId,
-        string reason,
-        string userId,
-        CancellationToken ct = default)
+    private const string RollbackCommandType = "shipping-order.rollback";
+
+    public Task<OperationResult<Guid>> RollbackAsync(
+        RollbackShippingOrderCommand command, CommandContext context, CancellationToken ct = default) =>
+        commandExecutor.ExecuteAsync(RollbackCommandType, context.RequestId,
+            CommandExecutor.ComputeHash($"{command.OrderId:N}|{JsonSerializer.Serialize(command.Reason)}"), context.UserId,
+            async (db, token) =>
+            {
+                var result = await RollbackCoreAsync(db, command.OrderId, command.Reason, context.UserId, token);
+                return result.IsSuccess ? command.OrderId : result.Error!;
+            }, ct);
+
+    private async Task<OperationResult> RollbackCoreAsync(
+        ApplicationDbContext dbContext, Guid orderId, string reason, string userId, CancellationToken ct)
     {
         using IDisposable? scope = logger.BeginScope("ShippingOrder Rollback {OrderId}", orderId);
         using Activity? activity = AppTracing.StartActivity("ShippingOrder.Rollback", nameof(ShippingOrderCommandService));
-
-        await using ApplicationDbContext dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         ShippingOrder? order = await dbContext.ShippingOrders
             .Include(x => x.Items)
@@ -416,13 +422,6 @@ public class ShippingOrderCommandService(
             }
         }
 
-        var saveResult = await ApplicationPersistence.SaveChangesAsync(dbContext, ct);
-        if (!saveResult.IsSuccess)
-        {
-            return saveResult;
-        }
-
-        logger.LogInformation("Операция расходного ордера отменена пользователем {UserId}. Причина: {Reason}", userId, reason.Trim());
         return OperationResult.Success();
     }
 

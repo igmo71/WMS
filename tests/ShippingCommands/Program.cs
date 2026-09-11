@@ -29,7 +29,7 @@ try
     await setup.Database.MigrateAsync();
     var source = new Source();
     var sink = new Sink(source);
-    var commandService = new ShippingOrderCommandService(factory, new CommandExecutor(factory),
+    var commandService = new ShippingOrderCommandService(new CommandExecutor(factory),
         new InventoryPostingService(NullLogger<InventoryPostingService>.Instance),
         new ShippingOrderSynchronizationService(factory, source, NullLogger<ShippingOrderSynchronizationService>.Instance),
         sink, NullLogger<ShippingOrderCommandService>.Instance);

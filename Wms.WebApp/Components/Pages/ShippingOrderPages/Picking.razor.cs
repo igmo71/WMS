@@ -26,10 +26,11 @@ public partial class Picking
     [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
     private PendingShippingCommand<Guid>? _pendingCompletion;
+    private PendingShippingCommand<RollbackShippingOrderCommand>? _pendingRollback;
     private PendingPickingOperation? _pendingMovement;
     private bool _isSavingMovement;
     private bool _isChoosingRollback;
-    private bool InputsLocked => _isSavingMovement || _pendingMovement is not null || _isCompleting
+    private bool InputsLocked => _pendingRollback is not null || _isSavingMovement || _pendingMovement is not null || _isCompleting
         || _pendingCompletion is not null || _isRollingBack || _isChoosingRollback || _isAcknowledgingSynchronization;
     private ShippingOrder? _order;
     private MudDataGrid<ShippingOrderItem> _orderItemsGrid = null!;
@@ -92,6 +93,8 @@ public partial class Picking
             _pendingCompletion = null;
         if (_pendingMovement is { } movement && movement.OrderId != Id)
             _pendingMovement = null;
+        if (_pendingRollback is { } rollback && rollback.Input.OrderId != Id)
+            _pendingRollback = null;
         _isLoading = true;
         OperationResult<OrderSynchronizationAssessment> synchronizationResult =
             await SynchronizationService.CheckAsync(Id);
@@ -326,7 +329,7 @@ public partial class Picking
 
     private async Task SetReadyForShipmentAsync()
     {
-        if (_isSavingMovement || _pendingMovement is not null || _isAcknowledgingSynchronization || _isChoosingRollback || _isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))
+        if (_pendingRollback is not null || _isSavingMovement || _pendingMovement is not null || _isAcknowledgingSynchronization || _isChoosingRollback || _isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))
             return;
         var orderId = Id;
         _isCompleting = true;
@@ -391,52 +394,54 @@ public partial class Picking
 
     private async Task ShowRollbackDialogAsync()
     {
-        if (InputsLocked) return;
+        if (InputsLocked || !CanRollback) return;
         var orderId = Id;
         _isChoosingRollback = true;
         DialogResult? dialogResult;
         try
         {
-            IDialogReference dialog = await DialogService.ShowAsync<RollbackDialog>("Откатить расходный ордер");
+            var dialog = await DialogService.ShowAsync<RollbackDialog>("Откатить расходный ордер");
             dialogResult = await dialog.Result;
         }
         finally { _isChoosingRollback = false; }
-
-        if (InputsLocked || Id != orderId
-            || dialogResult is null || dialogResult.Canceled || dialogResult.Data is not string reason)
-        {
+        if (InputsLocked || Id != orderId || dialogResult is null || dialogResult.Canceled || dialogResult.Data is not string reason)
             return;
-        }
-
+        var command = new RollbackShippingOrderCommand(orderId, reason);
         _isRollingBack = true;
         _operationFailed = false;
-
         try
         {
-            string? userId = await GetCurrentUserIdAsync();
-            if (userId is null)
+            var userId = await GetCurrentUserIdAsync();
+            if (userId is null) { SetError("Не удалось определить текущего пользователя."); return; }
+            if (Id != orderId) return;
+            _pendingRollback = new(command, new CommandContext(Guid.NewGuid(), userId));
+        }
+        catch { SetError("Не удалось определить текущего пользователя."); }
+        finally { _isRollingBack = false; }
+        if (_pendingRollback is not null) await RetryRollbackAsync();
+    }
+
+    private async Task RetryRollbackAsync()
+    {
+        if (_isRollingBack || _pendingRollback is not { } pending) return;
+        _isRollingBack = true;
+        _operationFailed = false;
+        try
+        {
+            if (await GetCurrentUserIdAsync() != pending.Context.UserId)
             {
-                SetError("Не удалось определить текущего пользователя.");
+                SetError("Повторите операцию под пользователем, который её начал.");
                 return;
             }
-
-            OperationResult result = await OrderCommandService.RollbackAsync(orderId, reason, userId);
-            if (!result.IsSuccess)
-            {
-                SetError(result.Error?.Message ?? "Не удалось откатить расходный ордер.");
-                return;
-            }
-
+            if (_pendingRollback != pending) return;
+            var result = await OrderCommandService.RollbackAsync(pending.Input, pending.Context);
+            if (_pendingRollback != pending) return;
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure) _pendingRollback = null;
+            if (!result.IsSuccess) { SetError(result.Error?.Message ?? "Не удалось откатить расходный ордер."); return; }
             NavigationManager.NavigateTo("/shipping-orders");
         }
-        catch
-        {
-            SetError("Не удалось откатить расходный ордер.");
-        }
-        finally
-        {
-            _isRollingBack = false;
-        }
+        catch { SetError("Не удалось выполнить или обновить откат расходного ордера."); }
+        finally { _isRollingBack = false; }
     }
 
     private void SetError(string message)

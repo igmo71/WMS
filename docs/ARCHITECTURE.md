@@ -67,7 +67,7 @@ Application services use `ApplicationDbContext` directly, and one operation
 normally has one explicit save boundary.
 
 Receiving start/completion and fact/comment edits, all putaway commands,
-picking draft add/update/delete, shipping start-picking/complete-picking/ship,
+picking draft add/update/delete, shipping start-picking/complete-picking/ship/rollback,
 transfer creation/movements/completion/draft deletion, and all inventory-count
 mutations enter the shared `CommandExecutor` from their public application methods. The executor
 owns receipt lookup/replay, winning receipt recovery after final-save races,
@@ -85,10 +85,10 @@ intermediate saves require explicit documented application semantics. Business
 completion helpers do not save. SQL and 1C remain separate boundaries; receipt
 uniqueness does not prevent concurrent external calls before final persistence.
 
-Existing `Stage...Async` methods in features not yet migrated still mutate a
-caller-owned context without saving for Mobile receipt orchestration. They are
-not a required layer for new shared commands. Use business-named private helpers
-only where they clarify substantial logic; do not add a dispatcher or pipeline.
+Warehouse commands no longer expose staging methods for Mobile receipt
+orchestration. Use business-named private helpers only where they clarify
+substantial logic; do not add a dispatcher or pipeline. Administrative mutations
+and synchronization operations retain their own explicit save boundaries.
 
 Migrations are immutable after they may have reached a non-disposable database.
 Schema correction then requires a new migration. Replacing history is permitted

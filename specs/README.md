@@ -10,6 +10,9 @@ None.
 
 ## Frozen
 
+- [Unified shipping rollback](2026-09-11-unified-shipping-rollback/spec.md)
+  — Repeat-safe Web rollback implemented on 2026-09-11.
+
 - [Unified picking commands](2026-09-11-unified-picking-commands/spec.md)
   — Shared draft add/update/delete implemented on 2026-09-11.
 - [Unified putaway commands](2026-09-10-unified-putaway-commands/spec.md)

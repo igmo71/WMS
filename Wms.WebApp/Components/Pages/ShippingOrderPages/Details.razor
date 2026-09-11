@@ -5,6 +5,14 @@
 
 <PageTitle>Детали расходного ордера</PageTitle>
 
+@if (_pendingRollback is { } rollback)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-3">
+        Откат ожидает подтверждения результата. Причина: @rollback.Input.Reason
+        <MudButton OnClick="RetryRollbackAsync" Disabled="@_isRollingBack" Color="Color.Primary">Повторить откат</MudButton>
+    </MudAlert>
+}
+
 @if (_isLoading)
 {
     <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -23,7 +31,7 @@ else
             {
                 <MudTooltip Text="Чтобы взять ордер в отбор, выберите зону и место отгрузки.">
                     <span>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_isStarting || _isShipping || _isRollingBack || (_pendingStart is null && (_shippingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_isStarting || _isShipping || RollbackPending || _isAcknowledgingSynchronization || (_pendingStart is null && (_shippingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                                    StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="SetReadyForPickingAsync">
                             @(_pendingStart is null ? "Взять в отбор" : "Повторить начало отбора")
                         </MudButton>
@@ -46,7 +54,7 @@ else
             {
                 <MudButton Color="Color.Primary"
                            Variant="Variant.Filled"
-                           Disabled="@(_isShipping || _isStarting || _isRollingBack || (_pendingShipment is null && (_synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
+                           Disabled="@(_isShipping || _isStarting || RollbackPending || _isAcknowledgingSynchronization || (_pendingShipment is null && (_synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                            StartIcon="@Icons.Material.Filled.LocalShipping"
                            OnClick="SetShippedAsync">
                     @(_pendingShipment is null ? "Отгрузить" : "Повторить отгрузку")
@@ -58,7 +66,7 @@ else
                     <span>
                         <MudButton Color="Color.Error"
                                    Variant="Variant.Outlined"
-                                   Disabled="@(_isRollingBack || HasPendingTransition)"
+                                   Disabled="@InputsLocked"
                                    StartIcon="@Icons.Material.Filled.Undo"
                                    OnClick="ShowRollbackDialogAsync">
                             Откатить
@@ -86,7 +94,7 @@ else
         }
 
         <OrderSynchronizationPanel Assessment="_synchronizationAssessment"
-                                   IsAcknowledging="_isAcknowledgingSynchronization"
+                                   IsAcknowledging="InputsLocked"
                                    OnAcknowledge="AcknowledgeSynchronizationAsync"
                                    AcknowledgedBy="@GetUserName(_order.SynchronizationAcknowledgedBy)"
                                    AcknowledgedAtUtc="_order.SynchronizationAcknowledgedAtUtc" />
@@ -118,7 +126,7 @@ else
                     <MudText Typo="Typo.caption">Зона отгрузки</MudText>
                     @if (_order.Status == ShippingOrderStatus.Prepared)
                     {
-                        <MudAutocomplete T="Zone" Disabled="@(HasPendingTransition || _isRollingBack)" Value="_shippingZone" ValueChanged="OnShippingZoneChanged" SearchFunc="SearchShippingZonesAsync"
+                        <MudAutocomplete T="Zone" Disabled="@InputsLocked" Value="_shippingZone" ValueChanged="OnShippingZoneChanged" SearchFunc="SearchShippingZonesAsync"
                                          ToStringFunc="zone => zone?.Name ?? string.Empty" Variant="Variant.Text" Dense="true" Clearable="true" Margin="Margin.Dense" />
                     }
                     else
@@ -131,7 +139,7 @@ else
                     @if (_order.Status == ShippingOrderStatus.Prepared)
                     {
                         <MudAutocomplete T="StorageLocation" Value="_shippingLocation" ValueChanged="OnShippingLocationChanged" SearchFunc="SearchShippingLocationsAsync"
-                                         ToStringFunc="StorageLocationDisplay.Format" Disabled="@(_shippingZone is null || HasPendingTransition || _isRollingBack)"
+                                         ToStringFunc="StorageLocationDisplay.Format" Disabled="@(_shippingZone is null || InputsLocked)"
                                          Variant="Variant.Text" Dense="true" Clearable="true" Margin="Margin.Dense" />
                     }
                     else
