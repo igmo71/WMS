@@ -40,6 +40,8 @@ public partial class Details
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
     private PendingReceivingCommand<StartReceivingCommand>? _pendingStart;
+    private (Guid OrderId, CommandContext Context)? _pendingPutaway;
+    private bool PutawayPending => _isStartingPutaway || _pendingPutaway is not null;
     private ReceivingOrder? _order;
     private Zone? _receivingZone;
     private StorageLocation? _receivingLocation;
@@ -57,6 +59,8 @@ public partial class Details
     {
         if (_pendingStart is { } pending && pending.Command.OrderId != Id)
             _pendingStart = null;
+        if (_pendingPutaway is { } putaway && putaway.OrderId != Id)
+            _pendingPutaway = null;
         _isLoading = true;
 
         OperationResult<OrderSynchronizationAssessment> synchronizationResult =
@@ -87,46 +91,49 @@ public partial class Details
 
     private async Task AcknowledgeSynchronizationAsync()
     {
-        if (_synchronizationAssessment is not { Level: OrderSynchronizationLevel.RequiresOperatorDecision } assessment)
+        if (PutawayPending || _synchronizationAssessment is not { Level: OrderSynchronizationLevel.RequiresOperatorDecision } assessment)
             return;
-
-        string? userId = await GetCurrentUserIdAsync();
-        if (userId is null)
-        {
-            _synchronizationErrorMessage = "Не удалось определить текущего пользователя.";
-            return;
-        }
 
         _isAcknowledgingSynchronization = true;
-        OperationResult result = await SynchronizationService.AcknowledgeAsync(
-            Id,
-            assessment.Fingerprint,
-            userId);
-        _isAcknowledgingSynchronization = false;
-        if (!result.IsSuccess)
+        try
         {
-            _synchronizationErrorMessage = result.Error?.Message
-                ?? "Не удалось подтвердить расхождения.";
-            if (result.Error?.Type == OperationErrorType.Conflict)
+            string? userId = await GetCurrentUserIdAsync();
+            if (userId is null)
             {
-                OperationResult<OrderSynchronizationAssessment> latestAssessment =
-                    await SynchronizationService.CheckAsync(Id);
-                if (latestAssessment.IsSuccess)
-                    _synchronizationAssessment = latestAssessment.Value;
-                _order = await OrderQueryService.GetOrderAsync(Id);
-                _receivingZone = _order?.ReceivingLocation?.Zone;
-                _receivingLocation = _order?.ReceivingLocation;
-                await LoadUserNamesAsync();
+                _synchronizationErrorMessage = "Не удалось определить текущего пользователя.";
+                return;
             }
-            return;
-        }
 
-        _synchronizationErrorMessage = null;
-        _synchronizationAssessment = new OrderSynchronizationAssessment(assessment.Fingerprint, []);
-        _order = await OrderQueryService.GetOrderAsync(Id);
-        _receivingZone = _order?.ReceivingLocation?.Zone;
-        _receivingLocation = _order?.ReceivingLocation;
-        await LoadUserNamesAsync();
+            OperationResult result = await SynchronizationService.AcknowledgeAsync(
+                Id,
+                assessment.Fingerprint,
+                userId);
+            if (!result.IsSuccess)
+            {
+                _synchronizationErrorMessage = result.Error?.Message
+                    ?? "Не удалось подтвердить расхождения.";
+                if (result.Error?.Type == OperationErrorType.Conflict)
+                {
+                    OperationResult<OrderSynchronizationAssessment> latestAssessment =
+                        await SynchronizationService.CheckAsync(Id);
+                    if (latestAssessment.IsSuccess)
+                        _synchronizationAssessment = latestAssessment.Value;
+                    _order = await OrderQueryService.GetOrderAsync(Id);
+                    _receivingZone = _order?.ReceivingLocation?.Zone;
+                    _receivingLocation = _order?.ReceivingLocation;
+                    await LoadUserNamesAsync();
+                }
+                return;
+            }
+
+            _synchronizationErrorMessage = null;
+            _synchronizationAssessment = new OrderSynchronizationAssessment(assessment.Fingerprint, []);
+            _order = await OrderQueryService.GetOrderAsync(Id);
+            _receivingZone = _order?.ReceivingLocation?.Zone;
+            _receivingLocation = _order?.ReceivingLocation;
+            await LoadUserNamesAsync();
+        }
+        finally { _isAcknowledgingSynchronization = false; }
     }
 
     private string GetUserName(string? userId) => string.IsNullOrWhiteSpace(userId)
@@ -186,7 +193,7 @@ public partial class Details
 
     private async Task SetInReceivingAsync()
     {
-        if (_isStarting || (_pendingStart is null && _receivingLocation is null))
+        if (PutawayPending || _isAcknowledgingSynchronization || _isStarting || (_pendingStart is null && _receivingLocation is null))
             return;
 
         _isStarting = true;
@@ -232,9 +239,11 @@ public partial class Details
 
     private async Task StartPutawayAsync()
     {
+        if (_isStartingPutaway || _isStarting || _pendingStart is not null || _isAcknowledgingSynchronization)
+            return;
+        var orderId = Id;
         _isStartingPutaway = true;
         _startOrderFailed = false;
-
         try
         {
             var userId = await GetCurrentUserIdAsync();
@@ -244,26 +253,32 @@ public partial class Details
                 _errorMessage = "Не удалось определить текущего пользователя.";
                 return;
             }
-
-            var result = await PutawayCommandService.StartAsync(Id, userId);
+            if (Id != orderId) return;
+            if (_pendingPutaway is { } previous && previous.Context.UserId != userId)
+            {
+                _startOrderFailed = true;
+                _errorMessage = "Повторите операцию под пользователем, который её начал.";
+                return;
+            }
+            _pendingPutaway ??= (orderId, new(Guid.NewGuid(), userId));
+            var pending = _pendingPutaway.Value;
+            var result = await PutawayCommandService.StartAsync(pending.OrderId, pending.Context);
+            if (_pendingPutaway != pending) return;
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure) _pendingPutaway = null;
             if (!result.IsSuccess)
             {
                 _startOrderFailed = true;
                 _errorMessage = result.Error?.Message ?? "Не удалось начать размещение.";
                 return;
             }
-
-            NavigationManager.NavigateTo($"receiving-orders/{Id}/putaway");
+            NavigationManager.NavigateTo($"receiving-orders/{result.Value}/putaway");
         }
         catch
         {
             _startOrderFailed = true;
             _errorMessage = "Не удалось начать размещение.";
         }
-        finally
-        {
-            _isStartingPutaway = false;
-        }
+        finally { _isStartingPutaway = false; }
     }
 
     private async Task<string?> GetCurrentUserIdAsync()

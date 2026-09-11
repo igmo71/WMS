@@ -137,8 +137,18 @@ persisted comment; comment edits preserve the nullable fact. Facts/comments and
 order revision commit with the receipt without 1C calls or inventory posting.
 Original Mobile fact hashes remain compatible. Web snapshots each line edit for
 explicit retry and blocks other edits, completion, location selection and
-synchronization acknowledgement while an attempt is active or pending. Putaway
-retains its existing execution path pending separately scoped migration.
+synchronization acknowledgement while an attempt is active or pending.
+
+Putaway start, draft add/update/delete and completion use the same
+PutawayCommandService and CommandExecutor in Web and Mobile. Receipt lookup
+precedes mutable checks; draft changes and order revision save with the receipt.
+Completion validates full allocation, routes, locks and current source stock,
+then confirms/posts all drafts and completes the order atomically with its receipt.
+No 1C call or synchronization checkpoint is involved. Web retains original
+movement inputs and request/user ids for explicit retries, disabling other
+mutations and editor selections while pending. Update/delete carry the expected
+order id. A draft edit racing its deletion is a business conflict even when SQL
+reports the missing movement before the order revision check.
 
 ### Picking and shipping
 
@@ -289,8 +299,8 @@ business/client `4xx` releases it. Stable Mobile error codes are
 `command_failed`.
 
 Receipts are shared application persistence (`CommandReceipts`), also used by
-Web receiving start/completion and line edits, shipping transitions, transfers
-and inventory counts. Mobile V1 retains the
+Web receiving start/completion and line edits, putaway, shipping transitions,
+transfers and inventory counts. Mobile V1 retains the
 `ClientRequestId` transport name. The receipt schema rename preserves existing
 keys, command types, hashes,
 and result ids, so previously completed Mobile attempts remain replayable.

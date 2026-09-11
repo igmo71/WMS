@@ -10,6 +10,8 @@ None.
 
 ## Frozen
 
+- [Unified putaway commands](2026-09-10-unified-putaway-commands/spec.md)
+  — Shared start, draft movements and completion implemented on 2026-09-11.
 - [Unified receiving facts](2026-09-10-unified-receiving-facts/spec.md)
   — Shared facts and line comments implemented on 2026-09-10.
 - [Unified inventory count commands](2026-09-10-unified-count-commands/spec.md)

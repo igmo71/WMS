@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Wms.Common;
 using Wms.Data;
 using Wms.Domain;
+using Wms.Domain.Enums;
 
 namespace Wms.Application.Persistence;
 
@@ -55,6 +56,21 @@ internal static class PersistenceConflictClassifier
             }
 
             if (concurrencyException.Entries.Any(x => x.Entity is ReceivingOrder))
+            {
+                error = ReceivingOrderConflict;
+                return true;
+            }
+
+            // A concurrent delete may be reported against the draft movement before
+            // SQL reaches the owning receiving order's operational revision check.
+            if (concurrencyException.Entries.Any(x =>
+                    x.Entity is InventoryMovement
+                    {
+                        RecorderType: RecorderType.ReceivingOrder,
+                        SourceStorageLocationId: not null,
+                        DestinationStorageLocationId: not null
+                    }
+                    && x.OriginalValues.GetValue<DateTimeOffset?>(nameof(InventoryMovement.PostedAtUtc)) is null))
             {
                 error = ReceivingOrderConflict;
                 return true;

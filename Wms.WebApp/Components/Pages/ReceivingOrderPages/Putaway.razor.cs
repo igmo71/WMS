@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
 using Wms.Application.ReceivingOrders;
+using Wms.Application.Commands;
+using Wms.Common;
 using Wms.Application.Users;
 using Wms.Domain;
 using Wms.Domain.Enums;
@@ -29,7 +31,9 @@ public partial class Putaway
     private StorageLocation? _selectedDestination;
     private decimal _movementQuantity;
     private bool _isLoading = true;
-    private bool _isCompleting;
+    private bool _isExecuting;
+    private PendingPutawayOperation? _pendingOperation;
+    private bool InputsLocked => _isExecuting || _pendingOperation is not null;
     private bool _operationFailed;
     private string? _errorMessage;
     private IReadOnlyDictionary<string, string> _userNames = new Dictionary<string, string>();
@@ -50,6 +54,8 @@ public partial class Putaway
 
     protected override async Task OnParametersSetAsync()
     {
+        if (_pendingOperation is { } pending && pending.OrderId != Id)
+            _pendingOperation = null;
         _isLoading = true;
         _order = await OrderQueryService.GetOrderAsync(Id);
         _userNames = _order is null
@@ -72,6 +78,7 @@ public partial class Putaway
 
     private async Task ToggleLineAsync(ReceivingOrderItem line)
     {
+        if (InputsLocked) return;
         if (_expandedLineNumber == line.LineNumber)
         {
             await _orderItemsGrid.ToggleHierarchyVisibilityAsync(line);
@@ -85,7 +92,7 @@ public partial class Putaway
         _operationFailed = false;
         _selectedLine = line;
         _expandedLineNumber = line.LineNumber;
-        CancelEditing();
+        ResetEditing();
         await _orderItemsGrid.ToggleHierarchyVisibilityAsync(line);
     }
 
@@ -93,17 +100,20 @@ public partial class Putaway
     {
         _selectedLine = null;
         _expandedLineNumber = null;
-        CancelEditing();
+        ResetEditing();
     }
 
     private void BeginEditing(InventoryMovement movement)
     {
+        if (InputsLocked) return;
         _editingMovement = movement;
         _selectedDestination = movement.DestinationStorageLocation;
         _movementQuantity = movement.Quantity;
     }
 
-    private void CancelEditing()
+    private void CancelEditing() { if (!InputsLocked) ResetEditing(); }
+
+    private void ResetEditing()
     {
         _editingMovement = null;
         _selectedDestination = null;
@@ -124,52 +134,52 @@ public partial class Putaway
     private static string FormatDestination(StorageLocation? location) =>
         StorageLocationDisplay.Format(location);
 
-    private async Task SaveMovementAsync()
+    private Task SaveMovementAsync()
     {
-        if (_selectedLine is null || _selectedDestination is null)
-            return;
-
-        _operationFailed = false;
-        var result = _editingMovement is null
-            ? await PutawayCommandService.AddMovementAsync(
-                Id, _selectedLine.LineNumber, _selectedDestination.Id, _movementQuantity)
-            : await PutawayCommandService.UpdateMovementAsync(
-                _editingMovement.Id, _selectedDestination.Id, _movementQuantity);
-
-        if (!result.IsSuccess)
+        if (InputsLocked || !IsEditable || !CanSaveMovement || _selectedLine is null || _selectedDestination is null)
+            return Task.CompletedTask;
+        if (_editingMovement is null)
         {
-            SetError(result.Error?.Message ?? "Не удалось сохранить размещение.");
-            return;
+            var command = new AddPutawayMovementCommand(Id, _selectedLine.LineNumber, _selectedDestination.Id, _movementQuantity);
+            return RunAsync("Добавить размещение", context => PutawayCommandService.AddMovementAsync(command, context), RefreshMovementsAsync);
         }
-
-        CancelEditing();
-        await ReloadMovementsAsync();
+        var update = new UpdatePutawayMovementCommand(Id, _editingMovement.Id, _selectedDestination.Id, _movementQuantity);
+        return RunAsync("Изменить размещение", context => PutawayCommandService.UpdateMovementAsync(update, context), RefreshMovementsAsync);
     }
 
-    private async Task DeleteMovementAsync(InventoryMovement movement)
+    private Task DeleteMovementAsync(InventoryMovement movement)
     {
-        _operationFailed = false;
-        var result = await PutawayCommandService.DeleteMovementAsync(movement.Id);
-        if (!result.IsSuccess)
-        {
-            SetError(result.Error?.Message ?? "Не удалось удалить размещение.");
-            return;
-        }
-
-        if (_editingMovement?.Id == movement.Id)
-            CancelEditing();
-
-        await ReloadMovementsAsync();
+        if (InputsLocked || !IsEditable) return Task.CompletedTask;
+        var command = new DeletePutawayMovementCommand(Id, movement.Id);
+        return RunAsync("Удалить размещение", context => PutawayCommandService.DeleteMovementAsync(command, context), RefreshMovementsAsync);
     }
 
-    private async Task ReloadMovementsAsync() =>
-        _movements = await PutawayQueryService.GetMovementsAsync(Id);
-
-    private async Task CompleteAsync()
+    private async Task RefreshMovementsAsync()
     {
-        _isCompleting = true;
-        _operationFailed = false;
+        ResetEditing();
+        var orderId = Id;
+        var movements = await PutawayQueryService.GetMovementsAsync(orderId);
+        if (Id == orderId) _movements = movements;
+    }
 
+    private Task CompleteAsync()
+    {
+        if (InputsLocked || !IsEditable || !CanComplete) return Task.CompletedTask;
+        var orderId = Id;
+        return RunAsync("Завершить размещение", context => PutawayCommandService.CompleteAsync(orderId, context),
+            () =>
+            {
+                NavigationManager.NavigateTo($"receiving-orders/{orderId}");
+                return Task.CompletedTask;
+            });
+    }
+
+    private async Task RunAsync(string label, Func<CommandContext, Task<OperationResult<Guid>>> execute, Func<Task> onSuccess)
+    {
+        if (InputsLocked) return;
+        var orderId = Id;
+        _isExecuting = true;
+        _operationFailed = false;
         try
         {
             var userId = await GetCurrentUserIdAsync();
@@ -178,25 +188,43 @@ public partial class Putaway
                 SetError("Не удалось определить текущего пользователя.");
                 return;
             }
+            if (Id != orderId) return;
+            _pendingOperation = new(orderId, label, new(Guid.NewGuid(), userId), execute, onSuccess);
+        }
+        catch { SetError("Не удалось определить текущего пользователя."); }
+        finally { _isExecuting = false; }
+        if (_pendingOperation is not null) await RetryAsync();
+    }
 
-            var result = await PutawayCommandService.CompleteAsync(Id, userId);
-            if (!result.IsSuccess)
+    private async Task RetryAsync()
+    {
+        if (_isExecuting || _pendingOperation is not { } pending) return;
+        _isExecuting = true;
+        _operationFailed = false;
+        try
+        {
+            if (await GetCurrentUserIdAsync() != pending.Context.UserId)
             {
-                SetError(result.Error?.Message ?? "Не удалось завершить размещение.");
+                SetError("Повторите операцию под пользователем, который её начал.");
                 return;
             }
-
-            NavigationManager.NavigateTo($"receiving-orders/{Id}");
+            if (_pendingOperation != pending) return;
+            var result = await pending.Execute(pending.Context);
+            if (_pendingOperation != pending) return;
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure) _pendingOperation = null;
+            if (!result.IsSuccess)
+            {
+                SetError(result.Error?.Message ?? "Не удалось выполнить операцию размещения.");
+                return;
+            }
+            await pending.OnSuccess();
         }
-        catch
-        {
-            SetError("Не удалось завершить размещение.");
-        }
-        finally
-        {
-            _isCompleting = false;
-        }
+        catch { SetError("Не удалось выполнить или обновить операцию размещения."); }
+        finally { _isExecuting = false; }
     }
+
+    private sealed record PendingPutawayOperation(Guid OrderId, string Label, CommandContext Context,
+        Func<CommandContext, Task<OperationResult<Guid>>> Execute, Func<Task> OnSuccess);
 
     private decimal GetAllocatedQuantity(int lineNumber) =>
         _movements.Where(x => x.RecorderLineNumber == lineNumber).Sum(x => x.Quantity);

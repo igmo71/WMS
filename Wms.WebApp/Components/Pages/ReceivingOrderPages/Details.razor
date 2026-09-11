@@ -5,6 +5,15 @@
 
 <PageTitle>Детали приходного ордера</PageTitle>
 
+@if (_pendingPutaway is not null)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-3">
+        Начало размещения ожидает подтверждения результата.
+        <MudButton OnClick="StartPutawayAsync" Disabled="@_isStartingPutaway" Color="Color.Primary">Повторить</MudButton>
+    </MudAlert>
+}
+
+
 @if (_isLoading)
 {
     <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -25,7 +34,7 @@ else
                     <span>
                         <MudButton Color="Color.Primary"
                                    Variant="Variant.Filled"
-                                   Disabled="@(_isStarting || (_pendingStart is null && (_receivingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
+                                   Disabled="@(PutawayPending || _isStarting || (_pendingStart is null && (_receivingLocation is null || _synchronizationAssessment?.Level != OrderSynchronizationLevel.Synchronized || !string.IsNullOrWhiteSpace(_synchronizationErrorMessage))))"
                                    StartIcon="@Icons.Material.Filled.PlayArrow"
                                    OnClick="SetInReceivingAsync">
                             @(_pendingStart is null ? "Взять в работу" : "Повторить начало приёмки")
@@ -37,7 +46,7 @@ else
             {
                 <MudButton Color="Color.Primary"
                            Variant="Variant.Filled"
-                           Disabled="_isStartingPutaway"
+                           Disabled="@(PutawayPending || _isStarting || _pendingStart is not null || _isAcknowledgingSynchronization)"
                            StartIcon="@Icons.Material.Filled.PlayArrow"
                            OnClick="StartPutawayAsync">
                     Начать размещение
@@ -83,7 +92,7 @@ else
         }
 
         <OrderSynchronizationPanel Assessment="_synchronizationAssessment"
-                                   IsAcknowledging="_isAcknowledgingSynchronization"
+                                   IsAcknowledging="@(_isAcknowledgingSynchronization || PutawayPending)"
                                    OnAcknowledge="AcknowledgeSynchronizationAsync"
                                    AcknowledgedBy="@GetUserName(_order.SynchronizationAcknowledgedBy)"
                                    AcknowledgedAtUtc="_order.SynchronizationAcknowledgedAtUtc" />
@@ -110,7 +119,7 @@ else
                     @if (_order.Status == ReceivingOrderStatus.ReadyForReceiving)
                     {
                         <MudAutocomplete T="Zone"
-                                         Disabled="@(_isStarting || _pendingStart is not null)"
+                                         Disabled="@(PutawayPending || _isStarting || _pendingStart is not null)"
                                          Value="_receivingZone"
                                          ValueChanged="OnReceivingZoneChanged"
                                          SearchFunc="SearchReceivingZonesAsync"

@@ -288,14 +288,14 @@ internal static class MobileReceivingOrderEndpoints
         Guid orderId,
         MobileReceivingOrderCommandRequest request,
         ClaimsPrincipal principal,
-        MobileReceivingOrderCommandService commandService,
+        PutawayCommandService commandService,
         MobileReceivingOrderQueryService queryService,
         CancellationToken ct) =>
         ExecuteOrderCommandAsync(
             orderId,
             request.ClientRequestId,
             principal,
-            commandService.StartPutawayAsync,
+            (id, requestId, userId, token) => commandService.StartAsync(id, new CommandContext(requestId, userId), token),
             queryService,
             ct);
 
@@ -304,7 +304,7 @@ internal static class MobileReceivingOrderEndpoints
         MobileAddReceivingOrderPutawayMovementRequest request,
         ClaimsPrincipal principal,
         MobileReceivingOrderQueryService queryService,
-        MobileReceivingOrderCommandService commandService,
+        PutawayCommandService commandService,
         CancellationToken ct)
     {
         var userId = GetUserId(principal);
@@ -321,13 +321,9 @@ internal static class MobileReceivingOrderEndpoints
                 OperationError.Invalid("Некорректный QR-код ячейки."));
         }
 
-        var result = await commandService.AddPutawayMovementAsync(
-            orderId,
-            request.LineNumber,
-            destinationStorageLocationId,
-            request.Quantity,
-            request.ClientRequestId,
-            userId,
+        var result = await commandService.AddMovementAsync(
+            new AddPutawayMovementCommand(orderId, request.LineNumber, destinationStorageLocationId, request.Quantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(
             result,
@@ -342,7 +338,7 @@ internal static class MobileReceivingOrderEndpoints
         Guid movementId,
         MobileReceivingOrderCommandRequest request,
         ClaimsPrincipal principal,
-        MobileReceivingOrderCommandService commandService,
+        PutawayCommandService commandService,
         MobileReceivingOrderQueryService queryService,
         CancellationToken ct)
     {
@@ -352,11 +348,9 @@ internal static class MobileReceivingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
-        var result = await commandService.DeletePutawayMovementAsync(
-            orderId,
-            movementId,
-            request.ClientRequestId,
-            userId,
+        var result = await commandService.DeleteMovementAsync(
+            new DeletePutawayMovementCommand(orderId, movementId),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(
             result,
@@ -370,14 +364,14 @@ internal static class MobileReceivingOrderEndpoints
         Guid orderId,
         MobileReceivingOrderCommandRequest request,
         ClaimsPrincipal principal,
-        MobileReceivingOrderCommandService commandService,
+        PutawayCommandService commandService,
         MobileReceivingOrderQueryService queryService,
         CancellationToken ct) =>
         ExecuteOrderCommandAsync(
             orderId,
             request.ClientRequestId,
             principal,
-            commandService.CompletePutawayAsync,
+            (id, requestId, userId, token) => commandService.CompleteAsync(id, new CommandContext(requestId, userId), token),
             queryService,
             ct);
 
