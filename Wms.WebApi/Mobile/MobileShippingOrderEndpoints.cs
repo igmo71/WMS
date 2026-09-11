@@ -184,7 +184,7 @@ internal static class MobileShippingOrderEndpoints
         MobileAddShippingOrderPickingMovementRequest request,
         ClaimsPrincipal principal,
         MobileShippingOrderQueryService queryService,
-        MobileShippingOrderCommandService commandService,
+        PickingCommandService commandService,
         CancellationToken ct)
     {
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -193,13 +193,12 @@ internal static class MobileShippingOrderEndpoints
             return TypedResults.Unauthorized();
         }
 
+        if (!StorageLocation.TryParseBarcode(request.SourceStorageLocationBarcode, out var sourceStorageLocationId))
+            return MobileEndpointResults.CommandProblem(OperationError.Invalid("Некорректный QR-код ячейки."));
+
         var result = await commandService.AddPickingMovementAsync(
-            orderId,
-            request.LineNumber,
-            request.SourceStorageLocationBarcode,
-            request.Quantity,
-            request.ClientRequestId,
-            userId,
+            new AddPickingMovementCommand(orderId, request.LineNumber, sourceStorageLocationId, request.Quantity),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(
             result,
@@ -216,7 +215,7 @@ internal static class MobileShippingOrderEndpoints
         MobileShippingOrderCommandRequest request,
         ClaimsPrincipal principal,
         MobileShippingOrderQueryService queryService,
-        MobileShippingOrderCommandService commandService,
+        PickingCommandService commandService,
         CancellationToken ct)
     {
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -226,10 +225,8 @@ internal static class MobileShippingOrderEndpoints
         }
 
         var result = await commandService.DeletePickingMovementAsync(
-            orderId,
-            movementId,
-            request.ClientRequestId,
-            userId,
+            new DeletePickingMovementCommand(orderId, movementId),
+            new CommandContext(request.ClientRequestId, userId),
             ct);
         return await CommandResultAsync(
             result,

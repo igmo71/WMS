@@ -67,7 +67,7 @@ Application services use `ApplicationDbContext` directly, and one operation
 normally has one explicit save boundary.
 
 Receiving start/completion and fact/comment edits, all putaway commands,
-shipping start-picking/complete-picking/ship,
+picking draft add/update/delete, shipping start-picking/complete-picking/ship,
 transfer creation/movements/completion/draft deletion, and all inventory-count
 mutations enter the shared `CommandExecutor` from their public application methods. The executor
 owns receipt lookup/replay, winning receipt recovery after final-save races,

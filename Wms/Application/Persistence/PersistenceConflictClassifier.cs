@@ -76,6 +76,19 @@ internal static class PersistenceConflictClassifier
                 return true;
             }
 
+            if (concurrencyException.Entries.Any(x =>
+                    x.Entity is InventoryMovement
+                    {
+                        RecorderType: RecorderType.ShippingOrder,
+                        SourceStorageLocationId: not null,
+                        DestinationStorageLocationId: not null
+                    }
+                    && x.OriginalValues.GetValue<DateTimeOffset?>(nameof(InventoryMovement.PostedAtUtc)) is null))
+            {
+                error = ShippingOrderConflict;
+                return true;
+            }
+
             if (concurrencyException.Entries.Any(x => x.Entity is ShippingOrder))
             {
                 error = ShippingOrderConflict;

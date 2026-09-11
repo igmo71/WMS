@@ -26,6 +26,11 @@ public partial class Picking
     [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
     private PendingShippingCommand<Guid>? _pendingCompletion;
+    private PendingPickingOperation? _pendingMovement;
+    private bool _isSavingMovement;
+    private bool _isChoosingRollback;
+    private bool InputsLocked => _isSavingMovement || _pendingMovement is not null || _isCompleting
+        || _pendingCompletion is not null || _isRollingBack || _isChoosingRollback || _isAcknowledgingSynchronization;
     private ShippingOrder? _order;
     private MudDataGrid<ShippingOrderItem> _orderItemsGrid = null!;
     private ShippingOrderItem? _selectedLine;
@@ -45,7 +50,7 @@ public partial class Picking
     private OrderSynchronizationAssessment? _synchronizationAssessment;
     private IReadOnlyDictionary<string, string> _userNames = new Dictionary<string, string>();
 
-    private bool IsPickingEditable => !_isCompleting && _pendingCompletion is null
+    private bool IsPickingEditable => !InputsLocked
         && (_order?.Status is ShippingOrderStatus.ReadyForPicking
         or ShippingOrderStatus.ReadyForVerification
         or ShippingOrderStatus.InVerification
@@ -85,6 +90,8 @@ public partial class Picking
     {
         if (_pendingCompletion is { } pending && pending.Input != Id)
             _pendingCompletion = null;
+        if (_pendingMovement is { } movement && movement.OrderId != Id)
+            _pendingMovement = null;
         _isLoading = true;
         OperationResult<OrderSynchronizationAssessment> synchronizationResult =
             await SynchronizationService.CheckAsync(Id);
@@ -106,43 +113,46 @@ public partial class Picking
         _expandedLineNumber = null;
         _movements = [];
         _availableSourceLocations = [];
-        CancelEditing();
+        ResetEditing();
         _isLoading = false;
     }
 
     private async Task AcknowledgeSynchronizationAsync()
     {
-        if (_synchronizationAssessment is not { Level: OrderSynchronizationLevel.RequiresOperatorDecision } assessment)
+        if (InputsLocked || _synchronizationAssessment is not { Level: OrderSynchronizationLevel.RequiresOperatorDecision } assessment)
             return;
-
-        string? userId = await GetCurrentUserIdAsync();
-        if (userId is null)
-        {
-            _synchronizationErrorMessage = "Не удалось определить текущего пользователя.";
-            return;
-        }
 
         _isAcknowledgingSynchronization = true;
-        OperationResult result = await SynchronizationService.AcknowledgeAsync(
-            Id, assessment.Fingerprint, userId);
-        _isAcknowledgingSynchronization = false;
-        if (!result.IsSuccess)
+        try
         {
-            _synchronizationErrorMessage = result.Error?.Message
-                ?? "Не удалось подтвердить расхождения.";
-            if (result.Error?.Type == OperationErrorType.Conflict)
+            string? userId = await GetCurrentUserIdAsync();
+            if (userId is null)
             {
-                OperationResult<OrderSynchronizationAssessment> latest =
-                    await SynchronizationService.CheckAsync(Id);
-                if (latest.IsSuccess)
-                    _synchronizationAssessment = latest.Value;
+                _synchronizationErrorMessage = "Не удалось определить текущего пользователя.";
+                return;
             }
-            return;
-        }
 
-        _synchronizationErrorMessage = null;
-        _synchronizationAssessment = new OrderSynchronizationAssessment(assessment.Fingerprint, []);
-        _order = await OrderQueryService.GetOrderAsync(Id);
+            OperationResult result = await SynchronizationService.AcknowledgeAsync(
+                Id, assessment.Fingerprint, userId);
+            if (!result.IsSuccess)
+            {
+                _synchronizationErrorMessage = result.Error?.Message
+                    ?? "Не удалось подтвердить расхождения.";
+                if (result.Error?.Type == OperationErrorType.Conflict)
+                {
+                    OperationResult<OrderSynchronizationAssessment> latest =
+                        await SynchronizationService.CheckAsync(Id);
+                    if (latest.IsSuccess)
+                        _synchronizationAssessment = latest.Value;
+                }
+                return;
+            }
+
+            _synchronizationErrorMessage = null;
+            _synchronizationAssessment = new OrderSynchronizationAssessment(assessment.Fingerprint, []);
+            _order = await OrderQueryService.GetOrderAsync(Id);
+        }
+        finally { _isAcknowledgingSynchronization = false; }
     }
 
     private static string FormatDateTime(DateTime? value) =>
@@ -156,6 +166,7 @@ public partial class Picking
 
     private async Task ToggleLinePickingAsync(ShippingOrderItem line)
     {
+        if (InputsLocked) return;
         if (_expandedLineNumber == line.LineNumber)
         {
             await _orderItemsGrid.ToggleHierarchyVisibilityAsync(line);
@@ -171,7 +182,7 @@ public partial class Picking
         _operationFailed = false;
         _selectedLine = line;
         _expandedLineNumber = line.LineNumber;
-        CancelEditing();
+        ResetEditing();
         await LoadSelectedLineDataAsync();
         await _orderItemsGrid.ToggleHierarchyVisibilityAsync(line);
     }
@@ -182,7 +193,7 @@ public partial class Picking
         _expandedLineNumber = null;
         _movements = [];
         _availableSourceLocations = [];
-        CancelEditing();
+        ResetEditing();
     }
 
     private async Task LoadSelectedLineDataAsync()
@@ -219,54 +230,79 @@ public partial class Picking
 
     private static string FormatQuantity(decimal quantity) => quantity.ToString("0.###");
 
-    private void CancelEditing()
+    private void CancelEditing() { if (!InputsLocked) ResetEditing(); }
+
+    private void ResetEditing()
     {
         _editingMovement = null;
         _selectedSourceLocation = null;
         _movementQuantity = 0;
     }
 
-    private async Task SaveMovementAsync()
+    private Task SaveMovementAsync()
     {
-        if (!IsPickingEditable || _selectedLine is null || _selectedSourceLocation is null)
+        if (!CanSaveMovement || _selectedLine is null || _selectedSourceLocation is null)
+            return Task.CompletedTask;
+        if (_editingMovement is null)
         {
-            return;
+            var command = new AddPickingMovementCommand(Id, _selectedLine.LineNumber, _selectedSourceLocation.Id, _movementQuantity);
+            return RunMovementAsync("Добавить отбор", context => PickingCommandService.AddPickingMovementAsync(command, context));
         }
-
-        _operationFailed = false;
-        OperationResult result = _editingMovement is null
-            ? await PickingCommandService.AddPickingMovementAsync(Id, _selectedLine.LineNumber, _selectedSourceLocation.Id, _movementQuantity)
-            : await PickingCommandService.UpdatePickingMovementAsync(_editingMovement.Id, _selectedSourceLocation.Id, _movementQuantity);
-
-        if (!result.IsSuccess)
-        {
-            SetError(result.Error?.Message ?? "Не удалось сохранить отбор.");
-            return;
-        }
-
-        CancelEditing();
-        await ReloadSelectedLineDataAsync();
+        var update = new UpdatePickingMovementCommand(Id, _editingMovement.Id, _selectedSourceLocation.Id, _movementQuantity);
+        return RunMovementAsync("Изменить отбор", context => PickingCommandService.UpdatePickingMovementAsync(update, context));
     }
 
-    private async Task DeleteMovementAsync(InventoryMovement movement)
+    private Task DeleteMovementAsync(InventoryMovement movement)
     {
-        if (!IsPickingEditable)
-            return;
-        _operationFailed = false;
-        OperationResult result = await PickingCommandService.DeletePickingMovementAsync(movement.Id);
-        if (!result.IsSuccess)
-        {
-            SetError(result.Error?.Message ?? "Не удалось удалить отбор.");
-            return;
-        }
-
-        if (_editingMovement?.Id == movement.Id)
-        {
-            CancelEditing();
-        }
-
-        await ReloadSelectedLineDataAsync();
+        if (!IsPickingEditable) return Task.CompletedTask;
+        var command = new DeletePickingMovementCommand(Id, movement.Id);
+        return RunMovementAsync("Удалить отбор", context => PickingCommandService.DeletePickingMovementAsync(command, context));
     }
+
+    private async Task RunMovementAsync(string label, Func<CommandContext, Task<OperationResult<Guid>>> execute)
+    {
+        if (InputsLocked) return;
+        var orderId = Id;
+        _isSavingMovement = true;
+        _operationFailed = false;
+        try
+        {
+            var userId = await GetCurrentUserIdAsync();
+            if (userId is null) { SetError("Не удалось определить текущего пользователя."); return; }
+            if (Id != orderId) return;
+            _pendingMovement = new(orderId, label, new(Guid.NewGuid(), userId), execute);
+        }
+        catch { SetError("Не удалось определить текущего пользователя."); }
+        finally { _isSavingMovement = false; }
+        if (_pendingMovement is not null) await RetryMovementAsync();
+    }
+
+    private async Task RetryMovementAsync()
+    {
+        if (_isSavingMovement || _pendingMovement is not { } pending) return;
+        _isSavingMovement = true;
+        _operationFailed = false;
+        try
+        {
+            if (await GetCurrentUserIdAsync() != pending.Context.UserId)
+            {
+                SetError("Повторите операцию под пользователем, который её начал.");
+                return;
+            }
+            if (_pendingMovement != pending) return;
+            var result = await pending.Execute(pending.Context);
+            if (_pendingMovement != pending) return;
+            if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure) _pendingMovement = null;
+            if (!result.IsSuccess) { SetError(result.Error?.Message ?? "Не удалось сохранить отбор."); return; }
+            ResetEditing();
+            await ReloadSelectedLineDataAsync();
+        }
+        catch { SetError("Не удалось сохранить или обновить отбор."); }
+        finally { _isSavingMovement = false; }
+    }
+
+    private sealed record PendingPickingOperation(Guid OrderId, string Label, CommandContext Context,
+        Func<CommandContext, Task<OperationResult<Guid>>> Execute);
 
     private async Task ReloadSelectedLineDataAsync()
     {
@@ -290,8 +326,9 @@ public partial class Picking
 
     private async Task SetReadyForShipmentAsync()
     {
-        if (_isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))
+        if (_isSavingMovement || _pendingMovement is not null || _isAcknowledgingSynchronization || _isChoosingRollback || _isCompleting || _isRollingBack || (_pendingCompletion is null && !CanCompletePicking))
             return;
+        var orderId = Id;
         _isCompleting = true;
         _operationFailed = false;
 
@@ -304,11 +341,16 @@ public partial class Picking
                 return;
             }
 
+            if (Id != orderId) return;
             if (_pendingCompletion is { } previous && previous.Context.UserId != userId)
-                _pendingCompletion = null;
-            _pendingCompletion ??= new(Id, new CommandContext(Guid.NewGuid(), userId));
-            OperationResult result = await OrderCommandService.SetReadyForShipmentAsync(
-                _pendingCompletion.Input, _pendingCompletion.Context);
+            {
+                SetError("Повторите операцию под пользователем, который её начал.");
+                return;
+            }
+            _pendingCompletion ??= new(orderId, new CommandContext(Guid.NewGuid(), userId));
+            var pending = _pendingCompletion;
+            OperationResult result = await OrderCommandService.SetReadyForShipmentAsync(pending.Input, pending.Context);
+            if (_pendingCompletion != pending) return;
             if (result.IsSuccess || result.Error?.Type != OperationErrorType.Failure)
                 _pendingCompletion = null;
             if (!result.IsSuccess)
@@ -349,12 +391,18 @@ public partial class Picking
 
     private async Task ShowRollbackDialogAsync()
     {
-        if (_isCompleting || _pendingCompletion is not null || _isRollingBack)
-            return;
-        IDialogReference dialog = await DialogService.ShowAsync<RollbackDialog>("Откатить расходный ордер");
-        DialogResult? dialogResult = await dialog.Result;
+        if (InputsLocked) return;
+        var orderId = Id;
+        _isChoosingRollback = true;
+        DialogResult? dialogResult;
+        try
+        {
+            IDialogReference dialog = await DialogService.ShowAsync<RollbackDialog>("Откатить расходный ордер");
+            dialogResult = await dialog.Result;
+        }
+        finally { _isChoosingRollback = false; }
 
-        if (_isCompleting || _pendingCompletion is not null
+        if (InputsLocked || Id != orderId
             || dialogResult is null || dialogResult.Canceled || dialogResult.Data is not string reason)
         {
             return;
@@ -372,7 +420,7 @@ public partial class Picking
                 return;
             }
 
-            OperationResult result = await OrderCommandService.RollbackAsync(Id, reason, userId);
+            OperationResult result = await OrderCommandService.RollbackAsync(orderId, reason, userId);
             if (!result.IsSuccess)
             {
                 SetError(result.Error?.Message ?? "Не удалось откатить расходный ордер.");

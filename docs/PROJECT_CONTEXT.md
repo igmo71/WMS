@@ -167,7 +167,16 @@ atomically. Successful replay does not repeat synchronization or target calls.
 Web retains each pending transition's original input and request id for the
 component lifetime, including uncertain retries. Local movement editing and
 rollback are unavailable while a transition is in flight or pending recovery.
-Picking movement mutations and Web rollback retain their existing execution paths.
+Picking draft add/update/delete use PickingCommandService and CommandExecutor
+in both clients. API parses the source-location barcode before the command;
+original Mobile hashes remain compatible. Movement, recalculated line fact and
+order revision commit with the receipt without posting stock or calling 1C.
+Web retains original source, quantity, expected order/movement and request/user
+for explicit uncertain retry during component lifetime. Other edits, completion,
+acknowledgement and rollback are blocked while pending. Concurrent deletion of an
+originally unposted picking movement is a shipping conflict, including when SQL
+reports the disappeared movement before the owning order's revision check.
+Web rollback retains its existing execution path.
 
 A shortage requires explicit operator acknowledgement. An unfinished cycle may
 be rolled back in WebApp: drafts are removed, posted work is offset by reverse
@@ -299,8 +308,8 @@ business/client `4xx` releases it. Stable Mobile error codes are
 `command_failed`.
 
 Receipts are shared application persistence (`CommandReceipts`), also used by
-Web receiving start/completion and line edits, putaway, shipping transitions,
-transfers and inventory counts. Mobile V1 retains the
+Web receiving start/completion and line edits, putaway, picking movements,
+shipping transitions, transfers and inventory counts. Mobile V1 retains the
 `ClientRequestId` transport name. The receipt schema rename preserves existing
 keys, command types, hashes,
 and result ids, so previously completed Mobile attempts remain replayable.

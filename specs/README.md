@@ -10,6 +10,8 @@ None.
 
 ## Frozen
 
+- [Unified picking commands](2026-09-11-unified-picking-commands/spec.md)
+  — Shared draft add/update/delete implemented on 2026-09-11.
 - [Unified putaway commands](2026-09-10-unified-putaway-commands/spec.md)
   — Shared start, draft movements and completion implemented on 2026-09-11.
 - [Unified receiving facts](2026-09-10-unified-receiving-facts/spec.md)

@@ -33,7 +33,7 @@ try
         new InventoryPostingService(NullLogger<InventoryPostingService>.Instance),
         new ShippingOrderSynchronizationService(factory, source, NullLogger<ShippingOrderSynchronizationService>.Instance),
         sink, NullLogger<ShippingOrderCommandService>.Instance);
-    var picking = new PickingCommandService(factory, NullLogger<PickingCommandService>.Instance);
+    var picking = new PickingCommandService(new CommandExecutor(factory), NullLogger<PickingCommandService>.Instance);
     const string user = "shipping-test";
 
     // Seed old protocol strings/hashes without using the new command implementation.
@@ -78,7 +78,7 @@ try
         int calls = sink.Calls;
         Require(await commandService.StartPickingAsync(new(snapshot.Id, shippingLocation.Id), start));
         Check(sink.Calls == calls, "Start replay");
-        Require(await picking.AddPickingMovementAsync(snapshot.Id, 1, storageLocation.Id, 5m));
+        Require(await picking.AddPickingMovementAsync(new(snapshot.Id, 1, storageLocation.Id, 5m), Context()));
         source.Snapshot = snapshot with { Status = ShippingOrderStatus.ReadyForPicking };
         var ready = Context();
         sink.FailReady = failTargets;
